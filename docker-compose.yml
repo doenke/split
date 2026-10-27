@@ -11,11 +11,22 @@ services:
         condition: service_healthy
     ports:
       - "8347:8347"                # Host:Container – not needed behind a reverse proxy in the same network
-    env_file: .env
+    # Values come from a .env file next to this file (docker compose) or from the
+    # stack's environment variables (Portainer).
     environment:
       PORT: 8347
-      DATABASE_URL: postgres://split:${POSTGRES_PASSWORD}@db:5432/split
+      DATABASE_URL: postgres://split:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}@db:5432/split
       UPLOAD_DIR: /data/uploads
+      PUBLIC_URL: ${PUBLIC_URL:?PUBLIC_URL fehlt}
+      TZ: ${TZ:-Europe/Berlin}
+      DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-EUR}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email}
+      OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
+      OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Anmelden}
+      WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Split}
     volumes:
       - uploads:/data/uploads      # receipts, avatars
     healthcheck:
@@ -32,7 +43,7 @@ services:
     environment:
       POSTGRES_DB: split
       POSTGRES_USER: split
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
     volumes:
       - db:/var/lib/postgresql/data
     healthcheck:

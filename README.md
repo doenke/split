@@ -20,6 +20,9 @@ cp .env.example .env    # Werte anpassen
 docker compose up -d
 ```
 
+**Portainer:** Inhalt von `docker-compose.yml` als Stack einfügen und die Variablen aus `.env.example`
+unter *Environment variables* eintragen (mindestens `PUBLIC_URL` und `POSTGRES_PASSWORD`).
+
 Die App lauscht auf Port **8347**. Datenbank-Migrationen laufen beim Start automatisch.
 Im Identity Provider als Redirect-URI eintragen: `https://<PUBLIC_URL>/auth/oidc/callback`.
 
