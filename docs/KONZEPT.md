@@ -53,6 +53,8 @@ Kern-Alleinstellungsmerkmale:
 1. **OIDC-Nutzer** – melden sich über den konfigurierten Identity Provider an
    (Authentik, Keycloak, Authelia, Google, …). Name, E-Mail und **Avatar**
    (`picture`-Claim) kommen aus dem IdP. **Nur sie dürfen Gruppen anlegen.**
+   Der **Text des Login-Buttons ist konfigurierbar** (z.B. „Mit Familien-Login
+   anmelden“ statt „Mit OIDC anmelden“), damit Nutzer ihren Anbieter wiedererkennen.
 2. **Gäste** – Personen ohne OIDC, die die App aber aktiv nutzen
    (Ausgaben erfassen, Salden sehen). Kein Passwort, kein Registrierungsformular.
 3. **Platzhalter** – Personen, die sich nie anmelden (Kinder, Oma ohne Smartphone).
@@ -559,6 +561,7 @@ OIDC_ISSUER=https://auth.example.de/application/o/split/
 OIDC_CLIENT_ID=split
 OIDC_CLIENT_SECRET=***
 OIDC_ADMIN_GROUP=split-admins
+OIDC_BUTTON_LABEL="Mit Authentik anmelden"   # Text des Login-Buttons
 RECEIPT_OCR_ENGINE=anthropic   # anthropic (Standard) | none – weitere Engines später
 ANTHROPIC_API_KEY=***
 ```
