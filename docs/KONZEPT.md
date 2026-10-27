@@ -601,18 +601,129 @@ Wichtige Prinzipien:
   da sie das Herz der App ist.
 - HTTPS ist Pflicht (Passkeys, Service Worker, Kamera funktionieren nur damit).
 
-Beispiel-Konfiguration:
+### 12.1 Installation mit Docker Compose
+
+Vollständiges Beispiel. Die App lauscht bewusst auf einem **unüblichen Port
+(`8347`)**, damit sie nicht mit anderen Diensten auf dem Host kollidiert
+(3000/8080 sind oft schon belegt). Der Port ist über `PORT` frei wählbar;
+Container- und Host-Port sind im Beispiel gleich, damit es keine Verwirrung gibt.
+
+`docker-compose.yml`:
+
+```yaml
+name: split
+
+services:
+  app:
+    image: ghcr.io/doenke/split:latest
+    container_name: split-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8347:8347"                # Host:Container – nur nötig ohne Reverse Proxy im selben Netz
+    env_file: .env
+    environment:
+      PORT: 8347
+      DATABASE_URL: postgres://split:${POSTGRES_PASSWORD}@db:5432/split
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads      # Belegfotos, Avatare
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8347/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  db:
+    image: postgres:17-alpine
+    container_name: split-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: split
+      POSTGRES_USER: split
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U split -d split"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # kein "ports:" – die Datenbank ist nur im internen Compose-Netz erreichbar
+
+volumes:
+  db:
+  uploads:
+```
+
+`.env` (liegt neben der `docker-compose.yml`, nicht ins Git einchecken):
 
 ```env
-PUBLIC_URL=https://split.example.de
-DATABASE_URL=postgres://split:***@db/split
+# --- Allgemein ---
+PUBLIC_URL=https://split.example.de      # öffentliche URL (HTTPS ist Pflicht für Passkeys, PWA, Kamera)
+TZ=Europe/Berlin
+DEFAULT_LOCALE=de
+DEFAULT_CURRENCY=EUR
+SESSION_SECRET=<openssl rand -hex 32>
+
+# --- Datenbank ---
+POSTGRES_PASSWORD=<openssl rand -hex 24>
+
+# --- OIDC ---
 OIDC_ISSUER=https://auth.example.de/application/o/split/
 OIDC_CLIENT_ID=split
-OIDC_CLIENT_SECRET=***
-OIDC_ADMIN_GROUP=split-admins
-OIDC_BUTTON_LABEL="Mit Authentik anmelden"   # Text des Login-Buttons
-RECEIPT_OCR_ENGINE=anthropic   # anthropic (Standard) | none – weitere Engines später
-ANTHROPIC_API_KEY=***
+OIDC_CLIENT_SECRET=<aus dem IdP>
+OIDC_SCOPES="openid profile email"
+OIDC_ADMIN_GROUP=split-admins            # Mitglieder dieser IdP-Gruppe sind Instanz-Admins
+OIDC_BUTTON_LABEL="Mit Authentik anmelden"
+# Redirect-URI im IdP eintragen: https://split.example.de/auth/oidc/callback
+
+# --- Passkeys (WebAuthn) ---
+WEBAUTHN_RP_NAME=Split                    # RP-ID wird aus PUBLIC_URL abgeleitet
+
+# --- Bon-Erkennung ---
+RECEIPT_OCR_ENGINE=anthropic              # anthropic (Standard) | none
+ANTHROPIC_API_KEY=<API-Key>
+
+# --- Push-Benachrichtigungen (Web Push) ---
+# einmalig erzeugen: docker compose run --rm app split generate-vapid-keys
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:admin@example.de
+
+# --- Optional: E-Mail (Magic Links) ---
+# SMTP_URL=smtp://user:pass@mail.example.de:587
+# SMTP_FROM="Split <split@example.de>"
+
+# --- Optional: Reverse Proxy ---
+TRUST_PROXY=true                          # X-Forwarded-* auswerten (Protokoll, Client-IP)
+```
+
+Start:
+
+```bash
+docker compose up -d
+docker compose logs -f app        # Migrationen laufen beim Start automatisch
+```
+
+**Reverse Proxy:** Für den Betrieb im Internet steht die App hinter einem
+Reverse Proxy mit TLS (Caddy, Traefik, Nginx Proxy Manager …), der auf
+`http://<host>:8347` weiterleitet. Minimalbeispiel Caddy:
+
+```caddyfile
+split.example.de {
+    reverse_proxy localhost:8347
+}
+```
+
+**Backup:** Gesichert werden müssen nur die beiden Volumes `db` (bzw. ein
+`pg_dump`) und `uploads`, z.B.:
+
+```bash
+docker compose exec db pg_dump -U split split > split-$(date +%F).sql
 ```
 
 ---
