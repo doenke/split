@@ -702,6 +702,18 @@ VAPID_SUBJECT=mailto:admin@example.de
 TRUST_PROXY=true                          # X-Forwarded-* auswerten (Protokoll, Client-IP)
 ```
 
+**Healthchecks:**
+- `db`: `pg_isready` – die App startet erst, wenn die Datenbank bereit ist
+  (`depends_on … condition: service_healthy`).
+- `app`: `GET /api/health` liefert `200`, wenn der Server läuft **und** die
+  Datenbank erreichbar ist (sonst `503`), z.B. `{"status":"ok","db":"ok","version":"1.0.0"}`.
+  Zusätzlich `/api/health/live` (nur Prozess, ohne DB) für Orchestrierungen,
+  die Liveness und Readiness trennen.
+- Das Image bringt `wget` mit (Alpine-Basis). Das muss beim Bau des Images
+  beachtet werden – ein Distroless-Image hätte kein `wget`.
+- `docker compose ps` zeigt den Zustand als `healthy` / `unhealthy`; mit
+  `restart: unless-stopped` werden abgestürzte Container neu gestartet.
+
 Start:
 
 ```bash
