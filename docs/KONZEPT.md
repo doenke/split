@@ -1,6 +1,6 @@
 # Konzept: Split – Kosten in Gruppen fair aufteilen
 
-> Status: **Entwurf v0.2** – Grundlage für Diskussion, noch keine Implementierung.
+> Status: **Entwurf v0.3** – Grundlage für Diskussion, noch keine Implementierung.
 > Entscheidungen stehen in Kapitel 14, offene Fragen (❓) in Kapitel 15.
 
 ---
@@ -126,6 +126,8 @@ Legt ein Organisator versehentlich eine zweite „Anna“ an, gibt es eine
 | Kassen anlegen & verwalten | ✅ | ✅ | – |
 | Platzhalter verwalten (z.B. eigene Kinder) | ✅ | ✅ für Personen der eigenen Kassen | – |
 
+**Lesen:** Jedes Gruppenmitglied sieht alle Ausgaben, Belege und Salden der Gruppe.
+
 Der Ersteller einer Gruppe ist automatisch Gruppenadmin und kann weitere
 Personen – auch Gäste – zu Gruppenadmins ernennen. Das **Anlegen** neuer
 Gruppen bleibt OIDC-Nutzern vorbehalten.
@@ -243,6 +245,31 @@ Anna/Ben/Carla je 22,50 €, Lea/Tim je 11,25 € – ohne dass jemand die Ausga
 **Rundung:** Alle Beträge werden intern als ganze Cent (Integer) gespeichert.
 Rest-Cents werden deterministisch nach dem Largest-Remainder-Verfahren verteilt,
 damit die Summe immer exakt stimmt.
+
+### 5.6 Fremdwährungen
+
+Auf Reisen zentral, daher Teil des MVP.
+
+- Jede Gruppe hat eine **Basiswährung**; alle Salden und Ausgleichsvorschläge
+  werden in ihr berechnet.
+- Jede Ausgabe kann in **beliebiger Währung** erfasst werden. Gespeichert werden
+  Originalbetrag, Originalwährung **und der verwendete Kurs** – der Kurs wird
+  beim Erfassen festgeschrieben, damit sich Salden nicht täglich verschieben.
+- **Kursquelle:** EZB-Referenzkurse (täglich, kostenlos, kein API-Key), auf dem
+  Server zwischengespeichert. Vorschlag ist der Kurs am Ausgabedatum.
+- **Tatsächlicher Betrag:** Alternativ zum Kurs kann der tatsächlich
+  abgebuchte Betrag eingegeben werden („Karte belastet mit 47,12 €“) – der
+  Kurs inkl. Bankgebühr ergibt sich daraus. Das ist der fairste Weg.
+- **Offline:** Die PWA hält die letzten Kurse lokal vor; im Funkloch wird der
+  letzte bekannte Kurs genutzt und als „vorläufig“ markiert.
+- Die zuletzt genutzte Währung einer Gruppe wird beim Erfassen vorausgewählt
+  (wer in der Schweiz ist, tippt meist CHF).
+- **Ausgleich in Fremdwährung** ist möglich (z.B. bar in CHF zurückgezahlt) und
+  wird zum Tageskurs umgerechnet.
+- **Gruppenübergreifendes Verrechnen** zwischen Gruppen mit unterschiedlicher
+  Basiswährung erfolgt zum aktuellen Kurs und wird vor dem Bestätigen angezeigt.
+- Anzeige: Liste zeigt den Originalbetrag („42,00 CHF“) und klein den Betrag
+  in Basiswährung („≈ 44,80 €“).
 
 ### 5.5 Stabilität vs. Dynamik
 
@@ -400,9 +427,6 @@ Edeka, 14.07.2027                         87,40 €
 ## 10. Weitere Funktionen (Vorschläge)
 
 **Wichtig für Reisen:**
-- **Fremdwährungen:** Ausgabe in CHF/USD/…, Umrechnung in Basiswährung zum Kurs
-  am Ausgabedatum (z.B. EZB-Referenzkurse, offline zwischengespeichert) oder
-  manuell eingegebener Kurs (der tatsächliche Kreditkartenkurs).
 - **Offline-Fähigkeit:** Ausgaben im Funkloch erfassen, später synchronisieren
   (Service Worker + lokale Warteschlange). Für eine Reise-App sehr wichtig.
 - **Push-Benachrichtigungen** (Web Push): „Ben hat 45 € fürs Abendessen eingetragen“,
@@ -446,10 +470,12 @@ Kasse             (id, name, avatar, einzelkasse: bool, erstellt_von)   -- globa
 KassenMitglied    (kasse_id, person_id, verwalter: bool, bevorzugt: bool)
                   -- eine Person kann in mehreren Kassen sein
 
+ExchangeRate      (datum, waehrung, kurs_zu_eur)      -- EZB-Cache
+
 Category          (id, group_id?, name, icon, farbe) -- group_id NULL = Standard
 Profile           (id, group_id, name, icon, regel_json, default_category_id?)
 
-Expense           (id, group_id, titel, datum, betrag_cent, waehrung, kurs, typ,
+Expense           (id, group_id, titel, datum, betrag_cent, waehrung, kurs, kurs_quelle: ezb|manuell|tatsaechlich, betrag_basis_cent, typ,
                    category_id, profile_id?, regel_json?, notiz, erstellt_von, frozen)
 ExpensePayer      (expense_id, person_id, betrag_cent)
 ExpenseItem       (id, expense_id, titel, betrag_cent, profile_id?, regel_json?)
@@ -482,7 +508,7 @@ Es gibt keine Vorgaben zum Stack – festgelegt wird:
 | Bereich | Entscheidung | Begründung |
 |---|---|---|
 | Frontend + Backend | **SvelteKit** (TypeScript) | eine Codebasis, SSR, sehr gute PWA-Unterstützung, schlank |
-| Datenbank | **PostgreSQL**, optional SQLite für Mini-Installationen | Transaktionen, JSON-Felder |
+| Datenbank | **PostgreSQL** | Transaktionen, JSON-Felder; für die Zielgröße mehr als ausreichend |
 | ORM | Drizzle | typsicher, Migrationen |
 | OIDC | `openid-client` | Standard, PKCE |
 | Passkeys | SimpleWebAuthn | etablierte WebAuthn-Bibliothek |
@@ -517,6 +543,7 @@ ANTHROPIC_API_KEY=***
 - OIDC-Login, Gruppen anlegen, Personen/Platzhalter
 - Gast-Login per persönlichem Link + Passkey/Geräte-Token
 - Ausgaben mit Regeln Alle / Alle außer / Nur / Individuell, Faktoren
+- Fremdwährungen (EZB-Kurse, Kurs festschreiben, tatsächlicher Betrag)
 - Kategorien, Salden, Ausgleichsvorschläge (pro Gruppe, pro Person)
 - PWA installierbar, Docker-Image
 
@@ -529,7 +556,7 @@ ANTHROPIC_API_KEY=***
 
 **Phase 3 – Komfort**
 - Kassenbon-OCR inkl. Positionen
-- Fremdwährungen, Offline-Modus, Push
+- Offline-Modus, Push
 - Gruppen-Einladungslink („Wer bist du?“), Geräte koppeln
 - Gruppenübergreifendes Verrechnen, Abrechnung abschließen, Export
 
@@ -545,12 +572,20 @@ ANTHROPIC_API_KEY=***
 | E4 | Gemeinsamer Topf | Nicht geplant |
 | E5 | Bon-Erkennung | Externe KI-API (Claude Vision) als Standard |
 | E6 | Tech-Stack | Keine Vorgaben → SvelteKit + PostgreSQL + Docker |
+| E7 | Fremdwährungen | Wichtig → Teil des MVP (Kapitel 5.6) |
+| E8 | OIDC | Genau **ein** OIDC-Provider pro Instanz |
+| E9 | Sichtbarkeit | Jedes Gruppenmitglied sieht **alle** Ausgaben, Belege und Salden der Gruppe |
+| E10 | Größe | Familie & Freunde; Gruppen mit max. ca. 20 Personen |
 
-## 15. Offene Fragen ❓
+**Konsequenzen aus E9/E10:**
+- Kein feingranulares Rechtesystem für Lesezugriffe nötig – Gruppenmitglied = sieht alles.
+  Andere Gruppen bleiben weiterhin unsichtbar (7.3).
+- Salden können bei jedem Aufruf vollständig neu berechnet werden; Caching,
+  Paginierung oder Vorberechnung sind nicht nötig. Das hält die dynamische
+  Regel-Logik einfach.
+- Bei max. 20 Personen ist der Ausgleichsalgorithmus (Greedy) unkritisch, und
+  Auswahllisten („Nur …“, „Alle außer …“) passen ohne Suche auf einen Bildschirm.
 
-1. **Fremdwährungen** schon im MVP?
-2. **Mehrere OIDC-Provider** oder genau einer?
-3. **Sichtbarkeit:** Sieht jedes Gruppenmitglied alle Ausgaben und alle Salden,
-   oder nur die eigenen?
-4. **Instanzgröße:** Familie & Freunde (≤ 50 Personen) oder auch größere Vereine?
-5. **Wero:** Zum Implementierungszeitpunkt prüfen, ob es Bezahl-Links/API gibt.
+## 15. Offene Punkte ❓
+
+1. **Wero:** Zum Implementierungszeitpunkt prüfen, ob es Bezahl-Links/API gibt.
