@@ -15,6 +15,13 @@
       "when": 1793107053071,
       "tag": "0001_settlement_link",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793107768457,
+      "tag": "0002_payment_details",
+      "breakpoints": true
     }
   ]
 }

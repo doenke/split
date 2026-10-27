@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import PayPanel from '$lib/components/PayPanel.svelte';
 	import { amountToInput } from '$lib/core/currency';
 	import { formatAmount, formatDate } from '$lib/format';
 
@@ -13,6 +14,7 @@
 	const maxAbs = $derived(Math.max(1, ...kassen.map((k) => Math.abs(k.balance))));
 
 	let recording = $state<{ from: string; to: string; amount: string } | null>(null);
+	let paying = $state<string | null>(null);
 	const methodLabels: Record<string, string> = {
 		cash: 'Bar',
 		transfer: 'Überweisung',
@@ -59,6 +61,9 @@
 					<strong>{kasseName(t.from)}</strong> → <strong>{kasseName(t.to)}</strong>
 				</div>
 				<span class="amount">{formatAmount(t.amount, currency)}</span>
+				{#if t.from === data.myKasseId}
+					<button class="small-btn primary" onclick={() => (paying = paying === t.from + '|' + t.to ? null : t.from + '|' + t.to)}>Bezahlen</button>
+				{/if}
 				<button
 					class="small-btn"
 					onclick={() => (recording = { from: t.from, to: t.to, amount: amountToInput(t.amount, currency) })}
@@ -66,6 +71,14 @@
 					Bezahlt
 				</button>
 			</div>
+			{#if paying === t.from + '|' + t.to}
+				<div class="paybox">
+					<PayPanel options={data.paymentOptions[paying] as never} amount={t.amount} {currency} />
+					<button class="full" style="margin-top: 0.6rem" onclick={() => ((paying = null), (recording = { from: t.from, to: t.to, amount: amountToInput(t.amount, currency) }))}>
+						Erledigt – Zahlung eintragen
+					</button>
+				</div>
+			{/if}
 			{#if recording && recording.from === t.from && recording.to === t.to}
 				<form
 					method="POST"
@@ -168,6 +181,10 @@
 		min-height: 36px;
 		padding: 0.3rem 0.7rem;
 		font-size: 0.85rem;
+	}
+	.paybox {
+		display: block !important;
+		background: var(--surface-2);
 	}
 	.record {
 		display: block !important;

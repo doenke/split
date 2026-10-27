@@ -1,12 +1,54 @@
 import { error, fail } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
+import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
-import { loadMembers, requireGroup } from '$lib/server/groups';
+import { loadGroupState, loadMembers, requireGroup } from '$lib/server/groups';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
 import { parseAmount } from '$lib/core/currency';
 import { today } from '$lib/format';
-import type { Actions } from './$types';
+import { epcPayload, formatIban, paypalLink } from '$lib/core/payment';
+import type { Actions, PageServerLoad } from './$types';
+
+/** Payment options for the transfers the current user has to make. */
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const g = await requireGroup(params.id, locals.user);
+	const state = await loadGroupState(params.id);
+	const mine = state.transfers.filter((t) => t.from === g.membership.kasseId);
+	const kassen = new Map(state.kassen.map((k) => [k.id, k]));
+	const receivers = [...new Set(mine.map((t) => kassen.get(t.to)?.receiverPersonId ?? kassen.get(t.to)?.personalOf).filter((x): x is string => !!x))];
+	const details = receivers.length
+		? await db.select().from(schema.paymentDetails).where(inArray(schema.paymentDetails.personId, receivers))
+		: [];
+	const names = new Map(
+		(receivers.length ? await db.select({ id: schema.persons.id, name: schema.persons.name }).from(schema.persons).where(inArray(schema.persons.id, receivers)) : []).map((p) => [p.id, p.name])
+	);
+	const currency = g.group.baseCurrency;
+	const text = `Split: ${g.group.name}`;
+	const options: Record<string, unknown> = {};
+	for (const t of mine) {
+		const k = kassen.get(t.to);
+		const receiverId = k?.receiverPersonId ?? k?.personalOf;
+		const d = details.find((x) => x.personId === receiverId);
+		if (!d || !receiverId) continue;
+		const holder = d.accountHolder ?? names.get(receiverId) ?? '';
+		options[t.from + '|' + t.to] = {
+			receiverName: names.get(receiverId),
+			paypal: d.paypalMe ? paypalLink(d.paypalMe, t.amount, currency) : null,
+			iban: d.iban ? formatIban(d.iban) : null,
+			holder,
+			girocode:
+				d.iban && currency === 'EUR'
+					? await QRCode.toString(epcPayload({ name: holder, iban: d.iban, amount: t.amount, text }), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
+					: null,
+			weroContact: d.weroContact,
+			weroLink: d.weroLink,
+			weroQr: d.weroLink ? await QRCode.toString(d.weroLink, { type: 'svg', margin: 1 }) : null,
+			text
+		};
+	}
+	return { paymentOptions: options };
+};
 
 const methods = ['cash', 'transfer', 'paypal', 'wero', 'other'] as const;
 

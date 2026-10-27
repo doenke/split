@@ -58,6 +58,36 @@
 	<PasskeySetup ondone={() => invalidateAll()} />
 </div>
 
+<form method="POST" action="?/savePayment" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
+	<h2>So bekommst du Geld</h2>
+	<p class="small muted">Wer dir in einer Gruppe etwas schuldet, sieht diese Angaben beim Ausgleichen – mit fertigem Betrag.</p>
+	{#if form?.paymentError}<p class="error">{form.paymentError}</p>{/if}
+	{#if form?.paymentSaved}<p class="positive">✔ Gespeichert</p>{/if}
+	<div class="field">
+		<label for="weroContact">Wero: E-Mail oder Handynummer</label>
+		<input id="weroContact" name="weroContact" value={data.payment?.weroContact ?? ''} autocomplete="off" />
+	</div>
+	<div class="field">
+		<label for="weroLink">Wero: offener Zahlungslink (optional)</label>
+		<input id="weroLink" name="weroLink" value={data.payment?.weroLink ?? ''} placeholder="https://…" inputmode="url" />
+		<p class="hint">In deiner Banking-App unter Wero → Anfordern einen Zahlungslink ohne festen Betrag erstellen und hier einfügen.</p>
+	</div>
+	<div class="field">
+		<label for="iban">IBAN (für GiroCode / Überweisung)</label>
+		<input id="iban" name="iban" value={data.payment?.iban ?? ''} autocomplete="off" />
+	</div>
+	<div class="field">
+		<label for="accountHolder">Kontoinhaber</label>
+		<input id="accountHolder" name="accountHolder" value={data.payment?.accountHolder ?? ''} placeholder={user.name} />
+	</div>
+	<div class="field">
+		<label for="paypalMe">PayPal.me-Name</label>
+		<input id="paypalMe" name="paypalMe" value={data.payment?.paypalMe ?? ''} placeholder="z.B. AnnaMuster oder paypal.me/AnnaMuster" autocomplete="off" />
+	</div>
+	<p class="hint">Sichtbar nur für Personen, mit denen du in einer Gruppe bist.</p>
+	<button class="primary full">Speichern</button>
+</form>
+
 {#if !data.hasOidc && data.oidcEnabled}
 	<div class="card">
 		<h2>Login verknüpfen</h2>

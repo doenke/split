@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { and, eq, gt } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
+import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -14,7 +15,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.select({ id: schema.sessions.id, createdAt: schema.sessions.createdAt })
 		.from(schema.sessions)
 		.where(and(eq(schema.sessions.personId, locals.user.id), gt(schema.sessions.expiresAt, new Date())));
+	const [payment] = await db.select().from(schema.paymentDetails).where(eq(schema.paymentDetails.personId, locals.user.id));
 	return {
+		payment: payment ? { ...payment, iban: payment.iban ? formatIban(payment.iban) : null } : null,
 		passkeys: creds.filter((c) => c.type === 'passkey'),
 		hasOidc: creds.some((c) => c.type === 'oidc'),
 		sessionCount: sessions.length,
@@ -32,6 +35,31 @@ export const actions: Actions = {
 		await db.update(schema.persons).set({ name }).where(eq(schema.persons.id, locals.user.id));
 		await db.update(schema.kassen).set({ name }).where(eq(schema.kassen.personalOf, locals.user.id));
 		return { saved: true };
+	},
+	savePayment: async ({ locals, request }) => {
+		if (!locals.user) redirect(303, '/login');
+		const f = await request.formData();
+		const str = (k: string) => String(f.get(k) ?? '').trim();
+		const iban = str('iban');
+		if (iban && !isValidIban(iban)) return fail(400, { paymentError: 'Die IBAN ist ungültig.' });
+		const paypalRaw = str('paypalMe');
+		const paypalMe = paypalRaw ? normalizePaypalMe(paypalRaw) : null;
+		if (paypalRaw && !paypalMe) return fail(400, { paymentError: 'Bitte nur deinen PayPal.me-Namen oder -Link angeben.' });
+		const weroLink = str('weroLink');
+		if (weroLink && !/^https:\/\//.test(weroLink)) return fail(400, { paymentError: 'Der Wero-Link muss mit https:// beginnen.' });
+		const values = {
+			weroContact: str('weroContact') || null,
+			weroLink: weroLink || null,
+			iban: iban ? normalizeIban(iban) : null,
+			accountHolder: str('accountHolder') || (iban ? locals.user.name : null),
+			paypalMe,
+			updatedAt: new Date()
+		};
+		await db
+			.insert(schema.paymentDetails)
+			.values({ personId: locals.user.id, ...values })
+			.onConflictDoUpdate({ target: schema.paymentDetails.personId, set: values });
+		return { paymentSaved: true };
 	},
 	deletePasskey: async ({ locals, request }) => {
 		if (!locals.user) redirect(303, '/login');

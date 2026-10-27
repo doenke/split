@@ -277,3 +277,18 @@ export const auditLog = pgTable(
 	},
 	(t) => [index('audit_group').on(t.groupId, t.createdAt)]
 );
+
+/** How a person wants to receive money. Visible to people sharing a group with them. */
+export const paymentDetails = pgTable('payment_details', {
+	personId: text('person_id')
+		.primaryKey()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	/** e-mail address or phone number registered with Wero */
+	weroContact: text('wero_contact'),
+	/** open payment link created in the banking app */
+	weroLink: text('wero_link'),
+	iban: text('iban'),
+	accountHolder: text('account_holder'),
+	paypalMe: text('paypal_me'),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+});
