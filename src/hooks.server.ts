@@ -21,5 +21,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const result = await validateSession(event.cookies.get(SESSION_COOKIE));
 	event.locals.user = result?.user ?? null;
 	event.locals.sessionId = result?.sessionId ?? null;
-	return resolve(event);
+	const response = await resolve(event);
+	// pages are never served from the browser's HTTP cache, so an update shows up right away
+	if (response.headers.get('content-type')?.startsWith('text/html')) {
+		response.headers.set('cache-control', 'no-cache');
+	}
+	return response;
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import { page } from '$app/state';
+	import { page, updated } from '$app/state';
+	import { versionLabel } from '$lib/version';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { flushPending } from '$lib/offline';
@@ -9,7 +10,22 @@
 	let { data, children } = $props();
 	let online = $state(true);
 
+	// pages where a reload could throw away what the user is typing
+	const editing = () => /\/(neu|ausgaben\/[^/]+)$/.test(location.pathname) || document.querySelector('form :focus') !== null;
+
 	onMount(() => {
+		// a new server version: reload as soon as it doesn't disturb
+		const hadController = !!navigator.serviceWorker?.controller;
+		const onControllerChange = () => {
+			if (hadController && !editing()) location.reload();
+		};
+		navigator.serviceWorker?.addEventListener('controllerchange', onControllerChange);
+		const onVisible = async () => {
+			if (document.visibilityState !== 'visible') return;
+			if ((await updated.check()) && !editing()) location.reload();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
 		online = navigator.onLine;
 		const sync = async () => {
 			online = navigator.onLine;
@@ -19,6 +35,8 @@
 		window.addEventListener('online', sync);
 		window.addEventListener('offline', sync);
 		return () => {
+			navigator.serviceWorker?.removeEventListener('controllerchange', onControllerChange);
+			document.removeEventListener('visibilitychange', onVisible);
 			window.removeEventListener('online', sync);
 			window.removeEventListener('offline', sync);
 		};
@@ -43,6 +61,13 @@
 	</div>
 </header>
 
+{#if updated.current}
+	<div class="update">
+		Eine neue Version von Split ist da.
+		<button class="link" onclick={() => location.reload()}>Jetzt neu laden</button>
+	</div>
+{/if}
+
 {#if !online}
 	<div class="offline">Offline – neue Ausgaben werden gespeichert und später übertragen.</div>
 {/if}
@@ -50,6 +75,8 @@
 <main class="container">
 	{@render children()}
 </main>
+
+<footer class="small muted">Split {versionLabel}</footer>
 
 <style>
 	header {
@@ -80,6 +107,18 @@
 	}
 	.me {
 		display: flex;
+	}
+	.update {
+		background: var(--primary-soft);
+		text-align: center;
+		font-size: 0.85rem;
+		padding: 0.4rem 1rem;
+	}
+	footer {
+		text-align: center;
+		padding: 0 1rem 6rem;
+		margin-top: -4.5rem;
+		font-size: 0.75rem;
 	}
 	.offline {
 		background: var(--warning-bg);

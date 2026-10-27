@@ -49,6 +49,9 @@ sw.addEventListener('fetch', (event) => {
 	const url = new URL(req.url);
 	if (url.origin !== location.origin || url.pathname.startsWith('/auth/') || url.pathname.startsWith('/api/')) return;
 
+	// SvelteKit's version file must always come from the server, otherwise updates go unnoticed
+	if (url.pathname.endsWith('/_app/version.json')) return;
+
 	// static, versioned assets: cache first
 	if (ASSETS.includes(url.pathname)) {
 		event.respondWith(caches.match(req).then((r) => r ?? fetch(req)));

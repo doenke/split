@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+ARG GIT_SHA=""
+ARG BUILD_DATE=""
+ENV GIT_SHA=$GIT_SHA BUILD_DATE=$BUILD_DATE
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-alpine
