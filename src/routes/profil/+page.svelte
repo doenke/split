@@ -96,6 +96,18 @@
 	</div>
 {/if}
 
+<div class="card">
+	<h2>Weiteres Gerät</h2>
+	{#if form?.pairing}
+		<p class="small">Mit dem anderen Gerät scannen – der Code gilt 10 Minuten und nur einmal.</p>
+		<div class="center"><div class="qr">{@html form.pairing.qr}</div></div>
+		<input readonly value={form.pairing.url} onfocus={(e) => e.currentTarget.select()} />
+	{:else}
+		<p class="small muted">Melde dich auf einem Tablet oder Laptop an, ohne Passwort: Code anzeigen, mit dem anderen Gerät scannen.</p>
+		<form method="POST" action="?/pairDevice" use:enhance><button class="full">📱 Gerät hinzufügen</button></form>
+	{/if}
+</div>
+
 <div class="card stack">
 	{#if data.sessionCount > 1}
 		<form method="POST" action="?/logoutOthers" use:enhance>
@@ -106,3 +118,21 @@
 		<button class="full danger">Abmelden</button>
 	</form>
 </div>
+
+<style>
+	.center {
+		text-align: center;
+	}
+	.qr {
+		display: inline-block;
+		background: #fff;
+		padding: 8px;
+		border-radius: 10px;
+		margin: 0.5rem 0;
+	}
+	.qr :global(svg) {
+		display: block;
+		width: 200px;
+		height: 200px;
+	}
+</style>

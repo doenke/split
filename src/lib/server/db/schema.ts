@@ -67,6 +67,8 @@ export const inviteTokens = pgTable('invite_tokens', {
 	/** sha256 of the token */
 	id: id(),
 	type: text('type', { enum: ['personal', 'group', 'pairing'] }).notNull(),
+	/** Only for group links (meant to be shared openly): the token itself, so admins can show it again. */
+	token: text('token'),
 	personId: text('person_id').references(() => persons.id, { onDelete: 'cascade' }),
 	groupId: text('group_id').references(() => groups.id, { onDelete: 'cascade' }),
 	createdBy: text('created_by'),

@@ -2,6 +2,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import { and, eq, gt } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
+import QRCode from 'qrcode';
+import { createPersonalInvite } from '$lib/server/auth/invites';
 import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -68,6 +70,12 @@ export const actions: Actions = {
 			.delete(schema.credentials)
 			.where(and(eq(schema.credentials.id, id), eq(schema.credentials.personId, locals.user.id), eq(schema.credentials.type, 'passkey')));
 		return { deleted: true };
+	},
+	/** Short-lived login link for another device of the same person. */
+	pairDevice: async ({ locals }) => {
+		if (!locals.user) redirect(303, '/login');
+		const { url } = await createPersonalInvite(locals.user.id, null, locals.user.id, 10);
+		return { pairing: { url, qr: await QRCode.toString(url, { type: 'svg', margin: 1 }) } };
 	},
 	logoutOthers: async ({ locals }) => {
 		if (!locals.user) redirect(303, '/login');

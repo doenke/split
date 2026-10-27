@@ -29,6 +29,13 @@
       "when": 1793107912816,
       "tag": "0003_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793137102735,
+      "tag": "0004_group_invite_token",
+      "breakpoints": true
     }
   ]
 }

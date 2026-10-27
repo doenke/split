@@ -22,7 +22,9 @@
 	const invite = $derived(form && 'invite' in form ? form.invite : null);
 
 	async function share(url: string, name: string) {
-		const text = `Hallo ${name}, hier ist dein Zugang zu „${data.group.name}“ in Split:`;
+		const text = name
+			? `Hallo ${name}, hier ist dein Zugang zu „${data.group.name}“ in Split:`
+			: `Macht mit bei „${data.group.name}“ in Split:`;
 		if (navigator.share) {
 			try {
 				await navigator.share({ title: 'Split', text, url });
@@ -65,6 +67,28 @@
 			{copied ? '✔ Kopiert' : 'Link teilen'}
 		</button>
 	</div>
+{/if}
+
+{#if data.isAdmin}
+	<details class="card" open={!!form && 'groupLinkCreated' in form}>
+		<summary><strong>🔗 Einladungslink für die ganze Gruppe</strong></summary>
+		<p class="small muted" style="margin-top: 0.5rem">
+			Ein Link für alle, z.B. für den Gruppenchat: Wer ihn öffnet, wählt „Wer bist du?“ aus den noch nicht
+			angemeldeten Personen oder trägt sich neu ein. Achtung: Jeder mit dem Link kann beitreten.
+		</p>
+		{#if data.groupLink}
+			<div class="center"><div class="qr">{@html data.groupLink.qr}</div></div>
+			<input readonly value={data.groupLink.url} onfocus={(e) => e.currentTarget.select()} />
+			<p class="hint">Gültig bis {formatDate(data.groupLink.expiresAt.slice(0, 10))}.</p>
+			<div class="row">
+				<button class="primary grow" onclick={() => share(data.groupLink!.url, '')}>{copied ? '✔ Kopiert' : 'Link teilen'}</button>
+				<form method="POST" action="?/revokeGroupLink" use:enhance><button class="danger">Deaktivieren</button></form>
+			</div>
+			<form method="POST" action="?/groupLink" use:enhance style="margin-top: 0.5rem"><button class="link small">Neuen Link erzeugen (alter wird ungültig)</button></form>
+		{:else}
+			<form method="POST" action="?/groupLink" use:enhance><button class="primary full">Gruppenlink erstellen</button></form>
+		{/if}
+	</details>
 {/if}
 
 <div class="row" style="justify-content: space-between">
@@ -303,6 +327,9 @@
 		margin-bottom: 0.25rem;
 	}
 	.invite {
+		text-align: center;
+	}
+	.center {
 		text-align: center;
 	}
 	.qr {

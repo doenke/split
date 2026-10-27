@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
 import { claimedPersonIds, createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
-import { createPersonalInvite } from '$lib/server/auth/invites';
+import { activeGroupInvite, createGroupInvite, createPersonalInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { pickKasseForGroup, sharedKassenOf, kasseMembersOf } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import { today } from '$lib/format';
@@ -33,7 +33,11 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 		const missing = (await kasseMembersOf(k.id)).filter((m) => !ids.includes(m.personId));
 		if (missing.length) myKassen.push({ id: k.id, name: k.name, missing: missing.map((m) => m.name) });
 	}
+	const groupLink = g.isAdmin ? await activeGroupInvite(params.id) : null;
 	return {
+		groupLink: groupLink
+			? { ...groupLink, qr: await QRCode.toString(groupLink.url, { type: 'svg', margin: 1 }), expiresAt: groupLink.expiresAt.toISOString() }
+			: null,
 		claimed: [...claimed],
 		known,
 		kassenByPerson,
@@ -229,6 +233,20 @@ export const actions: Actions = {
 			.where(and(eq(schema.memberships.groupId, params.id), eq(schema.memberships.personId, personId)));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.remove', entityId: personId });
 		return { removed: personId };
+	},
+
+	groupLink: async ({ params, locals }) => {
+		const g = await requireGroup(params.id, locals.user);
+		if (!g.isAdmin) error(403);
+		await createGroupInvite(params.id, g.user.id);
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.link' });
+		return { groupLinkCreated: true };
+	},
+	revokeGroupLink: async ({ params, locals }) => {
+		const g = await requireGroup(params.id, locals.user);
+		if (!g.isAdmin) error(403);
+		await revokeGroupInvite(params.id);
+		return { groupLinkRevoked: true };
 	},
 
 	invite: async ({ params, locals, request }) => {
