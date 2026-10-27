@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, children } = $props();
@@ -12,6 +13,10 @@
 			<span>Split</span>
 		</a>
 		{#if data.user}
+			<nav class="nav">
+				<a href="/" class:active={page.url.pathname === '/' || page.url.pathname.startsWith('/gruppen')}>Gruppen</a>
+				<a href="/kassen" class:active={page.url.pathname.startsWith('/kassen')}>Kassen</a>
+			</nav>
 			<a href="/profil" class="me" aria-label="Mein Profil">
 				<Avatar name={data.user.name} color={data.user.color} url={data.user.avatarUrl} size={32} />
 			</a>
@@ -52,5 +57,22 @@
 	}
 	.me {
 		display: flex;
+	}
+	.nav {
+		display: flex;
+		gap: 0.25rem;
+		margin-left: auto;
+		margin-right: 0.75rem;
+	}
+	.nav a {
+		color: var(--muted);
+		text-decoration: none;
+		font-weight: 600;
+		padding: 0.35rem 0.6rem;
+		border-radius: 8px;
+	}
+	.nav a.active {
+		color: var(--text);
+		background: var(--surface-2);
 	}
 </style>

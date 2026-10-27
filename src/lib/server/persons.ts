@@ -59,18 +59,32 @@ export async function claimedPersonIds(personIds: string[]): Promise<Set<string>
 	return new Set([...creds, ...sessions].map((r) => r.id));
 }
 
-/** People the user knows from other groups (to add them to a new group without a new invite). */
+/** People the user knows from groups and Kassen (to add them without a new invite). */
 export async function knownPersons(userId: string) {
+	const cols = { id: schema.persons.id, name: schema.persons.name, color: schema.persons.color, avatarUrl: schema.persons.avatarUrl };
 	const myGroups = db
 		.select({ id: schema.memberships.groupId })
 		.from(schema.memberships)
 		.where(eq(schema.memberships.personId, userId));
-	return db
-		.selectDistinct({ id: schema.persons.id, name: schema.persons.name, color: schema.persons.color, avatarUrl: schema.persons.avatarUrl })
-		.from(schema.memberships)
-		.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))
-		.where(and(inArray(schema.memberships.groupId, myGroups), isNull(schema.persons.mergedInto)))
-		.orderBy(schema.persons.name);
+	const myKassen = db
+		.select({ id: schema.kasseMembers.kasseId })
+		.from(schema.kasseMembers)
+		.where(eq(schema.kasseMembers.personId, userId));
+	const [fromGroups, fromKassen] = await Promise.all([
+		db
+			.selectDistinct(cols)
+			.from(schema.memberships)
+			.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))
+			.where(and(inArray(schema.memberships.groupId, myGroups), isNull(schema.persons.mergedInto))),
+		db
+			.selectDistinct(cols)
+			.from(schema.kasseMembers)
+			.innerJoin(schema.persons, eq(schema.persons.id, schema.kasseMembers.personId))
+			.where(and(inArray(schema.kasseMembers.kasseId, myKassen), isNull(schema.persons.mergedInto)))
+	]);
+	const all = new Map([...fromGroups, ...fromKassen].map((p) => [p.id, p]));
+	all.delete(userId);
+	return [...all.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
 /**

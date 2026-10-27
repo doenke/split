@@ -9,7 +9,11 @@
 	const hasExpenses = $derived(data.expenses.length > 0);
 
 	let adding = $state(page.url.searchParams.has('neu'));
-	let addMode = $state<'new' | 'known'>('new');
+	let addMode = $state<'new' | 'known' | 'kasse'>('new');
+	const canEdit = (personId: string) =>
+		data.isAdmin ||
+		personId === data.user?.id ||
+		(data.kassenByPerson[personId] ?? []).some((k) => data.managedKassen.includes(k.id));
 	let join = $state<'all' | 'today' | 'date'>('all');
 	let editing = $state<string | null>(null);
 	let copied = $state(false);
@@ -71,7 +75,7 @@
 {#if adding}
 	<form
 		method="POST"
-		action="?/add"
+		action={addMode === 'kasse' ? '?/addKasse' : '?/add'}
 		class="card"
 		use:enhance={() =>
 			async ({ result, update }) => {
@@ -79,13 +83,26 @@
 				if (result.type === 'success') join = 'all';
 			}}
 	>
-		{#if data.known.length}
+		{#if data.known.length || data.myKassen.length}
 			<div class="segmented" style="margin-bottom: 0.75rem">
 				<button type="button" class:active={addMode === 'new'} onclick={() => (addMode = 'new')}>Neue Person</button>
-				<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Aus anderen Gruppen</button>
+				{#if data.known.length}
+					<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Bekannte Person</button>
+				{/if}
+				{#if data.myKassen.length}
+					<button type="button" class:active={addMode === 'kasse'} onclick={() => (addMode = 'kasse')}>Ganze Kasse</button>
+				{/if}
 			</div>
 		{/if}
-		{#if addMode === 'new'}
+		{#if addMode === 'kasse'}
+			<div class="field">
+				<label for="kasseId">Kasse</label>
+				<select id="kasseId" name="kasseId">
+					{#each data.myKassen as k (k.id)}<option value={k.id}>{k.name} ({k.missing.join(', ')})</option>{/each}
+				</select>
+				<p class="hint">Alle fehlenden Mitglieder der Kasse kommen dazu und rechnen gemeinsam ab. Faktoren kannst du danach anpassen.</p>
+			</div>
+		{:else if addMode === 'new'}
 			<div class="field">
 				<label for="name">Name</label>
 				<input id="name" name="name" placeholder="z.B. Lea" required autocomplete="off" />
@@ -99,11 +116,13 @@
 				<p class="hint">Die Person ist sofort dabei und braucht keinen neuen Link.</p>
 			</div>
 		{/if}
-		<div class="field">
-			<label for="factor">Faktor</label>
-			<input id="factor" name="factor" value="1" inputmode="decimal" style="width: 6rem" />
-			<p class="hint">Gewichtung bei „Alle“-Ausgaben, z.B. 0,5 für ein Kind oder 0 für ein Kleinkind.</p>
-		</div>
+		{#if addMode !== 'kasse'}
+			<div class="field">
+				<label for="factor">Faktor</label>
+				<input id="factor" name="factor" value="1" inputmode="decimal" style="width: 6rem" />
+				<p class="hint">Gewichtung bei „Alle“-Ausgaben, z.B. 0,5 für ein Kind oder 0 für ein Kleinkind.</p>
+			</div>
+		{/if}
 		{#if hasExpenses}
 			<fieldset class="field">
 				<legend>An bisherigen Ausgaben beteiligen?</legend>
@@ -141,7 +160,7 @@
 						{#if !m.kassePersonal}· Kasse {m.kasseName}{/if}
 					</div>
 				</div>
-				{#if data.isAdmin || m.personId === data.user?.id}
+				{#if canEdit(m.personId)}
 					<button class="link" onclick={() => (editing = editing === m.personId ? null : m.personId)}>
 						{editing === m.personId ? 'Schließen' : 'Bearbeiten'}
 					</button>
@@ -181,6 +200,17 @@
 						</div>
 					</div>
 					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit. Änderungen wirken sich auf alle „Alle“-Ausgaben aus.</p>
+					{#if (data.kassenByPerson[m.personId] ?? []).length}
+						<div class="field">
+							<label for="k-{m.personId}">Rechnet ab über</label>
+							<select id="k-{m.personId}" name="kasseId">
+								<option value="personal" selected={!!m.kassePersonal}>sich allein</option>
+								{#each data.kassenByPerson[m.personId] as k (k.id)}
+									<option value={k.id} selected={k.id === m.kasseId}>Kasse {k.name}</option>
+								{/each}
+							</select>
+						</div>
+					{/if}
 					{#if data.isAdmin}
 						<label class="check">
 							<input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} />

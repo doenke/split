@@ -244,6 +244,8 @@ export const settlements = pgTable('settlements', {
 		.notNull()
 		.default('other'),
 	status: text('status', { enum: ['pending', 'confirmed'] }).notNull().default('pending'),
+	/** Settlements created together by netting across groups share this id. */
+	linkId: text('link_id'),
 	date: date('date').notNull(),
 	createdBy: text('created_by').notNull(),
 	createdAt: createdAt(),

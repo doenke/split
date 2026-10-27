@@ -1,10 +1,11 @@
 import { error, fail } from '@sveltejs/kit';
-import { and, eq, isNull, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
 import { claimedPersonIds, createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
 import { createPersonalInvite } from '$lib/server/auth/invites';
+import { pickKasseForGroup, sharedKassenOf, kasseMembersOf } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import { today } from '$lib/format';
 import type { Actions, PageServerLoad } from './$types';
@@ -21,9 +22,23 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 	const ids = data.members.map((m) => m.personId);
 	const claimed = await claimedPersonIds(ids);
 	const known = (await knownPersons(g.user.id)).filter((p) => !ids.includes(p.id));
+	const kassenByPerson = Object.fromEntries(
+		await Promise.all(ids.map(async (id) => [id, (await sharedKassenOf(id)).map((k) => ({ id: k.id, name: k.name }))] as const))
+	);
+	// my Kassen with members that are not in the group yet (to add a whole family at once)
+	const myKassen = [];
+	const mine = await sharedKassenOf(g.user.id);
+	const managedKassen = mine.filter((k) => k.isManager).map((k) => k.id);
+	for (const k of mine) {
+		const missing = (await kasseMembersOf(k.id)).filter((m) => !ids.includes(m.personId));
+		if (missing.length) myKassen.push({ id: k.id, name: k.name, missing: missing.map((m) => m.name) });
+	}
 	return {
 		claimed: [...claimed],
 		known,
+		kassenByPerson,
+		myKassen,
+		managedKassen,
 		canAddPeople: canAddPeople(g)
 	};
 };
@@ -65,16 +80,7 @@ export const actions: Actions = {
 			.where(and(eq(schema.memberships.groupId, params.id), eq(schema.memberships.personId, personId)));
 		if (already) return fail(400, { message: 'Diese Person ist schon Mitglied.' });
 
-		// a person in exactly one shared Kasse uses it by default, otherwise the preferred one or the personal Kasse
-		const shared = await db
-			.select()
-			.from(schema.kasseMembers)
-			.innerJoin(schema.kassen, eq(schema.kassen.id, schema.kasseMembers.kasseId))
-			.where(and(eq(schema.kasseMembers.personId, personId), isNull(schema.kassen.personalOf)));
-		const kasseId =
-			shared.length === 1
-				? shared[0].kassen.id
-				: (shared.find((s) => s.kasse_members.isPreferred)?.kassen.id ?? (await personalKasseId(db, personId)));
+		const kasseId = await pickKasseForGroup(personId, params.id, await personalKasseId(db, personId));
 
 		await db.insert(schema.memberships).values({
 			groupId: params.id,
@@ -87,12 +93,47 @@ export const actions: Actions = {
 		return { added: personId };
 	},
 
+	/** Adds all members of one of my Kassen that are not in the group yet. */
+	addKasse: async ({ params, locals, request }) => {
+		const g = await requireGroup(params.id, locals.user);
+		if (!canAddPeople(g)) error(403, 'Du darfst keine Personen hinzufügen.');
+		const f = await request.formData();
+		const kasseId = String(f.get('kasseId'));
+		if (!(await sharedKassenOf(g.user.id)).some((k) => k.id === kasseId)) error(404);
+		const join = String(f.get('join') ?? 'all');
+		const from = join === 'today' ? today() : join === 'date' && isDate(String(f.get('from'))) ? String(f.get('from')) : null;
+		const current = new Set((await loadMembers(params.id)).map((m) => m.personId));
+		const members = (await kasseMembersOf(kasseId)).filter((m) => !current.has(m.personId));
+		for (const m of members) {
+			await db.insert(schema.memberships).values({ groupId: params.id, personId: m.personId, participationFrom: from, kasseId });
+			await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
+		}
+		// members already in the group switch to the Kasse as well
+		await db
+			.update(schema.memberships)
+			.set({ kasseId })
+			.where(
+				and(
+					eq(schema.memberships.groupId, params.id),
+					inArray(
+						schema.memberships.personId,
+						(await kasseMembersOf(kasseId)).map((m) => m.personId)
+					),
+					isNull(schema.memberships.participationTo)
+				)
+			);
+		return { addedKasse: members.length };
+	},
+
 	update: async ({ params, locals, request }) => {
 		const g = await requireGroup(params.id, locals.user);
 		const f = await request.formData();
 		const personId = String(f.get('personId'));
 		const self = personId === g.user.id;
-		if (!g.isAdmin && !self) error(403, 'Nur Gruppenadmins dürfen andere bearbeiten.');
+		// managers of a shared Kasse may edit its members (e.g. their kids)
+		const targetKassen = new Set((await sharedKassenOf(personId)).map((k) => k.id));
+		const managesPerson = (await sharedKassenOf(g.user.id)).some((k) => k.isManager && targetKassen.has(k.id));
+		if (!g.isAdmin && !self && !managesPerson) error(403, 'Nur Gruppenadmins dürfen andere bearbeiten.');
 		const factor = parseFactor(f.get('factor'));
 		if (factor === null) return fail(400, { message: 'Ungültiger Faktor.' });
 		const from = String(f.get('from') ?? '');
@@ -105,6 +146,13 @@ export const actions: Actions = {
 			participationFrom: from || null,
 			participationTo: to || null
 		};
+		const personal = await personalKasseId(db, personId);
+		const kasseId = f.get('kasseId') === 'personal' ? personal : String(f.get('kasseId') ?? '');
+		if (kasseId) {
+			const allowed = [personal, ...(await sharedKassenOf(personId)).map((k) => k.id)];
+			if (!allowed.includes(kasseId)) return fail(400, { message: 'Die Person gehört dieser Kasse nicht an.' });
+			values.kasseId = kasseId;
+		}
 		if (g.isAdmin && f.has('role')) {
 			const role = f.get('role') === 'admin' ? 'admin' : 'member';
 			if (role === 'member' && self) {
