@@ -4,6 +4,12 @@
 	let { data, form } = $props();
 	const emojis = ['🧳', '🏖️', '⛷️', '🏕️', '🚐', '🏡', '🎉', '🍻', '⛵', '🚴', '🎿', '🌍'];
 	let emoji = $state('🧳');
+	// svelte-ignore state_referenced_locally
+	let template = $state(data.templateId ?? '');
+	const tpl = $derived(data.templates.find((t) => t.id === template));
+	$effect(() => {
+		if (tpl) emoji = tpl.emoji;
+	});
 </script>
 
 <svelte:head><title>Neue Gruppe · Split</title></svelte:head>
@@ -25,11 +31,25 @@
 		</div>
 		<input type="hidden" name="emoji" value={emoji} />
 	</div>
+	{#if data.templates.length}
+		<div class="field">
+			<label for="template">Vorlage (optional)</label>
+			<select id="template" name="template" bind:value={template}>
+				<option value="">– keine –</option>
+				{#each data.templates as t (t.id)}<option value={t.id}>{t.emoji} {t.name}</option>{/each}
+			</select>
+			{#if tpl}
+				<label class="check"><input type="checkbox" name="copyPeople" checked /> Personen übernehmen – mit Kassen, Faktoren und Merkmalen</label>
+				<label class="check"><input type="checkbox" name="copyProfiles" checked /> Profile und Einstellungen übernehmen</label>
+				<p class="hint">Ausgaben und Teilnahmezeiträume werden nicht übernommen. Alle sind sofort dabei, ohne neue Einladung.</p>
+			{/if}
+		</div>
+	{/if}
 	<div class="field">
 		<label for="currency">Währung der Gruppe</label>
 		<select id="currency" name="currency">
 			{#each data.currencies as c (c)}
-				<option value={c} selected={c === data.defaultCurrency}>{c}</option>
+				<option value={c} selected={c === (tpl?.currency ?? data.defaultCurrency)}>{c}</option>
 			{/each}
 		</select>
 		<p class="hint">Alle Salden werden in dieser Währung berechnet. Ausgaben in anderen Währungen werden umgerechnet.</p>

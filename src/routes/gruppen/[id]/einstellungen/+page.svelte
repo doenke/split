@@ -17,7 +17,11 @@
 		'settlement.confirm': 'hat eine Zahlung bestätigt',
 		'settlement.delete': 'hat eine Zahlung gelöscht',
 		'profile.save': 'hat ein Profil gespeichert',
-		'profile.delete': 'hat ein Profil gelöscht'
+		'profile.delete': 'hat ein Profil gelöscht',
+		'expense.restore': 'hat eine Ausgabe wiederhergestellt',
+		'settlement.restore': 'hat eine Zahlung wiederhergestellt',
+		'group.restore': 'hat die Gruppe wiederhergestellt',
+		'group.link': 'hat einen Gruppenlink erstellt'
 	};
 </script>
 
@@ -78,6 +82,11 @@
 
 <a class="button full" href="/gruppen/{data.group.id}/profile" style="margin-bottom: 1rem">🏷️ Ausgaben-Profile ({data.profiles.length})</a>
 
+{#if data.user?.isOidc}
+	<a class="button full" href="/gruppen/neu?vorlage={data.group.id}" style="margin-bottom: 1rem">📋 Neue Gruppe mit dieser als Vorlage</a>
+{/if}
+<a class="button full" href="/gruppen/{data.group.id}/papierkorb" style="margin-bottom: 1rem">🗑️ Papierkorb</a>
+
 <h2>Verlauf</h2>
 <div class="list small">
 	{#each data.log as l (l.id)}
@@ -92,7 +101,7 @@
 	<details class="card">
 		<summary class="negative">Gruppe löschen</summary>
 		<form method="POST" action="?/delete" style="margin-top: 0.75rem">
-			<p class="small">Gib zur Bestätigung den Namen der Gruppe ein: <strong>{data.group.name}</strong></p>
+			<p class="small">Die Gruppe kommt für 30 Tage in den Papierkorb (wiederherstellbar über „Meine Gruppen“). Gib zur Bestätigung den Namen der Gruppe ein: <strong>{data.group.name}</strong></p>
 			<input name="confirm" autocomplete="off" />
 			<button class="danger full" style="margin-top: 0.5rem">Endgültig löschen</button>
 		</form>

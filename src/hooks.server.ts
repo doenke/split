@@ -3,6 +3,7 @@ import { runMigrations } from '$lib/server/db';
 import { seedDefaults } from '$lib/server/defaults';
 import { refreshRatesIfStale } from '$lib/server/rates';
 import { cleanupOrphans } from '$lib/server/uploads';
+import { purgeTrash } from '$lib/server/trash';
 import { SESSION_COOKIE, validateSession } from '$lib/server/auth/session';
 
 export const init: ServerInit = async () => {
@@ -12,6 +13,7 @@ export const init: ServerInit = async () => {
 	setInterval(() => {
 		void refreshRatesIfStale();
 		void cleanupOrphans().catch((e) => console.warn('Aufräumen der Belege fehlgeschlagen:', e));
+		void purgeTrash().catch((e) => console.warn('Leeren des Papierkorbs fehlgeschlagen:', e));
 	}, 3_600_000).unref();
 };
 

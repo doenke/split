@@ -48,6 +48,20 @@
 	</div>
 {/if}
 
+{#if data.deleted.length}
+	<details class="card small">
+		<summary class="muted">🗑️ Gelöschte Gruppen ({data.deleted.length})</summary>
+		{#each data.deleted as g (g.id)}
+			<form method="POST" action="?/restoreGroup" class="row" style="margin-top: 0.5rem">
+				<input type="hidden" name="id" value={g.id} />
+				<span class="grow">{g.emoji} {g.name}</span>
+				<button>Wiederherstellen</button>
+			</form>
+		{/each}
+		<p class="hint">Gelöschte Gruppen werden nach 30 Tagen endgültig entfernt.</p>
+	</details>
+{/if}
+
 <style>
 	.emoji {
 		font-size: 1.8rem;

@@ -1,8 +1,10 @@
 import { redirect } from '@sveltejs/kit';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
+import { error } from '@sveltejs/kit';
+import { audit } from '$lib/server/audit';
 import { db, schema } from '$lib/server/db';
 import { loadGroupState } from '$lib/server/groups';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(303, '/login');
@@ -30,6 +32,26 @@ export const load: PageServerLoad = async ({ locals }) => {
 			};
 		})
 	);
+	const deleted = await db
+		.select({ id: schema.groups.id, name: schema.groups.name, emoji: schema.groups.emoji, deletedAt: schema.groups.deletedAt })
+		.from(schema.memberships)
+		.innerJoin(schema.groups, eq(schema.groups.id, schema.memberships.groupId))
+		.where(and(eq(schema.memberships.personId, me), eq(schema.memberships.role, 'admin'), isNotNull(schema.groups.deletedAt)));
 	groups.sort((a, b) => (a.status === 'archived' ? 1 : 0) - (b.status === 'archived' ? 1 : 0) || b.lastActivity.localeCompare(a.lastActivity));
-	return { groups };
+	return { groups, deleted };
+};
+
+export const actions: Actions = {
+	restoreGroup: async ({ locals, request }) => {
+		if (!locals.user) redirect(303, '/login');
+		const id = String((await request.formData()).get('id'));
+		const [m] = await db
+			.select()
+			.from(schema.memberships)
+			.where(and(eq(schema.memberships.groupId, id), eq(schema.memberships.personId, locals.user.id), eq(schema.memberships.role, 'admin')));
+		if (!m) error(403);
+		await db.update(schema.groups).set({ deletedAt: null }).where(eq(schema.groups.id, id));
+		await audit(db, { groupId: id, personId: locals.user.id, action: 'group.restore', entityId: id });
+		redirect(303, `/gruppen/${id}`);
+	}
 };
