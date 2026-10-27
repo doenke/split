@@ -1,15 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import { onMount } from 'svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, children } = $props();
-
-	onMount(() => {
-		if ('serviceWorker' in navigator && !import.meta.env.DEV) {
-			navigator.serviceWorker.register('/service-worker.js', { type: 'module' });
-		}
-	});
 </script>
 
 <header>

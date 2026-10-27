@@ -6,7 +6,7 @@ import * as schema from './schema';
 
 const url = env.DATABASE_URL ?? 'postgres://split:split@localhost:5432/split';
 
-export const client = postgres(url, { max: 10 });
+export const client = postgres(url, { max: 10, onnotice: () => {} });
 export const db = drizzle(client, { schema });
 export type DB = typeof db;
 export type Tx = Parameters<Parameters<DB['transaction']>[0]>[0];

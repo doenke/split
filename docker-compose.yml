@@ -1,0 +1,47 @@
+name: split
+
+services:
+  app:
+    image: ghcr.io/doenke/split:latest
+    # build: .                     # alternatively build the image locally
+    container_name: split-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8347:8347"                # Host:Container – not needed behind a reverse proxy in the same network
+    env_file: .env
+    environment:
+      PORT: 8347
+      DATABASE_URL: postgres://split:${POSTGRES_PASSWORD}@db:5432/split
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads      # receipts, avatars
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8347/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  db:
+    image: postgres:17-alpine
+    container_name: split-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: split
+      POSTGRES_USER: split
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U split -d split"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # no "ports:" – the database is only reachable inside the compose network
+
+volumes:
+  db:
+  uploads:
