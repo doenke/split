@@ -1,0 +1,1 @@
+ALTER TABLE "groups" ADD COLUMN "closed_until" date;

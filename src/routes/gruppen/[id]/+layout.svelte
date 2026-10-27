@@ -13,19 +13,19 @@
 		href === base ? page.url.pathname === base : page.url.pathname.startsWith(href);
 </script>
 
-<div class="head">
+<div class="head noprint">
 	<span class="emoji">{data.group.emoji}</span>
 	<h1>{data.group.name}</h1>
 </div>
 
-<nav class="segmented tabs">
+<nav class="segmented tabs noprint">
 	{#each tabs as t (t.href)}
 		<a href={t.href} class:active={active(t.href)}>{t.label}</a>
 	{/each}
 </nav>
 
 {#if data.balances.errors.length}
-	<div class="notice small">
+	<div class="notice small noprint">
 		⚠️ {data.balances.errors.length} Ausgabe(n) können nicht aufgeteilt werden und zählen nicht zu den Salden.
 		{#each data.balances.errors as e (e.expenseId)}
 			<div><a href="{base}/ausgaben/{e.expenseId}">{data.expenses.find((x) => x.id === e.expenseId)?.title}</a>: {e.message}</div>

@@ -4,6 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { requireGroup, loadMembers, loadProfiles } from '$lib/server/groups';
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
+import { isClosed } from '$lib/server/closing';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent, url }) => {
@@ -37,6 +38,9 @@ export const actions: Actions = {
 		} catch (e) {
 			if (e instanceof InputError || e instanceof SyntaxError) return fail(400, { message: e.message });
 			throw e;
+		}
+		if (isClosed(g.group, prepared.row.date)) {
+			return fail(400, { message: `Die Abrechnung ist bis ${g.group.closedUntil} abgeschlossen. Wähle ein späteres Datum oder öffne die Abrechnung wieder.` });
 		}
 		await saveExpense(params.id, g.user.id, prepared);
 		redirect(303, `/gruppen/${params.id}`);

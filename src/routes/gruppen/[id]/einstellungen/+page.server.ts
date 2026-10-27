@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { requireGroup, requireGroupAdmin } from '$lib/server/groups';
 import { audit } from '$lib/server/audit';
+import { closeUntil, reopen } from '$lib/server/closing';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -35,6 +36,20 @@ export const actions: Actions = {
 			.where(eq(schema.groups.id, params.id));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.update', entityId: params.id });
 		return { saved: true };
+	},
+	close: async ({ params, locals, request }) => {
+		const g = await requireGroupAdmin(params.id, locals.user);
+		const until = String((await request.formData()).get('until') ?? '');
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(until)) return fail(400, { message: 'Bitte ein Datum angeben.' });
+		const { failed } = await closeUntil(params.id, until);
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.close', data: { until } });
+		return { closed: true, failed };
+	},
+	reopen: async ({ params, locals }) => {
+		const g = await requireGroupAdmin(params.id, locals.user);
+		await reopen(params.id, null);
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.reopen' });
+		return { reopened: true };
 	},
 	delete: async ({ params, locals, request }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);

@@ -120,6 +120,10 @@
 		{/if}
 	</div>
 
+	{#if data.frozen}
+		<p class="notice small">🔒 Diese Ausgabe gehört zur abgeschlossenen Abrechnung und kann nicht mehr geändert werden.</p>
+	{/if}
+	{#if form?.message && !editing}<p class="error">{form.message}</p>{/if}
 	{#if data.canEdit}
 		<div class="row">
 			<button class="primary grow" onclick={() => (editing = true)}>Bearbeiten</button>

@@ -122,6 +122,8 @@ export const groups = pgTable('groups', {
 	startDate: date('start_date'),
 	endDate: date('end_date'),
 	status: text('status', { enum: ['active', 'settled', 'archived'] }).notNull().default('active'),
+	/** Expenses up to this date are frozen (their shares no longer change). */
+	closedUntil: date('closed_until'),
 	settings: jsonb('settings').$type<GroupSettings>().notNull(),
 	templateOf: text('template_of'),
 	createdBy: text('created_by').notNull(),

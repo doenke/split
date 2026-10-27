@@ -21,7 +21,9 @@
 		'expense.restore': 'hat eine Ausgabe wiederhergestellt',
 		'settlement.restore': 'hat eine Zahlung wiederhergestellt',
 		'group.restore': 'hat die Gruppe wiederhergestellt',
-		'group.link': 'hat einen Gruppenlink erstellt'
+		'group.link': 'hat einen Gruppenlink erstellt',
+		'group.close': 'hat die Abrechnung abgeschlossen',
+		'group.reopen': 'hat die Abrechnung wieder geöffnet'
 	};
 </script>
 
@@ -81,6 +83,31 @@
 {/if}
 
 <a class="button full" href="/gruppen/{data.group.id}/profile" style="margin-bottom: 1rem">🏷️ Ausgaben-Profile ({data.profiles.length})</a>
+
+<div class="card">
+	<h2>Abrechnung & Export</h2>
+	<div class="row" style="margin-bottom: 0.75rem">
+		<a class="button grow" href="/gruppen/{data.group.id}/abrechnung">📄 Abrechnung (PDF)</a>
+		<a class="button grow" href="/gruppen/{data.group.id}/export.csv" download>📊 CSV</a>
+	</div>
+	{#if data.group.closedUntil}
+		<p class="small">🔒 Abgeschlossen bis <strong>{data.group.closedUntil}</strong>. Ausgaben bis dahin ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.</p>
+		{#if data.isAdmin}
+			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Abrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet.')) cancel(); }}>
+				<button class="full">Wieder öffnen</button>
+			</form>
+		{/if}
+	{:else if data.isAdmin}
+		<form method="POST" action="?/close" use:enhance>
+			<p class="small muted">Schreibt die Anteile aller Ausgaben bis zum Stichtag fest – z.B. nach der Reise, bevor ausgeglichen wird.</p>
+			<div class="row">
+				<input type="date" name="until" value={data.group.endDate ?? new Date().toISOString().slice(0, 10)} class="grow" style="width: auto" />
+				<button>Abschließen</button>
+			</div>
+		</form>
+	{/if}
+	{#if form && 'failed' in form && form.failed?.length}<p class="error small">Nicht aufteilbar und daher nicht festgeschrieben: {form.failed.join(', ')}</p>{/if}
+</div>
 
 {#if data.user?.isOidc}
 	<a class="button full" href="/gruppen/neu?vorlage={data.group.id}" style="margin-bottom: 1rem">📋 Neue Gruppe mit dieser als Vorlage</a>

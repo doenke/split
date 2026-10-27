@@ -4,6 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { canEditExpense, loadMembers, loadProfiles, requireGroup, toCoreExpense, toCoreMember } from '$lib/server/groups';
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
+import { isClosed } from '$lib/server/closing';
 import { audit } from '$lib/server/audit';
 import { computeShares } from '$lib/core/split';
 import type { ExpenseInput } from '$lib/expense-input';
@@ -68,7 +69,8 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		initial,
 		shares,
 		history,
-		canEdit: canEditExpense(g, g.user.id, expense),
+		canEdit: canEditExpense(g, g.user.id, expense) && !expense.frozenShares,
+		frozen: Boolean(expense.frozenShares),
 		currencies: await currencyOptions(data.group.baseCurrency, used)
 	};
 };
@@ -78,6 +80,7 @@ export const actions: Actions = {
 		const g = await requireGroup(params.id, locals.user);
 		const existing = await requireExpense(params.id, params.eid);
 		if (!canEditExpense(g, g.user.id, existing)) error(403, 'Du darfst diese Ausgabe nicht bearbeiten.');
+		if (existing.frozenShares) return fail(400, { message: 'Diese Ausgabe gehört zu einer abgeschlossenen Abrechnung.' });
 		const [members, profiles] = await Promise.all([loadMembers(params.id), loadProfiles(params.id)]);
 		let prepared;
 		try {
@@ -92,6 +95,9 @@ export const actions: Actions = {
 			if (e instanceof InputError || e instanceof SyntaxError) return fail(400, { message: e.message });
 			throw e;
 		}
+		if (isClosed(g.group, prepared.row.date)) {
+			return fail(400, { message: `Die Abrechnung ist bis ${g.group.closedUntil} abgeschlossen. Wähle ein späteres Datum.` });
+		}
 		await saveExpense(params.id, g.user.id, prepared, params.eid);
 		redirect(303, `/gruppen/${params.id}/ausgaben/${params.eid}`);
 	},
@@ -99,6 +105,7 @@ export const actions: Actions = {
 		const g = await requireGroup(params.id, locals.user);
 		const existing = await requireExpense(params.id, params.eid);
 		if (!canEditExpense(g, g.user.id, existing)) error(403, 'Du darfst diese Ausgabe nicht löschen.');
+		if (existing.frozenShares) return fail(400, { message: 'Diese Ausgabe gehört zu einer abgeschlossenen Abrechnung.' });
 		await db.update(schema.expenses).set({ deletedAt: new Date() }).where(eq(schema.expenses.id, params.eid));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'expense.delete', entityId: params.eid, data: { title: existing.title } });
 		redirect(303, `/gruppen/${params.id}`);

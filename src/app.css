@@ -287,3 +287,9 @@ button:disabled {
 	white-space: nowrap;
 	font-weight: 600;
 }
+
+@media print {
+	.noprint {
+		display: none !important;
+	}
+}
