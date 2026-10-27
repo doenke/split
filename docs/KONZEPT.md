@@ -364,15 +364,26 @@ eigener Zahler-Typ „Topf“ nachrüsten, ohne das Datenmodell umzubauen.
 
 ## 8. Ausgleich bezahlen: PayPal, Wero & Co.
 
-Für jeden Ausgleichsvorschlag gibt es einen Button „Jetzt bezahlen“. Der
-Empfänger hinterlegt dafür in seinem Profil (bzw. seiner Kasse) die
-gewünschten Zahlungswege:
+Für jeden Ausgleichsvorschlag gibt es einen Button „Jetzt bezahlen“. Dafür
+hinterlegt jede Person ihre **Zahlungsdaten** im Profil:
+
+| Feld | Pflicht | Verwendung |
+|---|---|---|
+| **Wero: E-Mail-Adresse oder Handynummer** | empfohlen | Wird angezeigt und kann kopiert werden. Damit lässt sich in jeder Wero-App Geld senden |
+| **Wero: offener Zahlungslink** | optional | Wird als Button und QR-Code angezeigt (siehe unten) |
+| **IBAN + Kontoinhaber** | empfohlen | Daraus erzeugt Split den **GiroCode** |
+| **PayPal.me-Name** | optional | Daraus erzeugt Split den PayPal-Link |
+
+Eine **Kasse** hat keine eigenen Zahlungsdaten. Stattdessen legt sie fest,
+welches Mitglied Ausgleichszahlungen empfängt (z.B. Anna für „Familie Jacobs“).
+Dessen Zahlungsdaten werden angezeigt. Zahlungsdaten sehen nur Personen, die mit
+dem Inhaber in einer gemeinsamen Gruppe sind.
 
 | Zahlungsweg | Umsetzung | Aufwand |
 |---|---|---|
-| **PayPal** | `https://paypal.me/<name>/<betrag>EUR` – öffnet PayPal mit vorausgefülltem Betrag | gering, keine API nötig |
-| **SEPA-Überweisung (GiroCode / EPC-QR)** | QR-Code mit IBAN, Name, Betrag, Verwendungszweck – funktioniert mit fast allen Banking-Apps, inkl. Echtzeitüberweisung | gering |
-| **Wero** | Es gibt kein öffentliches Format, mit dem eine fremde App Wero-Links oder -QR-Codes erzeugen kann. Der Empfänger erstellt deshalb **einmalig in seiner Banking-App einen offenen Wero-Zahlungslink** (ohne festen Betrag) und hinterlegt ihn im Profil. Split zeigt ihn als Button und QR-Code, daneben den Betrag mit Kopieren-Button. Fallback: Handynummer/E-Mail anzeigen | gering |
+| **SEPA-Überweisung per GiroCode (EPC-QR)** | QR-Code nach EPC-Standard (EPC069-12) mit IBAN, Name, **Betrag** und Verwendungszweck („Split: Toskana 2027“). Wird lokal erzeugt, ohne externen Dienst. Funktioniert mit fast allen deutschen und österreichischen Banking-Apps, auch als Echtzeitüberweisung. Auf dem Handy zusätzlich: IBAN und Betrag zum Kopieren | gering |
+| **Wero** | Es gibt kein öffentliches Format, mit dem eine fremde App Wero-Links oder -QR-Codes mit Betrag erzeugen kann. Split zeigt deshalb die hinterlegte **Wero-E-Mail-Adresse bzw. Handynummer** und den Betrag, jeweils mit Kopieren-Button. Ist zusätzlich ein **offener Wero-Zahlungslink** hinterlegt (in der Banking-App ohne festen Betrag erstellt), erscheint er als Button und QR-Code | gering |
+| **PayPal** | `https://paypal.me/<name>/<betrag>EUR` öffnet PayPal mit vorausgefülltem Betrag | gering, keine API nötig |
 | **Bar** | Nur als „bar bezahlt“ markieren | – |
 
 Ablauf: Zahler klickt „bezahlt“ → Ausgleich wird als *ausstehend* gebucht →
@@ -484,6 +495,8 @@ Attachment        (id, expense_id, pfad, mime, ocr_result_json?)
 
 Settlement        (id, group_id, von_kasse_id, an_kasse_id, betrag_cent, status,
                    methode, link_id?)               -- link_id verknüpft gruppenübergreifende Verrechnung
+PaymentDetails    (person_id, wero_kontakt?, wero_link?, iban?, kontoinhaber?, paypal_me?)
+Kasse.empfaenger_person_id                   -- wer in der Kasse Ausgleiche empfängt
 AuditLog          (id, group_id, person_id, aktion, vorher_json, nachher_json, zeit)
 ```
 
