@@ -75,6 +75,7 @@
 						{e.type === 'income' ? 'erhalten von' : 'bezahlt von'}
 						{payerText(e)}
 						{#if e.privateAmount > 0}· {formatAmount(e.privateAmount, currency)} privat{/if}
+						{#if e.attachments.length}· 📎{/if}
 					</div>
 				</div>
 				<div class="right">

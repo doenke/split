@@ -48,6 +48,7 @@
 		members={data.members}
 		categories={data.categories}
 		profiles={data.profiles}
+		attachments={e.attachments}
 		currencies={data.currencies}
 		meId={data.user!.id}
 		initial={data.initial}
@@ -102,6 +103,17 @@
 			</div>
 		{/each}
 
+		{#if e.attachments.length}
+			<h3 style="margin-top: 1rem">Belege</h3>
+			<div class="receipts">
+				{#each e.attachments as a (a.id)}
+					<a href="/belege/{a.id}" target="_blank" rel="noopener" class="receipt">
+						{#if a.mime.startsWith('image/')}<img src="/belege/{a.id}" alt="Beleg" />{:else}📄 PDF{/if}
+					</a>
+				{/each}
+			</div>
+		{/if}
+
 		{#if e.notes}
 			<h3 style="margin-top: 1rem">Notiz</h3>
 			<p style="white-space: pre-wrap">{e.notes}</p>
@@ -141,5 +153,27 @@
 	}
 	.person {
 		padding: 0.3rem 0;
+	}
+	.receipts {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	.receipt {
+		width: 110px;
+		height: 110px;
+		border-radius: 10px;
+		overflow: hidden;
+		border: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--surface-2);
+		text-decoration: none;
+	}
+	.receipt img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
 	}
 </style>

@@ -292,3 +292,23 @@ export const paymentDetails = pgTable('payment_details', {
 	paypalMe: text('paypal_me'),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+/** Receipt photos and PDFs. Files live in UPLOAD_DIR, named after the id. */
+export const attachments = pgTable(
+	'attachments',
+	{
+		id: id(),
+		groupId: text('group_id')
+			.notNull()
+			.references(() => groups.id, { onDelete: 'cascade' }),
+		/** null until the expense is saved */
+		expenseId: text('expense_id').references(() => expenses.id, { onDelete: 'set null' }),
+		fileName: text('file_name').notNull(),
+		originalName: text('original_name'),
+		mime: text('mime').notNull(),
+		size: integer('size').notNull(),
+		uploadedBy: text('uploaded_by').notNull(),
+		createdAt: createdAt()
+	},
+	(t) => [index('attachments_expense').on(t.expenseId)]
+);

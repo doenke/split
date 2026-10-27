@@ -93,7 +93,17 @@ export async function loadExpenses(groupId: string) {
 				.from(schema.expensePayers)
 				.where(inArray(schema.expensePayers.expenseId, rows.map((r) => r.id)))
 		: [];
-	return rows.map((r) => ({ ...r, payers: payers.filter((p) => p.expenseId === r.id) }));
+	const files = rows.length
+		? await db
+				.select({ id: schema.attachments.id, expenseId: schema.attachments.expenseId, mime: schema.attachments.mime })
+				.from(schema.attachments)
+				.where(inArray(schema.attachments.expenseId, rows.map((r) => r.id)))
+		: [];
+	return rows.map((r) => ({
+		...r,
+		payers: payers.filter((p) => p.expenseId === r.id),
+		attachments: files.filter((f) => f.expenseId === r.id).map((f) => ({ id: f.id, mime: f.mime }))
+	}));
 }
 
 export type GroupExpense = Awaited<ReturnType<typeof loadExpenses>>[number];

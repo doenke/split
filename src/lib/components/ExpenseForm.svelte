@@ -6,6 +6,7 @@
 	import type { ExpenseInput } from '$lib/expense-input';
 	import { today } from '$lib/format';
 	import Avatar from './Avatar.svelte';
+	import ReceiptPicker from './ReceiptPicker.svelte';
 
 	interface PersonOption {
 		personId: string;
@@ -27,6 +28,8 @@
 		currencies,
 		meId,
 		profiles = [],
+		attachments = [],
+		initialAttachmentIds = [],
 		initial = null,
 		error = null
 	}: {
@@ -38,6 +41,9 @@
 		meId: string;
 		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
 		initial?: ExpenseInput | null;
+		attachments?: { id: string; mime: string }[];
+		/** receipts uploaded before the form opened (e.g. shared from another app) */
+		initialAttachmentIds?: { id: string; mime: string }[];
 		error?: string | null;
 	} = $props();
 
@@ -51,6 +57,7 @@
 	let date = $state(init?.date ?? today());
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
+	let attachmentIds = $state<string[]>([]);
 
 	// payers
 	let multiPayer = $state((init?.payers.length ?? 1) > 1);
@@ -248,7 +255,8 @@
 				charged: rateSource === 'charged' ? (parseAmount(chargedText, baseCurrency) ?? undefined) : undefined
 			},
 			period: showPeriod ? { from: periodFrom, to: periodTo, unit: periodUnit } : null,
-			notes
+			notes,
+			attachmentIds: [...new Set([...attachmentIds, ...initialAttachmentIds.map((a) => a.id)])]
 		} satisfies ExpenseInput)
 	);
 
@@ -326,6 +334,10 @@
 				{/if}
 			</div>
 		{/if}
+
+		<div class="field">
+			<ReceiptPicker {groupId} existing={[...attachments, ...initialAttachmentIds]} bind:ids={attachmentIds} />
+		</div>
 
 		<div class="row">
 			<div class="field grow">

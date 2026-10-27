@@ -13,6 +13,7 @@
 	members={data.members}
 	categories={data.categories}
 	profiles={data.profiles}
+	initialAttachmentIds={data.shared}
 	currencies={data.currencies}
 	meId={data.user!.id}
 	error={form?.message}

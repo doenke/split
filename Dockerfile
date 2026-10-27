@@ -12,7 +12,8 @@ ENV NODE_ENV=production \
     PORT=8347 \
     HOST=0.0.0.0 \
     MIGRATIONS_DIR=/app/drizzle \
-    UPLOAD_DIR=/data/uploads
+    UPLOAD_DIR=/data/uploads \
+    BODY_SIZE_LIMIT=16M
 # wget is part of busybox in the alpine image and used by the healthcheck
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules

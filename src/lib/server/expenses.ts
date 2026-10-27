@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { computeShares, SplitError } from '$lib/core/split';
 import { convert, rateFromCharged } from '$lib/core/currency';
 import type { ExpenseInput } from '$lib/expense-input';
@@ -131,7 +131,8 @@ export async function prepareExpense(
 		if (e instanceof SplitError) throw new InputError(e.message);
 		throw e;
 	}
-	return { row, payers };
+	const attachmentIds = Array.isArray(input.attachmentIds) ? input.attachmentIds.filter((x) => typeof x === 'string').slice(0, 20) : [];
+	return { row, payers, attachmentIds };
 }
 
 export async function saveExpense(
@@ -152,6 +153,18 @@ export async function saveExpense(
 			await tx.insert(schema.expenses).values({ ...prepared.row, id, groupId, createdBy: userId });
 		}
 		await tx.insert(schema.expensePayers).values(prepared.payers.map((p) => ({ ...p, expenseId: id })));
+		if (prepared.attachmentIds.length) {
+			await tx
+				.update(schema.attachments)
+				.set({ expenseId: id })
+				.where(
+					and(
+						inArray(schema.attachments.id, prepared.attachmentIds),
+						eq(schema.attachments.groupId, groupId),
+						isNull(schema.attachments.expenseId)
+					)
+				);
+		}
 		await audit(tx, {
 			groupId,
 			personId: userId,
