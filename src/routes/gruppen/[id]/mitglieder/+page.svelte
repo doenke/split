@@ -11,6 +11,10 @@
 
 	let adding = $state(page.url.searchParams.has('neu'));
 	let addMode = $state<'new' | 'known' | 'kasse'>('new');
+	// fall back when the chosen source has nobody left to add
+	$effect(() => {
+		if ((addMode === 'kasse' && !data.myKassen.length) || (addMode === 'known' && !data.known.length)) addMode = 'new';
+	});
 	const canEdit = (personId: string) =>
 		data.isAdmin ||
 		personId === data.user?.id ||
@@ -180,6 +184,7 @@
 						<strong>{m.name}</strong>
 						{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
 						{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
+						{#if m.doneAt}<span class="badge done" title="hat alles eingetragen">✔ fertig</span>{/if}
 						{#each m.tags as t (t)}<span class="badge tagbadge">{t}</span>{/each}
 					</div>
 					<div class="small muted">
@@ -311,6 +316,10 @@
 		font-weight: 600;
 		font-size: 0.9rem;
 		margin-bottom: 0.25rem;
+	}
+	.done {
+		background: var(--primary-soft);
+		color: var(--positive);
 	}
 	.tagbadge {
 		background: var(--primary-soft);

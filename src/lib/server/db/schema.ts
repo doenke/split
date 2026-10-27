@@ -150,6 +150,9 @@ export const memberships = pgTable(
 			.references(() => kassen.id),
 		/** no push notifications for this group */
 		muted: boolean('muted').notNull().default(false),
+		/** "I have entered all my expenses" – set by the person or someone of their Kasse */
+		doneAt: timestamp('done_at', { withTimezone: true }),
+		doneBy: text('done_by'),
 		joinedAt: createdAt()
 	},
 	(t) => [primaryKey({ columns: [t.groupId, t.personId] }), index('memberships_person').on(t.personId)]

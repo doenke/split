@@ -30,6 +30,8 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
   die VAPID-Schlüssel erzeugt die App beim ersten Start selbst
 - Ausgaben offline erfassen, automatische Übertragung bei Verbindung
 - Aufteilung nach Aufenthaltsdauer wahlweise nach Nächten oder Tagen
+- „Ich habe alles eingetragen“ – für sich oder die ganze Kasse; wenn alle fertig sind, steht die
+  Endabrechnung automatisch (Anteile festgeschrieben, alle werden benachrichtigt)
 
 ## Betrieb mit Docker Compose
 

@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import PayPanel from '$lib/components/PayPanel.svelte';
+	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { amountToInput } from '$lib/core/currency';
 	import { formatAmount, formatDate } from '$lib/format';
 
@@ -28,6 +29,15 @@
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
+<CompletionCard
+	completion={data.completion}
+	members={data.members}
+	meId={data.user!.id}
+	myKasseId={data.myKasseId}
+	kasseName={data.kassen[data.myKasseId]?.name ?? ''}
+	groupId={data.group.id}
+/>
+
 <h2>Salden</h2>
 <div class="list">
 	{#each kassen as k (k.kasseId)}
@@ -52,7 +62,7 @@
 
 <a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
 
-<h2>So wird ausgeglichen</h2>
+<h2>{data.completion.final ? 'Endabrechnung: so wird ausgeglichen' : 'So wird ausgeglichen (vorläufig)'}</h2>
 {#if data.transfers.length === 0}
 	<div class="card">🎉 Alles ausgeglichen.</div>
 {:else}

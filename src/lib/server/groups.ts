@@ -54,7 +54,9 @@ export async function loadMembers(groupId: string) {
 			kasseId: schema.memberships.kasseId,
 			kasseName: schema.kassen.name,
 			kassePersonal: schema.kassen.personalOf,
-			joinedAt: schema.memberships.joinedAt
+			joinedAt: schema.memberships.joinedAt,
+			doneAt: schema.memberships.doneAt,
+			doneBy: schema.memberships.doneBy
 		})
 		.from(schema.memberships)
 		.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))

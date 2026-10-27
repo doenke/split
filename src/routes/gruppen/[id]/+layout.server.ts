@@ -1,4 +1,5 @@
 import { loadCategories, loadGroupState, requireGroup } from '$lib/server/groups';
+import { completionState } from '$lib/server/completion';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
@@ -22,6 +23,7 @@ export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
 		categories,
 		kassen,
 		balances,
-		transfers: state.transfers
+		transfers: state.transfers,
+		completion: await completionState(state.members, state.group)
 	};
 };

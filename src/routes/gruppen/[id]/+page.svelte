@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatAmount, formatDate } from '$lib/format';
+	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { onMount } from 'svelte';
 	import { preloadData } from '$app/navigation';
 	import { discardPending, flushPending, pendingExpenses, type PendingExpense } from '$lib/offline';
@@ -64,6 +65,17 @@
 	</a>
 </div>
 
+{#if data.expenses.length || data.completion.final}
+	<CompletionCard
+		completion={data.completion}
+		members={data.members}
+		meId={data.user!.id}
+		myKasseId={data.myKasseId}
+		kasseName={data.kassen[data.myKasseId]?.name ?? ''}
+		groupId={data.group.id}
+	/>
+{/if}
+
 {#if pending.length}
 	<div class="list pending">
 		{#each pending as p (p.clientId)}
@@ -126,7 +138,7 @@
 	</div>
 {/each}
 
-{#if data.group.status !== 'archived'}
+{#if data.group.status === 'active'}
 	<a class="button primary fab" href="{base}/ausgaben/neu" aria-label="Neue Ausgabe">+</a>
 {/if}
 

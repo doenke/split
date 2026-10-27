@@ -4,6 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { requireGroup, requireGroupAdmin } from '$lib/server/groups';
 import { audit } from '$lib/server/audit';
 import { closeUntil, reopen } from '$lib/server/closing';
+import { resetCompletion } from '$lib/server/completion';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -56,6 +57,7 @@ export const actions: Actions = {
 	reopen: async ({ params, locals }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);
 		await reopen(params.id, null);
+		await resetCompletion(params.id);
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.reopen' });
 		return { reopened: true };
 	},

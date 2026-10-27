@@ -57,6 +57,13 @@
       "when": 1793137753825,
       "tag": "0007_client_id",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793138249288,
+      "tag": "0008_member_done",
+      "breakpoints": true
     }
   ]
 }

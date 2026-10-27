@@ -24,7 +24,10 @@
 		'group.link': 'hat einen Gruppenlink erstellt',
 		'group.close': 'hat die Abrechnung abgeschlossen',
 		'group.reopen': 'hat die Abrechnung wieder geöffnet',
-		'settlement.remind': 'hat an eine Zahlung erinnert'
+		'settlement.remind': 'hat an eine Zahlung erinnert',
+		'member.done': 'hat alles eingetragen',
+		'member.undone': 'trägt doch noch etwas ein',
+		'group.final': 'hat als Letzte(r) abgeschlossen – die Endabrechnung steht'
 	};
 </script>
 
@@ -99,7 +102,7 @@
 	{#if data.group.closedUntil}
 		<p class="small">🔒 Abgeschlossen bis <strong>{data.group.closedUntil}</strong>. Ausgaben bis dahin ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.</p>
 		{#if data.isAdmin}
-			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Abrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet.')) cancel(); }}>
+			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Abrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) cancel(); }}>
 				<button class="full">Wieder öffnen</button>
 			</form>
 		{/if}

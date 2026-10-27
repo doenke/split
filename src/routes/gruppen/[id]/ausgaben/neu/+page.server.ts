@@ -11,6 +11,8 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent, url }) => {
 	const data = await parent();
+	// the final statement stands: no new expenses until an admin reopens it
+	if (data.group.status === 'settled') redirect(303, `/gruppen/${data.group.id}`);
 	const used = [...new Set(data.expenses.map((e) => e.currency))];
 	// receipt uploaded via /teilen
 	const beleg = url.searchParams.get('beleg');
