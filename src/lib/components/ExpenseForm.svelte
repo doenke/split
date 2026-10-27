@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { computeShares } from '$lib/core/split';
+	import { computeShares, effectiveFactor } from '$lib/core/split';
 	import { amountToInput, convert, currencyDigits, formatAmount, parseAmount } from '$lib/core/currency';
 	import type { Member, SplitRule } from '$lib/core/types';
 	import type { ExpenseInput } from '$lib/expense-input';
@@ -26,6 +26,7 @@
 		categories,
 		currencies,
 		meId,
+		profiles = [],
 		initial = null,
 		error = null
 	}: {
@@ -35,6 +36,7 @@
 		categories: { id: string; name: string; icon: string; hidden: boolean }[];
 		currencies: string[];
 		meId: string;
+		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
 		initial?: ExpenseInput | null;
 		error?: string | null;
 	} = $props();
@@ -62,6 +64,16 @@
 	type Mode = 'all' | 'all_except' | 'only' | 'individual';
 	const initRule = init?.rule;
 	let mode = $state<Mode>(initRule?.type ?? 'all');
+	let profileId = $state<string | null>(init?.profileId ?? null);
+	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
+	const factorOf = (m: PersonOption) =>
+		effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
+	function chooseProfile(id: string) {
+		profileId = id;
+		mode = 'all';
+		const p = profiles.find((x) => x.id === id);
+		if (p?.defaultCategoryId && !categoryId) categoryId = p.defaultCategoryId;
+	}
 	// svelte-ignore state_referenced_locally
 	let selected = $state<Record<string, boolean>>(
 		Object.fromEntries(
@@ -145,6 +157,7 @@
 	);
 
 	const rule = $derived.by((): SplitRule => {
+		if (profile) return profile.rule;
 		const ids = Object.keys(selected).filter((id) => selected[id]);
 		switch (mode) {
 			case 'all':
@@ -226,7 +239,7 @@
 						.filter((p) => p.amount > 0)
 				: [{ personId: payer, amount }],
 			categoryId,
-			profileId: null,
+			profileId,
 			rule,
 			privateAmount,
 			rate: {
@@ -361,13 +374,25 @@
 
 	<div class="card">
 		<h2>{type === 'income' ? 'Gutgeschrieben für' : 'Aufgeteilt auf'}</h2>
+		{#if profiles.length}
+			<div class="chips" style="margin-bottom: 0.6rem">
+				{#each profiles as p (p.id)}
+					<button type="button" class="chip profile" class:active={profileId === p.id} onclick={() => (profileId === p.id ? (profileId = null) : chooseProfile(p.id))}>
+						{p.icon} {p.name}
+					</button>
+				{/each}
+			</div>
+		{/if}
 		<div class="segmented" style="margin-bottom: 0.75rem">
 			{#each Object.entries(modeLabels) as [k, label] (k)}
-				<button type="button" class:active={mode === k} onclick={() => (mode = k as Mode)}>{label}</button>
+				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null))}>{label}</button>
 			{/each}
 		</div>
 
-		{#if mode === 'individual'}
+		{#if profile}
+			<p class="hint" style="margin-top: -0.4rem">Profil „{profile.name}“: Ändert sich das Profil oder kommen Personen dazu, wird die Ausgabe automatisch neu aufgeteilt.</p>
+		{/if}
+		{#if !profile && mode === 'individual'}
 			<div class="segmented small-seg" style="margin-bottom: 0.5rem">
 				<button type="button" class:active={indivMode === 'shares'} onclick={() => (indivMode = 'shares')}>Anteile</button>
 				<button type="button" class:active={indivMode === 'percent'} onclick={() => (indivMode = 'percent')}>Prozent</button>
@@ -378,16 +403,16 @@
 		{#each members as m (m.personId)}
 			{@const share = preview && 'shares' in preview ? preview.shares?.get(m.personId) : undefined}
 			<div class="person-row" class:dim={!share}>
-				{#if mode === 'all_except' || mode === 'only'}
+				{#if !profile && (mode === 'all_except' || mode === 'only')}
 					<input type="checkbox" bind:checked={selected[m.personId]} aria-label={m.name} />
 				{/if}
 				<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={28} />
 				<span class="grow">
 					{m.name}
-					{#if m.factor !== 1 && mode !== 'individual'}<span class="badge">×{String(m.factor).replace('.', ',')}</span>{/if}
+					{#if factorOf(m) !== 1 && (profile || mode !== 'individual')}<span class="badge">×{String(factorOf(m)).replace('.', ',')}</span>{/if}
 					{#if mode === 'all_except' && selected[m.personId]}<span class="badge">ausgenommen</span>{/if}
 				</span>
-				{#if mode === 'individual'}
+				{#if !profile && mode === 'individual'}
 					<input
 						class="num"
 						inputmode="decimal"
@@ -446,6 +471,9 @@
 		padding: 0.25rem 0.75rem 0.25rem 0.3rem;
 		font-weight: 500;
 		min-height: 40px;
+	}
+	.chip.profile {
+		padding: 0.25rem 0.75rem;
 	}
 	.chip.active {
 		border-color: var(--primary);

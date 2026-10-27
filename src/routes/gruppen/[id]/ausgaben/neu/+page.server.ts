@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { requireGroup, loadMembers } from '$lib/server/groups';
+import { requireGroup, loadMembers, loadProfiles } from '$lib/server/groups';
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import type { Actions, PageServerLoad } from './$types';
@@ -13,10 +13,10 @@ export const load: PageServerLoad = async ({ parent }) => {
 export const actions: Actions = {
 	save: async ({ params, locals, request }) => {
 		const g = await requireGroup(params.id, locals.user);
-		const members = await loadMembers(params.id);
+		const [members, profiles] = await Promise.all([loadMembers(params.id), loadProfiles(params.id)]);
 		let prepared;
 		try {
-			prepared = await prepareExpense(JSON.parse(String((await request.formData()).get('payload'))), g.group, members);
+			prepared = await prepareExpense(JSON.parse(String((await request.formData()).get('payload'))), g.group, members, profiles);
 		} catch (e) {
 			if (e instanceof InputError || e instanceof SyntaxError) return fail(400, { message: e.message });
 			throw e;

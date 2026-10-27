@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
-import { canEditExpense, loadMembers, requireGroup, toCoreExpense, toCoreMember } from '$lib/server/groups';
+import { canEditExpense, loadMembers, loadProfiles, requireGroup, toCoreExpense, toCoreMember } from '$lib/server/groups';
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { audit } from '$lib/server/audit';
@@ -34,7 +34,8 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		date: expense.date,
 		payers: expense.payers.map((p) => ({ personId: p.personId, amount: p.amount })),
 		categoryId: expense.categoryId,
-		profileId: expense.profileId,
+		// an explicit rule overrides the profile
+		profileId: expense.rule ? null : expense.profileId,
 		rule: expense.rule ?? { type: 'all' },
 		privateAmount: privateOriginal,
 		rate: {
@@ -77,13 +78,14 @@ export const actions: Actions = {
 		const g = await requireGroup(params.id, locals.user);
 		const existing = await requireExpense(params.id, params.eid);
 		if (!canEditExpense(g, g.user.id, existing)) error(403, 'Du darfst diese Ausgabe nicht bearbeiten.');
-		const members = await loadMembers(params.id);
+		const [members, profiles] = await Promise.all([loadMembers(params.id), loadProfiles(params.id)]);
 		let prepared;
 		try {
 			prepared = await prepareExpense(
 				JSON.parse(String((await request.formData()).get('payload'))),
 				g.group,
 				members,
+				profiles,
 				existing
 			);
 		} catch (e) {

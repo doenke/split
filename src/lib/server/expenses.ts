@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { computeShares, SplitError } from '$lib/core/split';
 import { convert, rateFromCharged } from '$lib/core/currency';
 import type { ExpenseInput } from '$lib/expense-input';
+import type { SplitRule } from '$lib/core/types';
 import { db, schema } from './db';
 import { audit } from './audit';
 import { newId } from './ids';
@@ -18,6 +19,7 @@ export async function prepareExpense(
 	raw: unknown,
 	group: { id: string; baseCurrency: string },
 	members: GroupMember[],
+	profiles: { id: string; rule: SplitRule }[],
 	/** when editing: keeps the stored ECB rate if currency and date did not change */
 	existing?: { currency: string; date: string; rate: number; rateSource: string; rateProvisional: boolean }
 ) {
@@ -70,8 +72,10 @@ export async function prepareExpense(
 		rateSource === 'charged' ? input.rate.charged! : convert(input.amount, input.currency, group.baseCurrency, rate);
 	const privateBase = Math.round((privateAmount * baseAmount) / input.amount);
 
-	// rule
-	const rule = input.rule;
+	// rule: with a profile the expense follows the profile (stored rule = null)
+	const profile = input.profileId ? profiles.find((p) => p.id === input.profileId) : undefined;
+	if (input.profileId && !profile) throw new InputError('Unbekanntes Profil.');
+	const rule = profile ? profile.rule : input.rule;
 	if (!rule || !['all', 'all_except', 'only', 'individual'].includes(rule.type)) throw new InputError('Ungültige Aufteilung.');
 	const ids = rule.type === 'all_except' ? rule.excluded : rule.type === 'only' ? rule.included : rule.type === 'individual' ? Object.keys(rule.values) : [];
 	if (ids.some((id) => !memberIds.has(id))) throw new InputError('Unbekannte Person in der Aufteilung.');
@@ -109,8 +113,8 @@ export async function prepareExpense(
 		baseAmount,
 		privateAmount: privateBase,
 		categoryId: input.categoryId || null,
-		profileId: input.profileId || null,
-		rule,
+		profileId: profile?.id ?? null,
+		rule: profile ? null : rule,
 		periodFrom: period?.from ?? null,
 		periodTo: period?.to ?? null,
 		periodUnit: period?.unit ?? null,
@@ -120,7 +124,7 @@ export async function prepareExpense(
 	// make sure it can be split at all
 	try {
 		computeShares(
-			toCoreExpense({ ...row, id: 'new', payers: payers.map((p) => ({ ...p, expenseId: 'new' })) } as never, []),
+			toCoreExpense({ ...row, id: 'new', payers: payers.map((p) => ({ ...p, expenseId: 'new' })) } as never, profiles),
 			members.map(toCoreMember)
 		);
 	} catch (e) {

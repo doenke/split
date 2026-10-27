@@ -15,7 +15,9 @@
 		'expense.delete': 'hat eine Ausgabe gelöscht',
 		'settlement.create': 'hat eine Zahlung eingetragen',
 		'settlement.confirm': 'hat eine Zahlung bestätigt',
-		'settlement.delete': 'hat eine Zahlung gelöscht'
+		'settlement.delete': 'hat eine Zahlung gelöscht',
+		'profile.save': 'hat ein Profil gespeichert',
+		'profile.delete': 'hat ein Profil gelöscht'
 	};
 </script>
 
@@ -73,6 +75,8 @@
 {:else}
 	<div class="card small muted">Nur Gruppenadmins können die Einstellungen ändern.</div>
 {/if}
+
+<a class="button full" href="/gruppen/{data.group.id}/profile" style="margin-bottom: 1rem">🏷️ Ausgaben-Profile ({data.profiles.length})</a>
 
 <h2>Verlauf</h2>
 <div class="list small">

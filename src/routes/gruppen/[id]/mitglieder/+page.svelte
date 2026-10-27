@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import TagInput from '$lib/components/TagInput.svelte';
 	import { formatDate, today } from '$lib/format';
 
 	let { data, form } = $props();
@@ -36,6 +37,7 @@
 	}
 
 	const factorLabel = (f: number) => String(f).replace('.', ',');
+	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags), ...data.profiles.flatMap((p) => [...(p.rule.tagFilter?.require ?? []), ...(p.rule.tagFilter?.exclude ?? [])])])]);
 </script>
 
 <svelte:head><title>Mitglieder · {data.group.name}</title></svelte:head>
@@ -122,6 +124,11 @@
 				<input id="factor" name="factor" value="1" inputmode="decimal" style="width: 6rem" />
 				<p class="hint">Gewichtung bei „Alle“-Ausgaben, z.B. 0,5 für ein Kind oder 0 für ein Kleinkind.</p>
 			</div>
+			<div class="field">
+				<span class="label">Merkmale</span>
+				<TagInput suggestions={tagSuggestions} />
+				<p class="hint">Profile wie „Alkohol“ nutzen Merkmale, z.B. werden Personen mit „Kind“ dort nicht beteiligt.</p>
+			</div>
 		{/if}
 		{#if hasExpenses}
 			<fieldset class="field">
@@ -149,6 +156,7 @@
 						<strong>{m.name}</strong>
 						{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
 						{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
+						{#each m.tags as t (t)}<span class="badge tagbadge">{t}</span>{/each}
 					</div>
 					<div class="small muted">
 						{#if claimed.has(m.personId)}angemeldet{:else}ohne Login{/if}
@@ -200,6 +208,10 @@
 						</div>
 					</div>
 					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit. Änderungen wirken sich auf alle „Alle“-Ausgaben aus.</p>
+					<div class="field">
+						<span class="label">Merkmale</span>
+						<TagInput value={m.tags} suggestions={tagSuggestions} />
+					</div>
 					{#if (data.kassenByPerson[m.personId] ?? []).length}
 						<div class="field">
 							<label for="k-{m.personId}">Rechnet ab über</label>
@@ -269,6 +281,16 @@
 	}
 	.inline-invite {
 		margin: 0.25rem 0 0 3.2rem;
+	}
+	.label {
+		display: block;
+		font-weight: 600;
+		font-size: 0.9rem;
+		margin-bottom: 0.25rem;
+	}
+	.tagbadge {
+		background: var(--primary-soft);
+		color: var(--text);
 	}
 	fieldset {
 		border: 0;

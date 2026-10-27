@@ -21,6 +21,8 @@
 	);
 	const ruleText = $derived.by(() => {
 		const r = e.rule;
+		const prof = data.profiles.find((p) => p.id === e.profileId);
+		if (!r && prof) return `${prof.icon} ${prof.name}`;
 		if (!r || r.type === 'all') return 'Alle';
 		const names = (ids: string[]) => ids.map((id) => people.get(id)?.name ?? '?').join(', ');
 		if (r.type === 'all_except') return `Alle außer ${names(r.excluded)}`;
@@ -45,6 +47,7 @@
 		baseCurrency={base}
 		members={data.members}
 		categories={data.categories}
+		profiles={data.profiles}
 		currencies={data.currencies}
 		meId={data.user!.id}
 		initial={data.initial}

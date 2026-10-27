@@ -43,6 +43,17 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 	};
 };
 
+function parseTags(v: FormDataEntryValue | null): string[] {
+	return [
+		...new Set(
+			String(v ?? '')
+				.split(',')
+				.map((t) => t.trim().slice(0, 30))
+				.filter(Boolean)
+		)
+	].slice(0, 10);
+}
+
 function parseFactor(v: FormDataEntryValue | null) {
 	const n = parseFloat(String(v ?? '1').replace(',', '.'));
 	return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
@@ -86,6 +97,7 @@ export const actions: Actions = {
 			groupId: params.id,
 			personId,
 			factor,
+			tags: parseTags(f.get('tags')),
 			participationFrom: from,
 			kasseId
 		});
@@ -143,6 +155,7 @@ export const actions: Actions = {
 		}
 		const values: Partial<typeof schema.memberships.$inferInsert> = {
 			factor,
+			tags: parseTags(f.get('tags')),
 			participationFrom: from || null,
 			participationTo: to || null
 		};

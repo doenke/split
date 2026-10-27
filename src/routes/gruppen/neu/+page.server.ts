@@ -5,6 +5,7 @@ import { defaultSettings } from '$lib/server/groups';
 import { newId } from '$lib/server/ids';
 import { personalKasseId } from '$lib/server/persons';
 import { audit } from '$lib/server/audit';
+import { createDefaultProfiles } from '$lib/server/profiles';
 import { commonCurrencies, knownCurrencies } from '$lib/server/rates';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -46,6 +47,7 @@ export const actions: Actions = {
 				role: 'admin',
 				kasseId: await personalKasseId(tx, userId)
 			});
+			await createDefaultProfiles(tx, id);
 			await audit(tx, { groupId: id, personId: userId, action: 'group.create', entityId: id });
 		});
 		redirect(303, `/gruppen/${id}/mitglieder?neu=1`);

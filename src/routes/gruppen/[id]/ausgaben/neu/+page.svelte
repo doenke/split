@@ -12,6 +12,7 @@
 	baseCurrency={data.group.baseCurrency}
 	members={data.members}
 	categories={data.categories}
+	profiles={data.profiles}
 	currencies={data.currencies}
 	meId={data.user!.id}
 	error={form?.message}
