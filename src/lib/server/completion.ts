@@ -23,12 +23,22 @@ export async function completionState(members: GroupMember[], group: { status: s
 	};
 }
 
-/** Marks the user – or everyone of their Kasse in this group – as done. */
-export async function markDone(groupId: string, user: { id: string }, kasseId: string, scope: 'self' | 'kasse', done: boolean) {
+export type DoneScope = { type: 'self' } | { type: 'kasse' } | { type: 'person'; personId: string } | { type: 'all' };
+
+/**
+ * Marks people as done: the user, everyone of their Kasse in this group, or – for admins –
+ * any single person or everybody.
+ */
+export async function markDone(groupId: string, user: { id: string }, kasseId: string, scope: DoneScope, done: boolean) {
+	const inGroup = eq(schema.memberships.groupId, groupId);
 	const where =
-		scope === 'kasse'
-			? and(eq(schema.memberships.groupId, groupId), eq(schema.memberships.kasseId, kasseId))
-			: and(eq(schema.memberships.groupId, groupId), eq(schema.memberships.personId, user.id));
+		scope.type === 'kasse'
+			? and(inGroup, eq(schema.memberships.kasseId, kasseId))
+			: scope.type === 'person'
+				? and(inGroup, eq(schema.memberships.personId, scope.personId))
+				: scope.type === 'all'
+					? inGroup
+					: and(inGroup, eq(schema.memberships.personId, user.id));
 	await db
 		.update(schema.memberships)
 		.set(done ? { doneAt: new Date(), doneBy: user.id } : { doneAt: null, doneBy: null })

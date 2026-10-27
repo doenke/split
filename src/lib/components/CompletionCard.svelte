@@ -17,7 +17,8 @@
 		meId,
 		myKasseId,
 		kasseName,
-		groupId
+		groupId,
+		isAdmin = false
 	}: {
 		completion: { required: string[]; done: string[]; final: boolean };
 		members: M[];
@@ -25,6 +26,7 @@
 		myKasseId: string;
 		kasseName: string;
 		groupId: string;
+		isAdmin?: boolean;
 	} = $props();
 
 	const done = $derived(new Set(completion.done));
@@ -53,15 +55,36 @@
 		<div class="progress"><span style:width="{(completion.done.length / completion.required.length) * 100}%"></span></div>
 		{#if open}
 			<div class="people small">
-				{#each members.filter((m) => completion.required.includes(m.personId)) as m (m.personId)}
-					<span class="person" class:ok={done.has(m.personId)}>
-						<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={20} />
-						{m.name}
-						{done.has(m.personId) ? '✔' : '…'}
-					</span>
+				{#each members.filter((m) => isAdmin || completion.required.includes(m.personId)) as m (m.personId)}
+					{#if isAdmin}
+						<form method="POST" action="/gruppen/{groupId}?/{done.has(m.personId) ? 'undone' : 'done'}" use:enhance>
+							<input type="hidden" name="scope" value="person" />
+							<input type="hidden" name="personId" value={m.personId} />
+							<button class="person" class:ok={done.has(m.personId)} title={done.has(m.personId) ? 'Wieder öffnen' : 'Für diese Person abschließen'}>
+								<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={20} />
+								{m.name}
+								{done.has(m.personId) ? '✔' : completion.required.includes(m.personId) ? '…' : '–'}
+							</button>
+						</form>
+					{:else}
+						<span class="person" class:ok={done.has(m.personId)}>
+							<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={20} />
+							{m.name}
+							{done.has(m.personId) ? '✔' : '…'}
+						</span>
+					{/if}
 				{/each}
 			</div>
 			{#if missing.length}<p class="hint">Es fehlen noch: {missing.map((m) => m.name).join(', ')}</p>{/if}
+			{#if isAdmin}
+				<p class="hint">Als Admin kannst du Personen antippen, um sie abzuschließen oder wieder zu öffnen.</p>
+				{#if missing.length}
+					<form method="POST" action="/gruppen/{groupId}?/done" use:enhance={({ cancel }) => { if (!confirm('Alle Personen abschließen? Damit steht die Endabrechnung.')) cancel(); }}>
+						<input type="hidden" name="scope" value="all" />
+						<button class="full" style="margin-bottom: 0.5rem">Alle abschließen</button>
+					</form>
+				{/if}
+			{/if}
 		{/if}
 		<div class="row actions">
 			{#if shared}
@@ -133,6 +156,12 @@
 		border-radius: 999px;
 		background: var(--surface-2);
 		color: var(--muted);
+	}
+	button.person {
+		min-height: 32px;
+		border: 1px solid var(--border);
+		font-weight: 500;
+		font-size: 0.85rem;
 	}
 	.person.ok {
 		background: var(--primary-soft);

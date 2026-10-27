@@ -25,7 +25,7 @@
 		'group.close': 'hat die Abrechnung abgeschlossen',
 		'group.reopen': 'hat die Abrechnung wieder geöffnet',
 		'settlement.remind': 'hat an eine Zahlung erinnert',
-		'member.done': 'hat alles eingetragen',
+		'member.done': 'hat abgeschlossen',
 		'member.undone': 'trägt doch noch etwas ein',
 		'group.final': 'hat als Letzte(r) abgeschlossen – die Endabrechnung steht'
 	};

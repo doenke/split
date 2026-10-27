@@ -36,6 +36,7 @@
 	myKasseId={data.myKasseId}
 	kasseName={data.kassen[data.myKasseId]?.name ?? ''}
 	groupId={data.group.id}
+	isAdmin={data.isAdmin}
 />
 
 <h2>Salden</h2>

@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.6.0
+- Gruppenadmins können jede Person einzeln oder alle auf einmal abschließen (und wieder öffnen) –
+  auch Personen ohne Login
+
 ## 0.5.0
 - Versionsnummer in der App, im Healthcheck und als Docker-Tag
 - Sauberes Neuladen nach Server-Updates: offene Apps erkennen eine neue Version, laden beim nächsten
