@@ -156,3 +156,29 @@ export function directTransfers(members: Member[], expenses: Expense[], settleme
 	}
 	return transfers.sort((x, y) => y.amount - x.amount);
 }
+
+/**
+ * What each person actually consumed, per category (not what they paid).
+ * Income (negative amounts) reduces the consumption of its category.
+ */
+export function consumptionByCategory(
+	members: Member[],
+	expenses: { expense: Expense; categoryId: string | null }[]
+): Map<string, Map<string, Minor>> {
+	const result = new Map<string, Map<string, Minor>>();
+	for (const { expense, categoryId } of expenses) {
+		let shares: Map<string, Minor>;
+		try {
+			shares = computeShares(expense, members);
+		} catch {
+			continue;
+		}
+		const cat = categoryId ?? '';
+		for (const [personId, amount] of shares) {
+			const m = result.get(personId) ?? new Map<string, Minor>();
+			m.set(cat, (m.get(cat) ?? 0) + amount);
+			result.set(personId, m);
+		}
+	}
+	return result;
+}

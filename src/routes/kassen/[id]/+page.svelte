@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { formatAmount } from '$lib/format';
+	import CostBars from '$lib/components/CostBars.svelte';
 
 	let { data, form } = $props();
 	let adding = $state(false);
@@ -9,6 +10,18 @@
 	let netting = $state<string | null>(null);
 	const me = $derived(data.members.find((m) => m.personId === data.user?.id));
 	const keep = () => async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) => update({ reset: false });
+	const years = $derived([...new Set(data.costs.map((c) => c.year))].sort().reverse());
+	let year = $state<string | null>(null);
+	const costTotals = $derived.by(() => {
+		const byCurrency = new Map<string, Record<string, number>>();
+		for (const c of data.costs) {
+			if (year && c.year !== year) continue;
+			const t = byCurrency.get(c.currency) ?? {};
+			for (const [cat, v] of Object.entries(c.totals)) t[cat] = (t[cat] ?? 0) + v;
+			byCurrency.set(c.currency, t);
+		}
+		return [...byCurrency];
+	});
 	const methodLabels: Record<string, string> = { transfer: 'Überweisung', paypal: 'PayPal', wero: 'Wero', cash: 'Bar', other: 'Sonstiges' };
 </script>
 
@@ -92,6 +105,25 @@
 					{g.balance > 0 ? '+' : ''}{formatAmount(g.balance, g.currency)}
 				</span>
 			</a>
+		{/each}
+	</div>
+{/if}
+
+{#if data.costs.length}
+	<h2>Was hat es euch gekostet?</h2>
+	<div class="card">
+		{#if years.length > 1}
+			<div class="segmented" style="margin-bottom: 0.5rem">
+				<button type="button" class:active={year === null} onclick={() => (year = null)}>Alle</button>
+				{#each years as y (y)}<button type="button" class:active={year === y} onclick={() => (year = y)}>{y}</button>{/each}
+			</div>
+		{/if}
+		{#each costTotals as [currency, totals] (currency)}
+			<div class="row" style="justify-content: space-between">
+				<span class="muted small">{data.costs.filter((c) => (!year || c.year === year) && c.currency === currency).length} Gruppe(n)</span>
+				<span class="amount">{formatAmount(Object.values(totals).reduce((a, b) => a + b, 0), currency)}</span>
+			</div>
+			<CostBars {totals} categories={data.categories} {currency} />
 		{/each}
 	</div>
 {/if}

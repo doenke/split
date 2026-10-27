@@ -3,15 +3,24 @@
 Selbst gehostete PWA, um gemeinsame Ausgaben in Gruppen fair aufzuteilen – für Reisen, Familien und Freunde.
 Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 
-## Stand (Phase 1)
+## Stand
 
+**Phase 1**
 - Anmeldung per OIDC (nur OIDC-Nutzer legen Gruppen an), Gäste per persönlichem Link + Passkey – ohne Passwort
 - Personen ohne Login (z.B. Kinder), Standard-Faktor pro Person, Teilnahmezeitraum, Nachzügler-Dialog
 - Ausgaben mit den Aufteilungen *Alle*, *Alle außer …*, *Nur …*, *Individuell* (Anteile, Prozent, Beträge),
   mehreren Zahlern, privatem Anteil und Aufteilung nach Aufenthaltsdauer (Nächte/Tage)
 - Fremdwährungen mit EZB-Kursen, manuellem Kurs oder tatsächlich abgebuchtem Betrag
-- Kategorien, Salden pro Kasse, Ausgleichsvorschläge (vereinfacht oder direkt), Zahlungen mit Bestätigung
+- Kategorien, Salden, Ausgleichsvorschläge (vereinfacht oder direkt), Zahlungen mit Bestätigung
 - Änderungsverlauf, PWA (installierbar, Offline-Lesezugriff), Docker-Image mit Healthcheck
+
+**Phase 2**
+- Gemeinsame Kassen (Familien, Paare) über alle Gruppen, ganze Kasse zu einer Gruppe hinzufügen,
+  Verrechnung über mehrere Gruppen mit einer einzigen Zahlung
+- Merkmale an Mitgliedern (z.B. „Kind“) und Ausgaben-Profile („Alkohol“, „Unterkunft“), die sich automatisch anpassen
+- Zahlungsdaten im Profil: Wero (Kontakt + Zahlungslink), IBAN mit GiroCode, PayPal.me – mit fertigem Betrag
+- Belegfotos und PDFs, „An Split teilen“ aus der Galerie (PWA Share Target)
+- Kostenübersicht nach Kategorien pro Person, Kasse und Gruppe – für Kassen auch über alle Gruppen und Jahre
 
 ## Betrieb mit Docker Compose
 

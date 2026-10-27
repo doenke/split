@@ -5,6 +5,8 @@ import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
 import { createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
 import { kasseOverview, requireKasse } from '$lib/server/kassen';
+import { groupCosts } from '$lib/server/costs';
+import { defaultCategories } from '$lib/server/defaults';
 import { today } from '$lib/format';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -12,7 +14,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const k = await requireKasse(params.id, locals.user);
 	const ids = new Set(k.members.map((m) => m.personId));
 	const [overview, known] = await Promise.all([kasseOverview(params.id), knownPersons(k.user.id)]);
+	const costs = await Promise.all(
+		overview.groups.map(async (g) => {
+			const c = await groupCosts(g.id);
+			const year = (c.group.startDate ?? c.group.createdAt.toISOString()).slice(0, 4);
+			return { groupId: g.id, year, currency: g.currency, totals: c.kassen[params.id] ?? {} };
+		})
+	);
+	const categories = await db.select().from(schema.categories);
 	return {
+		costs,
+		categories: categories.length ? categories : defaultCategories,
 		kasse: k.kasse,
 		members: k.members,
 		isManager: k.isManager,

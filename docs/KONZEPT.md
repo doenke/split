@@ -1,6 +1,6 @@
 # Konzept: Split – Kosten in Gruppen fair aufteilen
 
-> Status: **Entwurf v0.4** – Grundlage für Diskussion, noch keine Implementierung.
+> Status: **v0.4** – Phase 1 und 2 sind umgesetzt, Phase 3 ist offen.
 > Entscheidungen stehen in Kapitel 14, offene Fragen (❓) in Kapitel 15.
 
 ---
@@ -742,7 +742,7 @@ docker compose exec db pg_dump -U split split > split-$(date +%F).sql
 
 ## 13. Ausbaustufen
 
-**Phase 1 – MVP**
+**Phase 1 – MVP** ✅
 - OIDC-Login, Gruppen anlegen, Personen/Platzhalter
 - Gast-Login per persönlichem Link + Passkey/Geräte-Token
 - Ausgaben mit Regeln Alle / Alle außer / Nur / Individuell, Faktoren
@@ -750,7 +750,7 @@ docker compose exec db pg_dump -U split split > split-$(date +%F).sql
 - Kategorien, Salden, Ausgleichsvorschläge (pro Gruppe, pro Person)
 - PWA installierbar, Docker-Image
 
-**Phase 2 – Alleinstellungsmerkmale**
+**Phase 2 – Alleinstellungsmerkmale** ✅
 - Kassen (inkl. gruppenübergreifender Salden)
 - Merkmale & Profile
 - Nachzügler-Dialog, Teilnahmezeitraum, zeitanteilige Aufteilung

@@ -50,6 +50,8 @@
 	{/each}
 </div>
 
+<a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
+
 <h2>So wird ausgeglichen</h2>
 {#if data.transfers.length === 0}
 	<div class="card">🎉 Alles ausgeglichen.</div>

@@ -182,3 +182,17 @@ describe('currency', () => {
 		expect(parseAmount('abc', 'EUR')).toBeNull();
 	});
 });
+
+describe('consumptionByCategory', () => {
+	it('sums shares per person and category', async () => {
+		const { consumptionByCategory } = await import('./balance');
+		const members = [m('a'), m('b')];
+		const r = consumptionByCategory(members, [
+			{ expense: expense({ id: '1', baseAmount: 1000 }), categoryId: 'food' },
+			{ expense: expense({ id: '2', baseAmount: 400 }), categoryId: 'food' },
+			{ expense: expense({ id: '3', baseAmount: -200 }), categoryId: 'food' },
+			{ expense: expense({ id: '4', baseAmount: 600 }), categoryId: null }
+		]);
+		expect(Object.fromEntries(r.get('a')!)).toEqual({ food: 600, '': 300 });
+	});
+});
