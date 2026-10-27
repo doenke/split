@@ -181,7 +181,6 @@ speichern, rechnet sich alles automatisch neu.
 - **Kategorie** (Essen, Unterkunft, Transport, …)
 - **Aufteilungsregel** (siehe unten), optional über ein **Profil**
 - Belege (Fotos/PDF), Notiz, Ort (optional)
-- optional **Positionen** (Teilausgaben, z.B. aus einem Kassenbon) mit eigener Regel
 - Typ: *Ausgabe*, *Einnahme/Erstattung* (z.B. Pfand zurück, Rückerstattung), *Ausgleich*
 
 ### 5.2 Aufteilungsregeln
@@ -224,7 +223,7 @@ Profile sind benannte Regelvorlagen einer Gruppe – sie machen das Erfassen sch
 | **Sprit** ⛽ | Nur Mitfahrer | – |
 
 Ein Profil kann eine **Standard-Kategorie** vorschlagen. Beim Kassenbon-Scan
-können Positionen automatisch einem Profil zugeordnet werden („Bier“ → Alkohol).
+schlägt die KI Kategorie und Profil für die ganze Ausgabe vor.
 
 ### 5.4 Rechenbeispiel
 
@@ -407,7 +406,7 @@ die **einzelnen Positionen**.
 **Standard ist ein Vision-LLM via API (Claude).** Das ist die eleganteste
 Lösung: keine lokale Hardware, sehr gute Erkennung auch von Positionen, und
 die Ausgabe kommt direkt als strukturiertes JSON (Händler, Datum, Summe,
-Positionen, Kategorie- und Profilvorschläge). Der Bon wird dafür an die API
+Positionen, Kategorie- und Profilvorschlag). Der Bon wird dafür an die API
 übertragen; das wird in der App transparent angezeigt.
 
 Die Engine bleibt austauschbar (Interface), damit später bei Bedarf eine
@@ -422,16 +421,33 @@ lokale Alternative ergänzt werden kann:
 
 Das Ergebnis wird **immer als Vorschlag** angezeigt und vom Nutzer bestätigt.
 
-### 9.3 Stufe 3 – Positionen aufteilen
-Der eigentliche Mehrwert: Aus einem Supermarkt-Bon werden Positionen erkannt,
-die man einzeln Profilen/Personen zuordnen kann:
+### 9.3 Positionen abwählen
+
+Ein Bon wird **nicht** in mehrere Teilausgaben mit eigenen Regeln zerlegt. Das
+würde Bedienung und Datenmodell stark aufblähen. Die erkannten Positionen dienen
+nur dazu, einzelne Posten **an- oder abzuwählen**, z.B. um einen privaten Einkauf
+herauszunehmen:
 
 ```
-Edeka, 14.07.2027                         87,40 €
-  ├─ Lebensmittel (Standard, Alle)        61,20 €
-  ├─ 2× Kiste Bier  (Profil Alkohol)      22,00 €   ← automatisch vorgeschlagen
-  └─ Zigaretten     (Nur Ben)              4,20 €
+Edeka, 14.07.2027                    Bon: 87,40 €
+  ☑ Brot, Käse, Obst, …                   61,20 €
+  ☑ 2× Kiste Bier                         22,00 €
+  ☐ Zeitschrift (privat)                   4,20 €
+  ─────────────────────────────────────────────
+  Gemeinsame Ausgabe:                     83,20 €
 ```
+
+- Alle Positionen sind zunächst angewählt. Der Betrag der Ausgabe ist die Summe
+  der angewählten Positionen, der Rest bleibt privat beim Zahler.
+- Die Ausgabe selbst hat weiterhin **eine** Aufteilungsregel bzw. ein Profil.
+- Weicht die Summe der erkannten Positionen vom Bon-Gesamtbetrag ab (z.B. Pfand,
+  Rabatte, Lesefehler), zeigt die App den Unterschied als eigene Zeile
+  „Differenz / nicht erkannt“ an, die ebenfalls an- oder abwählbar ist.
+- Die Auswahl wird mit dem Erkennungsergebnis am Beleg gespeichert und kann
+  später geändert werden. Gespeichert werden Bon-Gesamtbetrag und gemeinsamer
+  Betrag, damit sichtbar bleibt, dass etwas herausgenommen wurde.
+- Ohne Bon-Scan geht dasselbe von Hand: Gesamtbetrag eingeben und einen
+  „privaten Anteil“ abziehen.
 
 ---
 
@@ -486,12 +502,11 @@ ExchangeRate      (datum, waehrung, kurs_zu_eur)      -- EZB-Cache
 Category          (id, group_id?, name, icon, farbe) -- group_id NULL = Standard
 Profile           (id, group_id, name, icon, regel_json, default_category_id?)
 
-Expense           (id, group_id, titel, datum, betrag_cent, waehrung, kurs, kurs_quelle: ezb|manuell|tatsaechlich, betrag_basis_cent, typ,
+Expense           (id, group_id, titel, datum, betrag_cent, privat_anteil_cent, waehrung, kurs, kurs_quelle: ezb|manuell|tatsaechlich, betrag_basis_cent, typ,
                    category_id, profile_id?, regel_json?, notiz, erstellt_von, frozen)
 ExpensePayer      (expense_id, person_id, betrag_cent)
-ExpenseItem       (id, expense_id, titel, betrag_cent, profile_id?, regel_json?)
 ExpenseShareSnapshot (expense_id, person_id, betrag_cent)   -- nur bei eingefrorenen Ausgaben
-Attachment        (id, expense_id, pfad, mime, ocr_result_json?)
+Attachment        (id, expense_id, pfad, mime, ocr_result_json?)   -- inkl. Positionen mit Flag angewählt/abgewählt
 
 Settlement        (id, group_id, von_kasse_id, an_kasse_id, betrag_cent, status,
                    methode, link_id?)               -- link_id verknüpft gruppenübergreifende Verrechnung
@@ -568,7 +583,7 @@ ANTHROPIC_API_KEY=***
 - Beleg-Fotos
 
 **Phase 3 – Komfort**
-- Kassenbon-OCR inkl. Positionen
+- Kassenbon-Erkennung inkl. Positionen an-/abwählen
 - Offline-Modus, Push
 - Gruppen-Einladungslink („Wer bist du?“), Geräte koppeln
 - Gruppenübergreifendes Verrechnen, Abrechnung abschließen, Export
