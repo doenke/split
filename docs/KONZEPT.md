@@ -1,6 +1,6 @@
 # Konzept: Split – Kosten in Gruppen fair aufteilen
 
-> Status: **Entwurf v0.3** – Grundlage für Diskussion, noch keine Implementierung.
+> Status: **Entwurf v0.4** – Grundlage für Diskussion, noch keine Implementierung.
 > Entscheidungen stehen in Kapitel 14, offene Fragen (❓) in Kapitel 15.
 
 ---
@@ -148,6 +148,12 @@ Eine Gruppe hat:
 - Kategorien, Profile, Merkmale (gruppenspezifisch, mit Vorlagen)
 - Status: *aktiv* → *abgerechnet* → *archiviert*
 
+**Gruppe als Vorlage:** Eine bestehende Gruppe kann kopiert werden
+(„Sommerurlaub 2028 wie 2027“). Übernommen werden wahlweise Personen samt
+Kassenzuordnung, Faktoren, Merkmale, Profile und Kategorien – keine Ausgaben.
+Weil Personen gruppenübergreifend existieren, sind alle sofort wieder dabei und
+müssen nicht neu eingeladen werden.
+
 Eine **Mitgliedschaft** hat:
 - **Standard-Faktor** (Default `1.0`, z.B. Kind `0.5`, Kleinkind `0`)
 - **Merkmale** (`Kind`, `Erwachsen`, `Vegetarier`, …)
@@ -247,6 +253,19 @@ Anna/Ben/Carla je 22,50 €, Lea/Tim je 11,25 € – ohne dass jemand die Ausga
 Rest-Cents werden deterministisch nach dem Largest-Remainder-Verfahren verteilt,
 damit die Summe immer exakt stimmt.
 
+### 5.5 Stabilität vs. Dynamik
+
+Dynamische Regeln haben einen Nachteil: Ändert jemand Faktoren oder Mitglieder,
+ändern sich auch alte Salden – auch nach bereits erfolgten Ausgleichszahlungen.
+
+Lösung:
+- Jede Änderung, die Salden verschiebt, zeigt vorher eine **Vorschau**
+  („Annas Saldo ändert sich um −7,50 €“).
+- **Abrechnung abschließen:** Ein Admin kann einen Stichtag setzen. Ausgaben
+  davor werden „eingefroren“ (Anteile werden als Snapshot gespeichert und nicht
+  mehr neu berechnet).
+- Vollständiges **Änderungsprotokoll** (wer hat wann was geändert) – schafft Vertrauen.
+
 ### 5.6 Fremdwährungen
 
 Auf Reisen zentral, daher Teil des MVP.
@@ -272,18 +291,29 @@ Auf Reisen zentral, daher Teil des MVP.
 - Anzeige: Liste zeigt den Originalbetrag („42,00 CHF“) und klein den Betrag
   in Basiswährung („≈ 44,80 €“).
 
-### 5.5 Stabilität vs. Dynamik
+### 5.7 Zeitanteilige Aufteilung (z.B. Unterkunft)
 
-Dynamische Regeln haben einen Nachteil: Ändert jemand Faktoren oder Mitglieder,
-ändern sich auch alte Salden – auch nach bereits erfolgten Ausgleichszahlungen.
+Manche Ausgaben betreffen einen **Zeitraum** statt eines Tages: Das Ferienhaus
+wird einmal für 14 Nächte bezahlt, wer erst Dienstag anreist, soll aber nur
+seine Nächte zahlen.
 
-Lösung:
-- Jede Änderung, die Salden verschiebt, zeigt vorher eine **Vorschau**
-  („Annas Saldo ändert sich um −7,50 €“).
-- **Abrechnung abschließen:** Ein Admin kann einen Stichtag setzen. Ausgaben
-  davor werden „eingefroren“ (Anteile werden als Snapshot gespeichert und nicht
-  mehr neu berechnet).
-- Vollständiges **Änderungsprotokoll** (wer hat wann was geändert) – schafft Vertrauen.
+- Eine Ausgabe kann optional einen **Leistungszeitraum** haben
+  (z.B. 01.08.–15.08., Einheit *Nächte* oder *Tage*).
+- Der Anteil jeder Person ergibt sich dann aus
+  `Faktor × anwesende Nächte im Zeitraum`. Die Anwesenheit kommt aus dem
+  Teilnahmezeitraum der Mitgliedschaft.
+- Funktioniert mit allen Regeln und Profilen (z.B. „Alle außer …“ + Zeitraum).
+- Ändert sich die Anreise einer Person, rechnet sich die Ausgabe automatisch neu.
+
+Beispiel: Ferienhaus 1.400 € für 14 Nächte. Anna und Ben (je 1.0) sind alle
+14 Nächte da, Carla (1.0) kommt nach 4 Nächten und bleibt 10:
+
+```
+Gewichte:  Anna 14, Ben 14, Carla 10   → Σ = 38
+Anna  = 1.400 × 14/38 = 515,79 €
+Ben   = 1.400 × 14/38 = 515,79 €
+Carla = 1.400 × 10/38 = 368,42 €
+```
 
 ---
 
@@ -293,6 +323,11 @@ Lösung:
   Unterkunft, Transport, Sprit, Aktivitäten, Eintritt, Einkauf, Sonstiges …)
 - Pro Gruppe anpassbar (umbenennen, ausblenden, eigene hinzufügen)
 - Auswertungen: Ausgaben pro Kategorie, pro Person, pro Kasse, pro Tag (Diagramme)
+- **„Was hat uns die Reise gekostet?“** – eigene Ansicht pro Person und pro Kasse:
+  der tatsächlich verbrauchte Anteil (nicht was bezahlt wurde und nicht nur der
+  Saldo), aufgeschlüsselt nach Kategorien, z.B. „Familie Jacobs: 2.340 € gesamt,
+  davon Unterkunft 980 €, Essen 720 €, …“. Auch über alle Gruppen einer Kasse
+  hinweg, z.B. pro Jahr.
 - Automatischer Kategorie-Vorschlag anhand von Titel / Händler auf dem Bon
 
 ---
@@ -387,6 +422,11 @@ dem Inhaber in einer gemeinsamen Gruppe sind.
 | **PayPal** | `https://paypal.me/<name>/<betrag>EUR` öffnet PayPal mit vorausgefülltem Betrag | gering, keine API nötig |
 | **Bar** | Nur als „bar bezahlt“ markieren | – |
 
+**Zahlungserinnerung:** Beim Ausgleichsvorschlag hat der Empfänger einen
+Button „Erinnern“. Er schickt dem Zahler eine Push-Benachrichtigung (bzw. zeigt
+die Erinnerung beim nächsten Öffnen der App an). Damit es nicht nervt: höchstens
+eine Erinnerung pro Tag und Zahlung.
+
 Ablauf: Zahler klickt „bezahlt“ → Ausgleich wird als *ausstehend* gebucht →
 Empfänger bestätigt (oder automatisch nach X Tagen). Eine echte
 Zahlungsbestätigung über Bank-/PayPal-APIs ist für eine Self-Hosted-App
@@ -453,7 +493,7 @@ Edeka, 14.07.2027                    Bon: 87,40 €
 
 ---
 
-## 10. Weitere Funktionen (Vorschläge)
+## 10. Weitere Funktionen
 
 **Wichtig für Reisen:**
 - **Offline-Fähigkeit:** Ausgaben im Funkloch erfassen, später synchronisieren
@@ -463,6 +503,11 @@ Edeka, 14.07.2027                    Bon: 87,40 €
 
 **Komfort:**
 - Schnellerfassung: Betrag eintippen → Profil wählen → fertig (≤ 3 Taps)
+- **PWA-Share-Target:** Bon-Foto aus der Galerie oder PDF-Rechnung aus der Mail
+  direkt „an Split teilen“ → öffnet eine neue Ausgabe mit angehängtem Beleg
+  (und startet die Bon-Erkennung)
+- **App-Shortcuts:** Langes Drücken auf das App-Symbol → „Neue Ausgabe“,
+  „Bon fotografieren“, zuletzt genutzte Gruppe
 - Wiederkehrende Ausgaben (für WGs: Miete, Internet)
 - Kommentare / Reaktionen an Ausgaben
 - Suche & Filter (Person, Kategorie, Zeitraum, Profil)
@@ -473,6 +518,9 @@ Edeka, 14.07.2027                    Bon: 87,40 €
 - Export: CSV, PDF-Abrechnung („Endabrechnung Toskana 2027“)
 - Import aus Splitwise/Tricount (CSV) ❓
 - Backup/Restore, Healthcheck-Endpoint
+- **Papierkorb:** Gelöschte Ausgaben, Personen und Gruppen landen 30 Tage im
+  Papierkorb und können von Gruppenadmins wiederhergestellt werden; danach
+  endgültige Löschung
 - REST-API (z.B. für Home Assistant / n8n-Automationen) ❓
 
 **Datenschutz:**
@@ -489,7 +537,7 @@ Person            (id, name, avatar, email?, created_at, merged_into?)
 Credential        (id, person_id, typ: oidc|passkey|device_token, subject/public_key, last_used)
 InviteToken       (id, person_id?|group_id?, typ: personal|group, expires_at, used_at)
 
-Group             (id, name, emoji/bild, basiswaehrung, von?, bis?, status, settings)
+Group             (id, name, emoji/bild, basiswaehrung, von?, bis?, status, settings, vorlage_von_group_id?, deleted_at?)
 Membership        (group_id, person_id, rolle, faktor, teilnahme_von?, teilnahme_bis?, kasse_id)
                   -- kasse_id: genau eine Kasse pro Person und Gruppe; muss eine Kasse der Person sein
 Tag               (id, group_id, name)               -- „Kind“, „Erwachsen“ …
@@ -505,7 +553,8 @@ Category          (id, group_id?, name, icon, farbe) -- group_id NULL = Standard
 Profile           (id, group_id, name, icon, regel_json, default_category_id?)
 
 Expense           (id, group_id, titel, datum, betrag_cent, privat_anteil_cent, waehrung, kurs, kurs_quelle: ezb|manuell|tatsaechlich, betrag_basis_cent, typ,
-                   category_id, profile_id?, regel_json?, notiz, erstellt_von, frozen)
+                   category_id, profile_id?, regel_json?, zeitraum_von?, zeitraum_bis?, zeiteinheit?: tage|naechte,
+                   notiz, erstellt_von, frozen, deleted_at?)
 ExpensePayer      (expense_id, person_id, betrag_cent)
 ExpenseShareSnapshot (expense_id, person_id, betrag_cent)   -- nur bei eingefrorenen Ausgaben
 Attachment        (id, expense_id, pfad, mime, ocr_result_json?)   -- inkl. Positionen mit Flag angewählt/abgewählt
@@ -581,15 +630,17 @@ ANTHROPIC_API_KEY=***
 **Phase 2 – Alleinstellungsmerkmale**
 - Kassen (inkl. gruppenübergreifender Salden)
 - Merkmale & Profile
-- Nachzügler-Dialog, Teilnahmezeitraum
+- Nachzügler-Dialog, Teilnahmezeitraum, zeitanteilige Aufteilung
 - PayPal-Link, GiroCode, hinterlegter Wero-Zahlungslink
-- Beleg-Fotos
+- Beleg-Fotos, Share-Target
+- Kostenübersicht pro Person/Kasse
 
 **Phase 3 – Komfort**
 - Kassenbon-Erkennung inkl. Positionen an-/abwählen
 - Offline-Modus, Push
 - Gruppen-Einladungslink („Wer bist du?“), Geräte koppeln
 - Gruppenübergreifendes Verrechnen, Abrechnung abschließen, Export
+- Gruppe als Vorlage, Zahlungserinnerung, Papierkorb, App-Shortcuts
 
 ---
 
