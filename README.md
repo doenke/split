@@ -22,6 +22,15 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 - Belegfotos und PDFs, „An Split teilen“ aus der Galerie (PWA Share Target)
 - Kostenübersicht nach Kategorien pro Person, Kasse und Gruppe – für Kassen auch über alle Gruppen und Jahre
 
+**Phase 3** (ohne Bon-Erkennung)
+- Gruppen-Einladungslink „Wer bist du?“ für den Gruppenchat, weitere Geräte per QR-Code koppeln
+- Gruppe als Vorlage (Personen, Kassen, Faktoren, Merkmale, Profile), Papierkorb (30 Tage)
+- Abrechnung abschließen (Anteile festschreiben), CSV-Export, druckbare Abrechnung als PDF
+- Push-Benachrichtigungen (neue Ausgaben, Zahlungen, Erinnerungen), pro Gruppe stummschaltbar –
+  die VAPID-Schlüssel erzeugt die App beim ersten Start selbst
+- Ausgaben offline erfassen, automatische Übertragung bei Verbindung
+- Aufteilung nach Aufenthaltsdauer wahlweise nach Nächten oder Tagen
+
 ## Betrieb mit Docker Compose
 
 ```bash

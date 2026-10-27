@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { queueExpense } from '$lib/offline';
-	import { computeShares, effectiveFactor } from '$lib/core/split';
+	import { computeShares, effectiveFactor, presentUnits } from '$lib/core/split';
 	import { amountToInput, convert, currencyDigits, formatAmount, parseAmount } from '$lib/core/currency';
 	import type { Member, SplitRule } from '$lib/core/types';
 	import type { ExpenseInput } from '$lib/expense-input';
@@ -32,6 +32,7 @@
 		profiles = [],
 		attachments = [],
 		initialAttachmentIds = [],
+		groupPeriod = null,
 		initial = null,
 		error = null
 	}: {
@@ -44,6 +45,8 @@
 		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
 		initial?: ExpenseInput | null;
 		attachments?: { id: string; mime: string }[];
+		/** travel dates of the group, used as default stay period */
+		groupPeriod?: { from: string | null; to: string | null } | null;
 		/** receipts uploaded before the form opened (e.g. shared from another app) */
 		initialAttachmentIds?: { id: string; mime: string }[];
 		error?: string | null;
@@ -119,10 +122,24 @@
 
 	let showPeriod = $state(Boolean(init?.period));
 	// svelte-ignore state_referenced_locally
-	let periodFrom = $state(init?.period?.from ?? date);
+	let periodFrom = $state(init?.period?.from ?? groupPeriod?.from ?? date);
 	// svelte-ignore state_referenced_locally
-	let periodTo = $state(init?.period?.to ?? date);
+	let periodTo = $state(init?.period?.to ?? groupPeriod?.to ?? date);
+	// accommodation is paid per night, most other things per day – until the user chooses
+	let unitChosen = $state(Boolean(init?.period));
 	let periodUnit = $state<'days' | 'nights'>(init?.period?.unit ?? 'nights');
+	$effect(() => {
+		if (!unitChosen) periodUnit = categoryId === 'accommodation' || categoryId === null ? 'nights' : 'days';
+	});
+	const unitsOf = (m: PersonOption) =>
+		presentUnits(
+			{ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId, from: m.participationFrom ?? undefined, to: m.participationTo ?? undefined },
+			{ from: periodFrom, to: periodTo, unit: periodUnit }
+		);
+	const unitLabel = (n: number) => (periodUnit === 'nights' ? (n === 1 ? '1 Nacht' : `${n} Nächte`) : n === 1 ? '1 Tag' : `${n} Tage`);
+	const periodTotal = $derived(
+		presentUnits({ personId: '', factor: 1, tags: [], kasseId: '' }, { from: periodFrom, to: periodTo, unit: periodUnit })
+	);
 
 	// exchange rate
 	let rateSource = $state<'auto' | 'manual' | 'charged'>(init?.rate.source ?? 'auto');
@@ -448,6 +465,7 @@
 						bind:value={indivValues[m.personId]}
 					/>
 				{/if}
+				{#if showPeriod}<span class="badge">{unitLabel(unitsOf(m))}</span>{/if}
 				<span class="amount share">{share ? formatAmount(share, currency) : '–'}</span>
 			</div>
 		{/each}
@@ -471,10 +489,17 @@
 				<div class="field grow"><label for="pt">Bis</label><input id="pt" type="date" bind:value={periodTo} /></div>
 			</div>
 			<div class="segmented small-seg">
-				<button type="button" class:active={periodUnit === 'nights'} onclick={() => (periodUnit = 'nights')}>Nächte</button>
-				<button type="button" class:active={periodUnit === 'days'} onclick={() => (periodUnit = 'days')}>Tage</button>
+				<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
+				<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
 			</div>
-			<p class="hint">Jeder zahlt nach Faktor × anwesende {periodUnit === 'nights' ? 'Nächte' : 'Tage'} (aus dem Teilnahmezeitraum der Mitglieder).</p>
+			<p class="hint">
+				{#if periodUnit === 'nights'}
+					<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
+				{:else}
+					<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
+				{/if}
+				Jeder zahlt Faktor × eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
+			</p>
 		{/if}
 
 		<div class="field" style="margin-top: 0.75rem">

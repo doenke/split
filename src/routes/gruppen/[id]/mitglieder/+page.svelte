@@ -223,15 +223,15 @@
 							<input id="f-{m.personId}" name="factor" value={factorLabel(m.factor)} inputmode="decimal" />
 						</div>
 						<div class="field grow">
-							<label for="from-{m.personId}">Dabei ab</label>
+							<label for="from-{m.personId}">Dabei ab (Anreise)</label>
 							<input id="from-{m.personId}" type="date" name="from" value={m.participationFrom ?? ''} />
 						</div>
 						<div class="field grow">
-							<label for="to-{m.personId}">Dabei bis</label>
+							<label for="to-{m.personId}">Dabei bis (Abreise)</label>
 							<input id="to-{m.personId}" type="date" name="to" value={m.participationTo ?? ''} />
 						</div>
 					</div>
-					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit. Änderungen wirken sich auf alle „Alle“-Ausgaben aus.</p>
+					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit. Bei Aufteilung nach Nächten zählt der Abreisetag nicht mit, nach Tagen schon. Änderungen wirken sich auf alle „Alle“-Ausgaben aus.</p>
 					<div class="field">
 						<span class="label">Merkmale</span>
 						<TagInput value={m.tags} suggestions={tagSuggestions} />

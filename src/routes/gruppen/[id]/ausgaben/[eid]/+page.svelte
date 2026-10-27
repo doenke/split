@@ -48,6 +48,7 @@
 		members={data.members}
 		categories={data.categories}
 		profiles={data.profiles}
+	groupPeriod={{ from: data.group.startDate, to: data.group.endDate }}
 		attachments={e.attachments}
 		currencies={data.currencies}
 		meId={data.user!.id}
@@ -91,7 +92,7 @@
 		<h3 style="margin-top: 1rem">Aufteilung: {ruleText}</h3>
 		{#if e.periodFrom && e.periodTo}
 			<p class="small muted">
-				nach Aufenthalt, {formatDate(e.periodFrom)} – {formatDate(e.periodTo)} ({e.periodUnit === 'nights' ? 'Nächte' : 'Tage'})
+				nach Aufenthalt, {formatDate(e.periodFrom)} – {formatDate(e.periodTo)}, gezählt in {e.periodUnit === 'nights' ? 'Nächten (Abreisetag zählt nicht)' : 'Tagen (An- und Abreisetag zählen)'}
 			</p>
 		{/if}
 		{#each shareRows as [personId, amount] (personId)}

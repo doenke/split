@@ -13,6 +13,7 @@
 	members={data.members}
 	categories={data.categories}
 	profiles={data.profiles}
+	groupPeriod={{ from: data.group.startDate, to: data.group.endDate }}
 	initialAttachmentIds={data.shared}
 	currencies={data.currencies}
 	meId={data.user!.id}

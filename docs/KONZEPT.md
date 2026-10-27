@@ -1,6 +1,6 @@
 # Konzept: Split – Kosten in Gruppen fair aufteilen
 
-> Status: **v0.4** – Phase 1 und 2 sind umgesetzt, Phase 3 ist offen.
+> Status: **v0.5** – Phase 1–3 sind umgesetzt, offen ist die automatische Bon-Erkennung.
 > Entscheidungen stehen in Kapitel 14, offene Fragen (❓) in Kapitel 15.
 
 ---
@@ -758,7 +758,7 @@ docker compose exec db pg_dump -U split split > split-$(date +%F).sql
 - Beleg-Fotos, Share-Target
 - Kostenübersicht pro Person/Kasse
 
-**Phase 3 – Komfort**
+**Phase 3 – Komfort** ✅ (außer Bon-Erkennung)
 - Kassenbon-Erkennung inkl. Positionen an-/abwählen
 - Offline-Modus, Push
 - Gruppen-Einladungslink („Wer bist du?“), Geräte koppeln
