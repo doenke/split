@@ -372,7 +372,7 @@ gewünschten Zahlungswege:
 |---|---|---|
 | **PayPal** | `https://paypal.me/<name>/<betrag>EUR` – öffnet PayPal mit vorausgefülltem Betrag | gering, keine API nötig |
 | **SEPA-Überweisung (GiroCode / EPC-QR)** | QR-Code mit IBAN, Name, Betrag, Verwendungszweck – funktioniert mit fast allen Banking-Apps, inkl. Echtzeitüberweisung | gering |
-| **Wero** | Wero bietet derzeit keine offene API bzw. standardisierte Bezahl-Links für P2P an. Pragmatisch: Handynummer/E-Mail des Empfängers + Betrag anzeigen, „Kopieren“-Button, ggf. Deep-Link in die Wero-App, sobald verfügbar. ❓ Zum Implementierungszeitpunkt neu prüfen | gering bis unklar |
+| **Wero** | Es gibt kein öffentliches Format, mit dem eine fremde App Wero-Links oder -QR-Codes erzeugen kann. Der Empfänger erstellt deshalb **einmalig in seiner Banking-App einen offenen Wero-Zahlungslink** (ohne festen Betrag) und hinterlegt ihn im Profil. Split zeigt ihn als Button und QR-Code, daneben den Betrag mit Kopieren-Button. Fallback: Handynummer/E-Mail anzeigen | gering |
 | **Bar** | Nur als „bar bezahlt“ markieren | – |
 
 Ablauf: Zahler klickt „bezahlt“ → Ausgleich wird als *ausstehend* gebucht →
@@ -551,7 +551,7 @@ ANTHROPIC_API_KEY=***
 - Kassen (inkl. gruppenübergreifender Salden)
 - Merkmale & Profile
 - Nachzügler-Dialog, Teilnahmezeitraum
-- PayPal-Link, GiroCode, Wero-Hinweis
+- PayPal-Link, GiroCode, hinterlegter Wero-Zahlungslink
 - Beleg-Fotos
 
 **Phase 3 – Komfort**
@@ -588,4 +588,4 @@ ANTHROPIC_API_KEY=***
 
 ## 15. Offene Punkte ❓
 
-1. **Wero:** Zum Implementierungszeitpunkt prüfen, ob es Bezahl-Links/API gibt.
+1. **Wero:** Wenn EPI ein offenes Format für Wero-Links oder -QR-Codes mit Betrag veröffentlicht, nutzen wir es statt des hinterlegten Links.
