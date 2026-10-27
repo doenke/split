@@ -132,7 +132,8 @@ export async function prepareExpense(
 		throw e;
 	}
 	const attachmentIds = Array.isArray(input.attachmentIds) ? input.attachmentIds.filter((x) => typeof x === 'string').slice(0, 20) : [];
-	return { row, payers, attachmentIds };
+	const clientId = typeof input.clientId === 'string' && /^[\w-]{8,64}$/.test(input.clientId) ? input.clientId : null;
+	return { row, payers, attachmentIds, clientId };
 }
 
 export async function saveExpense(
@@ -141,6 +142,14 @@ export async function saveExpense(
 	prepared: Awaited<ReturnType<typeof prepareExpense>>,
 	existingId?: string
 ) {
+	if (!existingId && prepared.clientId) {
+		// already saved (offline sync retried, or the form was submitted twice)
+		const [dup] = await db
+			.select({ id: schema.expenses.id })
+			.from(schema.expenses)
+			.where(and(eq(schema.expenses.clientId, prepared.clientId), eq(schema.expenses.groupId, groupId)));
+		if (dup) return dup.id;
+	}
 	const id = existingId ?? newId();
 	await db.transaction(async (tx) => {
 		if (existingId) {
@@ -150,7 +159,7 @@ export async function saveExpense(
 				.where(eq(schema.expenses.id, existingId));
 			await tx.delete(schema.expensePayers).where(eq(schema.expensePayers.expenseId, existingId));
 		} else {
-			await tx.insert(schema.expenses).values({ ...prepared.row, id, groupId, createdBy: userId });
+			await tx.insert(schema.expenses).values({ ...prepared.row, id, groupId, createdBy: userId, clientId: prepared.clientId });
 		}
 		await tx.insert(schema.expensePayers).values(prepared.payers.map((p) => ({ ...p, expenseId: id })));
 		if (prepared.attachmentIds.length) {

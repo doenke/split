@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { formatAmount, formatDate } from '$lib/format';
+	import { onMount } from 'svelte';
+	import { preloadData } from '$app/navigation';
+	import { discardPending, flushPending, pendingExpenses, type PendingExpense } from '$lib/offline';
 
 	let { data } = $props();
 	const base = $derived(`/gruppen/${data.group.id}`);
@@ -10,6 +13,16 @@
 	const total = $derived(
 		data.expenses.reduce((s, e) => s + (e.type === 'income' ? -1 : 1) * (e.baseAmount - e.privateAmount), 0)
 	);
+
+	let pending = $state<PendingExpense[]>([]);
+	const loadPending = async () => (pending = await pendingExpenses(data.group.id));
+	onMount(() => {
+		loadPending();
+		// keep the form available offline
+		if (navigator.onLine) preloadData(`/gruppen/${data.group.id}/ausgaben/neu`).catch(() => {});
+		window.addEventListener('split:pending', loadPending);
+		return () => window.removeEventListener('split:pending', loadPending);
+	});
 
 	let query = $state('');
 	const filtered = $derived(
@@ -51,11 +64,33 @@
 	</a>
 </div>
 
+{#if pending.length}
+	<div class="list pending">
+		{#each pending as p (p.clientId)}
+			<div>
+				<span class="cat" style:background="#999">⏳</span>
+				<div class="grow">
+					<div class="ellipsis"><strong>{p.payload.title}</strong></div>
+					<div class="small {p.error ? 'error' : 'muted'}">{p.error ?? 'Noch nicht übertragen – wartet auf Verbindung'}</div>
+				</div>
+				<div class="right">
+					<div class="amount">{formatAmount(p.payload.amount, p.payload.currency)}</div>
+					{#if p.error}
+						<button class="link small danger" onclick={() => confirm('Verwerfen?') && discardPending(p.clientId)}>Verwerfen</button>
+					{:else}
+						<button class="link small" onclick={() => flushPending()}>Jetzt senden</button>
+					{/if}
+				</div>
+			</div>
+		{/each}
+	</div>
+{/if}
+
 {#if data.expenses.length > 8}
 	<input type="search" placeholder="Ausgaben durchsuchen …" bind:value={query} class="search" />
 {/if}
 
-{#if data.expenses.length === 0}
+{#if data.expenses.length === 0 && pending.length === 0}
 	<div class="card">
 		<p>Noch keine Ausgaben.</p>
 		<p class="muted small">Tippe auf <strong>+</strong>, um die erste Ausgabe einzutragen.</p>
@@ -107,6 +142,9 @@
 	}
 	.big {
 		font-size: 1.35rem;
+	}
+	.pending {
+		border-style: dashed;
 	}
 	.search {
 		margin-bottom: 1rem;

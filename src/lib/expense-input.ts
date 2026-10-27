@@ -15,6 +15,8 @@ export interface ExpenseInput {
 	rate: { source: 'auto' | 'manual' | 'charged'; value?: number; charged?: number };
 	period: { from: string; to: string; unit: 'days' | 'nights' } | null;
 	notes: string;
+	/** generated in the browser; the same id is never saved twice */
+	clientId?: string;
 	/** uploaded receipts to attach */
 	attachmentIds?: string[];
 }

@@ -1,9 +1,28 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
+	import { flushPending } from '$lib/offline';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, children } = $props();
+	let online = $state(true);
+
+	onMount(() => {
+		online = navigator.onLine;
+		const sync = async () => {
+			online = navigator.onLine;
+			if (online && data.user && (await flushPending()) > 0) await invalidateAll();
+		};
+		sync();
+		window.addEventListener('online', sync);
+		window.addEventListener('offline', sync);
+		return () => {
+			window.removeEventListener('online', sync);
+			window.removeEventListener('offline', sync);
+		};
+	});
 </script>
 
 <header>
@@ -23,6 +42,10 @@
 		{/if}
 	</div>
 </header>
+
+{#if !online}
+	<div class="offline">Offline – neue Ausgaben werden gespeichert und später übertragen.</div>
+{/if}
 
 <main class="container">
 	{@render children()}
@@ -57,6 +80,12 @@
 	}
 	.me {
 		display: flex;
+	}
+	.offline {
+		background: var(--warning-bg);
+		text-align: center;
+		font-size: 0.85rem;
+		padding: 0.4rem 1rem;
 	}
 	.nav {
 		display: flex;

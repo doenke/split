@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { queueExpense } from '$lib/offline';
 	import { computeShares, effectiveFactor } from '$lib/core/split';
 	import { amountToInput, convert, currencyDigits, formatAmount, parseAmount } from '$lib/core/currency';
 	import type { Member, SplitRule } from '$lib/core/types';
@@ -58,6 +60,11 @@
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
 	let attachmentIds = $state<string[]>([]);
+	// one id per form: retries and offline sync never create duplicates
+	const clientId =
+		typeof crypto !== 'undefined' && 'randomUUID' in crypto
+			? crypto.randomUUID()
+			: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 
 	// payers
 	let multiPayer = $state((init?.payers.length ?? 1) > 1);
@@ -256,6 +263,7 @@
 			},
 			period: showPeriod ? { from: periodFrom, to: periodTo, unit: periodUnit } : null,
 			notes,
+			clientId: init ? undefined : clientId,
 			attachmentIds: [...new Set([...attachmentIds, ...initialAttachmentIds.map((a) => a.id)])]
 		} satisfies ExpenseInput)
 	);
@@ -272,7 +280,13 @@
 <form
 	method="POST"
 	action="?/save"
-	use:enhance={() => {
+	use:enhance={({ cancel }) => {
+		// offline: keep the new expense on the device and send it later
+		if (!init && !navigator.onLine) {
+			cancel();
+			queueExpense(groupId, JSON.parse(payload)).then(() => goto(`/gruppen/${groupId}?offline=1`));
+			return;
+		}
 		submitting = true;
 		return async ({ update }) => {
 			await update({ reset: false });
@@ -320,6 +334,8 @@
 							1 {currency} = {autoRate.rate.toLocaleString('de-DE', { maximumFractionDigits: 5 })} {baseCurrency}
 							(EZB, {autoRate.rateDate}){#if autoRate.provisional} · <strong>vorläufig</strong>{/if}
 						</p>
+					{:else if rateError && typeof navigator !== 'undefined' && !navigator.onLine}
+						<p class="hint">Offline – der Tageskurs wird bei der Übertragung ermittelt.</p>
 					{:else if rateError}
 						<p class="hint error">{rateError}</p>
 					{/if}

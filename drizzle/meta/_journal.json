@@ -50,6 +50,13 @@
       "when": 1793137513906,
       "tag": "0006_push",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793137753825,
+      "tag": "0007_client_id",
+      "breakpoints": true
     }
   ]
 }
