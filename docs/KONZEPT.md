@@ -1,7 +1,7 @@
 # Konzept: Split – Kosten in Gruppen fair aufteilen
 
-> Status: **Entwurf v0.1** – Grundlage für Diskussion, noch keine Implementierung.
-> Offene Fragen sind mit ❓ markiert und am Ende gesammelt.
+> Status: **Entwurf v0.2** – Grundlage für Diskussion, noch keine Implementierung.
+> Entscheidungen stehen in Kapitel 14, offene Fragen (❓) in Kapitel 15.
 
 ---
 
@@ -119,11 +119,16 @@ Legt ein Organisator versehentlich eine zweite „Anna“ an, gibt es eine
 | Aktion | OIDC-Nutzer | Gast | Platzhalter |
 |---|---|---|---|
 | Gruppe anlegen | ✅ | ❌ | – |
-| Gruppe verwalten (Mitglieder, Profile, Einstellungen) | ✅ wenn Gruppenadmin | ✅ wenn zum Admin ernannt ❓ | – |
+| Gruppe verwalten (Mitglieder, Profile, Einstellungen) | ✅ wenn Gruppenadmin | ✅ wenn zum Gruppenadmin ernannt | – |
 | Ausgaben erfassen | ✅ | ✅ | über andere |
 | Fremde Ausgaben bearbeiten | konfigurierbar pro Gruppe: *alle* / *nur Ersteller + Admins* | | |
-| Personen hinzufügen | ✅ | konfigurierbar | – |
-| Platzhalter verwalten (z.B. eigene Kinder) | ✅ | ✅ für Personen der eigenen Kasse | – |
+| Personen hinzufügen | ✅ | ✅ (pro Gruppe abschaltbar) | – |
+| Kassen anlegen & verwalten | ✅ | ✅ | – |
+| Platzhalter verwalten (z.B. eigene Kinder) | ✅ | ✅ für Personen der eigenen Kassen | – |
+
+Der Ersteller einer Gruppe ist automatisch Gruppenadmin und kann weitere
+Personen – auch Gäste – zu Gruppenadmins ernennen. Das **Anlegen** neuer
+Gruppen bleibt OIDC-Nutzern vorbehalten.
 
 Instanzweit gibt es zusätzlich einen **Instanz-Admin** (über OIDC-Gruppe/Claim
 festgelegt), der z.B. die OIDC-Nutzer sieht und die Instanz konfiguriert.
@@ -143,7 +148,7 @@ Eine **Mitgliedschaft** hat:
 - **Standard-Faktor** (Default `1.0`, z.B. Kind `0.5`, Kleinkind `0`)
 - **Merkmale** (`Kind`, `Erwachsen`, `Vegetarier`, …)
 - **Teilnahmezeitraum** (optional `von` / `bis`) – z.B. „kommt erst Dienstag nach“
-- **Kasse** in dieser Gruppe (siehe Kapitel 7)
+- **Kasse** in dieser Gruppe – genau eine, gewählt aus den Kassen der Person (siehe Kapitel 7)
 
 ### Nachzügler
 
@@ -154,6 +159,9 @@ Wenn eine Person zu einer Gruppe hinzugefügt wird, die schon Ausgaben hat, frag
 > ○ Erst ab heute
 > ○ Ab Datum: [__]
 > ○ Einzeln auswählen …
+
+**Default ist „an allen beteiligen“** – wer die Frage einfach bestätigt, wird an
+allen bisherigen „Alle“-/„Alle außer“-Ausgaben beteiligt.
 
 Technisch wird dabei nur der `teilnahme_von`-Zeitpunkt gesetzt (bzw. bei
 „einzeln auswählen“ die betroffenen Ausgaben angepasst). Weil Ausgaben Regeln
@@ -270,20 +278,35 @@ typischerweise eine Familie oder ein Paar. Die Kasse ist **global**, d.h. die
 „Kasse Familie Jacobs“ existiert unabhängig von Gruppen und wird in jeder Gruppe
 verwendet, in der Familienmitglieder vorkommen.
 
-- Jede Person hat implizit eine **Einzelkasse**, solange sie keiner gemeinsamen
-  Kasse angehört.
-- Eine Person gehört standardmäßig zu genau **einer** Kasse.
-  Pro Gruppe kann das überschrieben werden (z.B. Patchwork: Kind ist bei der
-  Reise mit Papa in dessen Kasse, bei der Reise mit Mama in ihrer). ❓
-- Kassen haben Verwalter (Personen mit Login), die Platzhalter der Kasse pflegen dürfen.
+- Jede Person hat immer eine implizite **Einzelkasse**.
+- Eine Person kann **mehreren Kassen** angehören (z.B. Patchwork: Kind ist in
+  der Kasse von Papa *und* in der von Mama; oder jemand ist in „Familie“ und
+  in „WG“).
+- **Pro Gruppe gilt genau eine Kasse je Person.** Sie wird beim Beitritt
+  festgelegt:
+  - gehört die Person nur ihrer Einzelkasse → Einzelkasse
+  - gehört sie genau einer gemeinsamen Kasse → diese wird vorausgewählt
+  - mehrere gemeinsame Kassen → Auswahl beim Hinzufügen; hat die Person eine
+    **bevorzugte Kasse** markiert, wird diese vorausgewählt. Zusätzlich schlägt
+    die App die Kasse vor, die in der Gruppe schon von anderen Kassenmitgliedern
+    genutzt wird (Lea wird zusammen mit Papa hinzugefügt → Kasse „Papa & Kinder“).
+- Ein Wechsel der Kasse innerhalb einer Gruppe ist möglich, verschiebt aber
+  Salden (Vorschau wie in 5.5).
+- **Kassen dürfen alle angemeldeten Personen anlegen** – OIDC-Nutzer und Gäste.
+  Der Ersteller ist Verwalter und kann weitere Verwalter ernennen, Personen
+  einladen und Platzhalter (z.B. Kinder) anlegen und pflegen.
 
 ### 7.2 Salden
 
 ```
 Saldo(Person, Gruppe) = bezahlt − Anteil − erhaltene Ausgleiche + geleistete Ausgleiche
-Saldo(Kasse, Gruppe)  = Σ Saldo(Person, Gruppe) aller Kassenmitglieder
+Saldo(Kasse, Gruppe)  = Σ Saldo(Person, Gruppe) aller Personen, deren
+                        Mitgliedschaft in dieser Gruppe auf diese Kasse zeigt
 Saldo(Kasse, gesamt)  = Σ Saldo(Kasse, Gruppe) über alle Gruppen
 ```
+
+Weil pro Gruppe jede Person genau einer Kasse zugeordnet ist, wird kein Betrag
+doppelt gezählt – auch wenn die Person global mehreren Kassen angehört.
 
 Innerhalb einer Kasse ist egal, *wer* bezahlt hat – Anna zahlt fürs Essen,
 Ben fürs Tanken, das ist familienintern. Nach außen zählt nur die Kasse.
@@ -304,12 +327,11 @@ Optional kann man in die Kasse „hineinzoomen“, um interne Salden zu sehen
   - **Datenschutz:** Gruppenübergreifende Salden sehen nur Mitglieder der
     beteiligten Kassen; Mitglieder einer Gruppe sehen keine Ausgaben anderer Gruppen.
 
-### 7.4 Abgrenzung: „Gemeinsamer Topf“ ❓
+### 7.4 Nicht geplant: „Gemeinsamer Topf“
 
-Häufig gewünscht auf Reisen: Alle zahlen 100 € in eine Reisekasse, daraus wird
-bezahlt. Das ist etwas anderes als die Familien-Kasse. Vorschlag: als eigener
-„Zahler“ vom Typ **Topf** modellieren (Einzahlungen = Ausgleich an den Topf,
-Ausgaben „bezahlt vom Topf“). → Kandidat für eine spätere Phase.
+Eine Reisekasse, in die alle einzahlen und aus der bezahlt wird, ist **nicht
+vorgesehen**. Falls sie später doch gebraucht wird, ließe sie sich als
+eigener Zahler-Typ „Topf“ nachrüsten, ohne das Datenmodell umzubauen.
 
 ---
 
@@ -344,11 +366,18 @@ unverhältnismäßig aufwändig und wird nicht angestrebt.
 Erkannt werden sollen: **Händler, Datum, Gesamtbetrag, Währung** und optional
 die **einzelnen Positionen**.
 
-Konfigurierbare Engines (Datenschutz!):
+**Standard ist ein Vision-LLM via API (Claude).** Das ist die eleganteste
+Lösung: keine lokale Hardware, sehr gute Erkennung auch von Positionen, und
+die Ausgabe kommt direkt als strukturiertes JSON (Händler, Datum, Summe,
+Positionen, Kategorie- und Profilvorschläge). Der Bon wird dafür an die API
+übertragen; das wird in der App transparent angezeigt.
+
+Die Engine bleibt austauschbar (Interface), damit später bei Bedarf eine
+lokale Alternative ergänzt werden kann:
 
 | Engine | Qualität | Datenschutz | Hardware |
 |---|---|---|---|
-| **Vision-LLM via API** (z.B. Claude) | sehr gut, auch Positionen | Bild verlässt den Server | keine |
+| **Vision-LLM via API** (Claude) – *Standard* | sehr gut, auch Positionen | Bild verlässt den Server | keine |
 | **Lokales Vision-LLM** (z.B. via Ollama) | gut | bleibt lokal | GPU empfohlen |
 | **Klassische OCR** (Tesseract/PaddleOCR) + Heuristik | ok für Summe/Datum | bleibt lokal | gering |
 | **Aus** | – | – | – |
@@ -408,12 +437,14 @@ Credential        (id, person_id, typ: oidc|passkey|device_token, subject/public
 InviteToken       (id, person_id?|group_id?, typ: personal|group, expires_at, used_at)
 
 Group             (id, name, emoji/bild, basiswaehrung, von?, bis?, status, settings)
-Membership        (group_id, person_id, rolle, faktor, teilnahme_von?, teilnahme_bis?, kasse_override_id?)
+Membership        (group_id, person_id, rolle, faktor, teilnahme_von?, teilnahme_bis?, kasse_id)
+                  -- kasse_id: genau eine Kasse pro Person und Gruppe; muss eine Kasse der Person sein
 Tag               (id, group_id, name)               -- „Kind“, „Erwachsen“ …
 MembershipTag     (membership_id, tag_id)
 
-Kasse             (id, name, avatar)                 -- global
-KassenMitglied    (kasse_id, person_id, verwalter: bool)
+Kasse             (id, name, avatar, einzelkasse: bool, erstellt_von)   -- global
+KassenMitglied    (kasse_id, person_id, verwalter: bool, bevorzugt: bool)
+                  -- eine Person kann in mehreren Kassen sein
 
 Category          (id, group_id?, name, icon, farbe) -- group_id NULL = Standard
 Profile           (id, group_id, name, icon, regel_json, default_category_id?)
@@ -444,17 +475,19 @@ Beispiel `regel_json`:
 
 ---
 
-## 12. Technik (Vorschlag)
+## 12. Technik
 
-| Bereich | Vorschlag | Begründung |
+Es gibt keine Vorgaben zum Stack – festgelegt wird:
+
+| Bereich | Entscheidung | Begründung |
 |---|---|---|
-| Frontend + Backend | **SvelteKit** (TypeScript), alternativ Next.js | eine Codebasis, SSR, sehr gute PWA-Unterstützung, schlank |
+| Frontend + Backend | **SvelteKit** (TypeScript) | eine Codebasis, SSR, sehr gute PWA-Unterstützung, schlank |
 | Datenbank | **PostgreSQL**, optional SQLite für Mini-Installationen | Transaktionen, JSON-Felder |
 | ORM | Drizzle | typsicher, Migrationen |
 | OIDC | `openid-client` | Standard, PKCE |
 | Passkeys | SimpleWebAuthn | etablierte WebAuthn-Bibliothek |
 | PWA | Service Worker, Web App Manifest, Web Push (VAPID) | Installierbar, offline |
-| OCR | austauschbares Interface, Engines siehe Kap. 9 | Datenschutz-Wahlfreiheit |
+| Bon-Erkennung | Claude Vision via Anthropic SDK, hinter austauschbarem Interface | beste Qualität ohne lokale Hardware |
 | Betrieb | **ein Docker-Image** + `docker-compose.yml` (App + Postgres), Konfiguration per ENV | einfach selbst zu hosten, hinter Reverse Proxy |
 
 Wichtige Prinzipien:
@@ -472,7 +505,7 @@ OIDC_ISSUER=https://auth.example.de/application/o/split/
 OIDC_CLIENT_ID=split
 OIDC_CLIENT_SECRET=***
 OIDC_ADMIN_GROUP=split-admins
-RECEIPT_OCR_ENGINE=anthropic   # none | tesseract | ollama | anthropic
+RECEIPT_OCR_ENGINE=anthropic   # anthropic (Standard) | none – weitere Engines später
 ANTHROPIC_API_KEY=***
 ```
 
@@ -502,24 +535,22 @@ ANTHROPIC_API_KEY=***
 
 ---
 
-## 14. Offene Fragen ❓
+## 14. Entscheidungen
 
-1. **Gäste als Admins:** Darf ein Gast (ohne OIDC) Gruppen *verwalten*, wenn ein
-   OIDC-Nutzer ihn dazu ernennt? Oder bleibt Verwaltung OIDC-Nutzern vorbehalten?
-2. **Nachzügler-Default:** Soll eine neu hinzugefügte Person standardmäßig an
-   allen bisherigen „Alle“-Ausgaben beteiligt werden, oder erst ab Beitritt?
-3. **Kassen-Zugehörigkeit:** Reicht „eine Person = eine Kasse“ mit Override pro
-   Gruppe, oder gibt es Fälle, in denen eine Person gleichzeitig in mehreren Kassen ist?
-4. **Wer darf Kassen anlegen / Personen hinzufügen?** Kann Anna (Gast) selbst
-   „Familie Müller“ anlegen und ihre Kinder dort eintragen?
-5. **Gemeinsamer Topf** (Reisekasse zum Einzahlen) – gewünscht? Wenn ja, in welcher Phase?
-6. **Fremdwährungen** schon im MVP?
-7. **OCR-Engine:** Ist es okay, Bon-Fotos an eine externe KI-API zu schicken,
-   oder soll es primär lokal laufen?
-8. **Mehrere OIDC-Provider** oder genau einer?
-9. **Sichtbarkeit:** Sieht jedes Gruppenmitglied alle Ausgaben und alle Salden,
+| # | Thema | Entscheidung |
+|---|---|---|
+| E1 | Nachzügler | Neue Personen werden standardmäßig an **allen** bisherigen „Alle“-Ausgaben beteiligt |
+| E2 | Kassen-Zugehörigkeit | Eine Person kann in **mehreren Kassen** sein, pro Gruppe aber genau **einer** zugeordnet |
+| E3 | Rechte von Gästen | Gäste dürfen Kassen anlegen, Personen hinzufügen und – wenn ernannt – Gruppen verwalten. Gruppen *anlegen* bleibt OIDC-Nutzern vorbehalten |
+| E4 | Gemeinsamer Topf | Nicht geplant |
+| E5 | Bon-Erkennung | Externe KI-API (Claude Vision) als Standard |
+| E6 | Tech-Stack | Keine Vorgaben → SvelteKit + PostgreSQL + Docker |
+
+## 15. Offene Fragen ❓
+
+1. **Fremdwährungen** schon im MVP?
+2. **Mehrere OIDC-Provider** oder genau einer?
+3. **Sichtbarkeit:** Sieht jedes Gruppenmitglied alle Ausgaben und alle Salden,
    oder nur die eigenen?
-10. **Instanzgröße:** Familie & Freunde (≤ 50 Personen) oder auch größere Vereine?
-    Beeinflusst SQLite vs. Postgres und Performance-Überlegungen.
-11. **Tech-Stack:** Gibt es Präferenzen (Sprache/Framework), z.B. weil du den Code
-    selbst warten möchtest?
+4. **Instanzgröße:** Familie & Freunde (≤ 50 Personen) oder auch größere Vereine?
+5. **Wero:** Zum Implementierungszeitpunkt prüfen, ob es Bezahl-Links/API gibt.
