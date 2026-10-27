@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
+	import PushToggle from '$lib/components/PushToggle.svelte';
 	import { formatDate } from '$lib/format';
 
 	let { data, form } = $props();
@@ -56,6 +57,12 @@
 		<p class="notice small">Du hast noch keinen Passkey. Ohne Passkey bist du nur auf diesem Gerät angemeldet.</p>
 	{/if}
 	<PasskeySetup ondone={() => invalidateAll()} />
+</div>
+
+<div class="card">
+	<h2>Benachrichtigungen</h2>
+	<p class="small muted">Z.B. wenn jemand eine Ausgabe einträgt, dir Geld überweist oder dich an eine Zahlung erinnert. Einzelne Gruppen kannst du in deren Einstellungen stummschalten.</p>
+	<PushToggle />
 </div>
 
 <form method="POST" action="?/savePayment" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>

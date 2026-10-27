@@ -71,3 +71,34 @@ sw.addEventListener('fetch', (event) => {
 		})()
 	);
 });
+
+sw.addEventListener('push', (event) => {
+	const data = (() => {
+		try {
+			return event.data?.json() ?? {};
+		} catch {
+			return { title: 'Split', body: event.data?.text() };
+		}
+	})();
+	event.waitUntil(
+		sw.registration.showNotification(data.title ?? 'Split', {
+			body: data.body,
+			icon: '/icon-192.png',
+			badge: '/icon-192.png',
+			tag: data.tag,
+			data: { url: data.url ?? '/' }
+		})
+	);
+});
+
+sw.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const url = new URL(event.notification.data?.url ?? '/', location.origin).href;
+	event.waitUntil(
+		sw.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+			const open = windows.find((w) => w.url.startsWith(location.origin));
+			if (open) return open.navigate(url).then((w) => w?.focus());
+			return sw.clients.openWindow(url);
+		})
+	);
+});

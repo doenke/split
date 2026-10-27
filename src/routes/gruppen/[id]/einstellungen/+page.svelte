@@ -23,7 +23,8 @@
 		'group.restore': 'hat die Gruppe wiederhergestellt',
 		'group.link': 'hat einen Gruppenlink erstellt',
 		'group.close': 'hat die Abrechnung abgeschlossen',
-		'group.reopen': 'hat die Abrechnung wieder geöffnet'
+		'group.reopen': 'hat die Abrechnung wieder geöffnet',
+		'settlement.remind': 'hat an eine Zahlung erinnert'
 	};
 </script>
 
@@ -83,6 +84,11 @@
 {/if}
 
 <a class="button full" href="/gruppen/{data.group.id}/profile" style="margin-bottom: 1rem">🏷️ Ausgaben-Profile ({data.profiles.length})</a>
+
+<form method="POST" action="?/toggleMute" class="card row" use:enhance>
+	<span class="grow">{data.muted ? '🔕 Benachrichtigungen für diese Gruppe sind aus' : '🔔 Benachrichtigungen für diese Gruppe sind an'}</span>
+	<button>{data.muted ? 'Einschalten' : 'Stummschalten'}</button>
+</form>
 
 <div class="card">
 	<h2>Abrechnung & Export</h2>

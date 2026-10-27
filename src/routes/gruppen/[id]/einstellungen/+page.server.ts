@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { requireGroup, requireGroupAdmin } from '$lib/server/groups';
 import { audit } from '$lib/server/audit';
@@ -7,13 +7,13 @@ import { closeUntil, reopen } from '$lib/server/closing';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	await requireGroup(params.id, locals.user);
+	const g = await requireGroup(params.id, locals.user);
 	const log = await db
 		.select()
 		.from(schema.auditLog)
 		.where(eq(schema.auditLog.groupId, params.id))
 		.orderBy(schema.auditLog.createdAt);
-	return { log: log.slice(-30).reverse() };
+	return { log: log.slice(-30).reverse(), muted: g.membership.muted };
 };
 
 export const actions: Actions = {
@@ -36,6 +36,14 @@ export const actions: Actions = {
 			.where(eq(schema.groups.id, params.id));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.update', entityId: params.id });
 		return { saved: true };
+	},
+	toggleMute: async ({ params, locals }) => {
+		const g = await requireGroup(params.id, locals.user);
+		await db
+			.update(schema.memberships)
+			.set({ muted: !g.membership.muted })
+			.where(and(eq(schema.memberships.groupId, params.id), eq(schema.memberships.personId, g.user.id)));
+		return { muted: !g.membership.muted };
 	},
 	close: async ({ params, locals, request }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);

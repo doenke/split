@@ -5,6 +5,8 @@ import { requireGroup, loadMembers, loadProfiles } from '$lib/server/groups';
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { isClosed } from '$lib/server/closing';
+import { groupRecipients, notify } from '$lib/server/push';
+import { formatAmount } from '$lib/core/currency';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent, url }) => {
@@ -42,7 +44,14 @@ export const actions: Actions = {
 		if (isClosed(g.group, prepared.row.date)) {
 			return fail(400, { message: `Die Abrechnung ist bis ${g.group.closedUntil} abgeschlossen. Wähle ein späteres Datum oder öffne die Abrechnung wieder.` });
 		}
-		await saveExpense(params.id, g.user.id, prepared);
+		const expenseId = await saveExpense(params.id, g.user.id, prepared);
+		void groupRecipients(params.id, g.user.id).then((ids) =>
+			notify(ids, {
+				title: `${g.group.emoji} ${g.group.name}`,
+				body: `${g.user.name}: ${prepared.row.title} – ${formatAmount(prepared.row.amount, prepared.row.currency)}`,
+				url: `/gruppen/${params.id}/ausgaben/${expenseId}`
+			})
+		);
 		redirect(303, `/gruppen/${params.id}`);
 	}
 };

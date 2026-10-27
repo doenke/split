@@ -8,7 +8,12 @@ import { audit } from '$lib/server/audit';
 import { parseAmount } from '$lib/core/currency';
 import { today } from '$lib/format';
 import { epcPayload, formatIban, paypalLink } from '$lib/core/payment';
+import { formatAmount } from '$lib/core/currency';
+import { kasseRecipients, notify } from '$lib/server/push';
+import { gt } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
+
+const REMINDER_HOURS = 24;
 
 /** Payment options for the transfers the current user has to make. */
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -79,6 +84,16 @@ export const actions: Actions = {
 			createdBy: g.user.id
 		});
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'settlement.create', entityId: id, data: { from, to, amount } });
+		const money = formatAmount(amount, g.group.baseCurrency);
+		const url = `/gruppen/${params.id}/salden`;
+		const title = `${g.group.emoji} ${g.group.name}`;
+		if (confirmed) {
+			void kasseRecipients(params.id, from, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat ${money} von dir erhalten. Danke!`, url }));
+		} else {
+			void kasseRecipients(params.id, to, g.user.id).then((ids) =>
+				notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt – bitte den Eingang bestätigen.`, url })
+			);
+		}
 		return { ok: true };
 	},
 	confirm: async ({ params, locals, request }) => {
@@ -92,7 +107,45 @@ export const actions: Actions = {
 		if (s.toKasseId !== g.membership.kasseId && !g.isAdmin) error(403, 'Nur der Empfänger kann bestätigen.');
 		await db.update(schema.settlements).set({ status: 'confirmed', confirmedAt: new Date() }).where(eq(schema.settlements.id, id));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'settlement.confirm', entityId: id });
+		void kasseRecipients(params.id, s.fromKasseId, g.user.id).then((ids) =>
+			notify(ids, {
+				title: `${g.group.emoji} ${g.group.name}`,
+				body: `${g.user.name} hat deine Zahlung über ${formatAmount(s.amount, g.group.baseCurrency)} bestätigt.`,
+				url: `/gruppen/${params.id}/salden`
+			})
+		);
 		return { ok: true };
+	},
+	/** The receiver reminds the payer of an open transfer (at most once a day). */
+	remind: async ({ params, locals, request }) => {
+		const g = await requireGroup(params.id, locals.user);
+		const from = String((await request.formData()).get('from'));
+		const state = await loadGroupState(params.id);
+		const t = state.transfers.find((x) => x.from === from && x.to === g.membership.kasseId);
+		if (!t) return fail(400, { message: 'Diese Zahlung ist nicht mehr offen.' });
+		const key = `${from}|${t.to}`;
+		const [recent] = await db
+			.select({ id: schema.auditLog.id })
+			.from(schema.auditLog)
+			.where(
+				and(
+					eq(schema.auditLog.groupId, params.id),
+					eq(schema.auditLog.action, 'settlement.remind'),
+					eq(schema.auditLog.entityId, key),
+					gt(schema.auditLog.createdAt, new Date(Date.now() - REMINDER_HOURS * 3_600_000))
+				)
+			)
+			.limit(1);
+		if (recent) return fail(400, { message: 'Es wurde heute schon erinnert.' });
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'settlement.remind', entityId: key });
+		const ids = await kasseRecipients(params.id, from, g.user.id);
+		await notify(ids, {
+			title: `${g.group.emoji} ${g.group.name}`,
+			body: `Erinnerung von ${g.user.name}: noch ${formatAmount(t.amount, g.group.baseCurrency)} offen.`,
+			url: `/gruppen/${params.id}/salden`,
+			tag: `remind-${key}`
+		});
+		return { reminded: from };
 	},
 	delete: async ({ params, locals, request }) => {
 		const g = await requireGroup(params.id, locals.user);

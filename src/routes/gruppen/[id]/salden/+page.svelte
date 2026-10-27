@@ -63,6 +63,12 @@
 					<strong>{kasseName(t.from)}</strong> → <strong>{kasseName(t.to)}</strong>
 				</div>
 				<span class="amount">{formatAmount(t.amount, currency)}</span>
+				{#if t.to === data.myKasseId}
+					<form method="POST" action="?/remind" use:enhance>
+						<input type="hidden" name="from" value={t.from} />
+						<button class="small-btn" title="Per Benachrichtigung erinnern">{form && 'reminded' in form && form.reminded === t.from ? '✔' : '🔔'}</button>
+					</form>
+				{/if}
 				{#if t.from === data.myKasseId}
 					<button class="small-btn primary" onclick={() => (paying = paying === t.from + '|' + t.to ? null : t.from + '|' + t.to)}>Bezahlen</button>
 				{/if}

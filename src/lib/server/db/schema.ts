@@ -148,6 +148,8 @@ export const memberships = pgTable(
 		kasseId: text('kasse_id')
 			.notNull()
 			.references(() => kassen.id),
+		/** no push notifications for this group */
+		muted: boolean('muted').notNull().default(false),
 		joinedAt: createdAt()
 	},
 	(t) => [primaryKey({ columns: [t.groupId, t.personId] }), index('memberships_person').on(t.personId)]
@@ -316,3 +318,21 @@ export const attachments = pgTable(
 	},
 	(t) => [index('attachments_expense').on(t.expenseId)]
 );
+
+/** Instance-wide settings generated at runtime (e.g. VAPID keys). */
+export const appSettings = pgTable('app_settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull()
+});
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+	id: id(),
+	personId: text('person_id')
+		.notNull()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	endpoint: text('endpoint').notNull().unique(),
+	p256dh: text('p256dh').notNull(),
+	auth: text('auth').notNull(),
+	label: text('label'),
+	createdAt: createdAt()
+});
