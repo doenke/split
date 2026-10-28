@@ -262,14 +262,10 @@ button:disabled {
 	padding: 0;
 	box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
 }
-.fab.secondary {
+.fab.camera {
+	/* same look as the plus button, placed to its left */
 	right: calc(max(1rem, calc(50vw - 360px + 1rem)) + 72px);
-	width: 52px;
-	height: 52px;
-	bottom: calc(1.5rem + env(safe-area-inset-bottom));
-	font-size: 1.5rem;
-	background: var(--surface);
-	border: 1px solid var(--border);
+	font-size: 1.6rem;
 	cursor: pointer;
 	margin: 0;
 }

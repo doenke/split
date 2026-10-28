@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.15.1
+- Kamera-Button sieht jetzt genauso aus wie der Plus-Button (gleiche Größe und Farbe)
+
 ## 0.15.0
 - „📲 Als App installieren“: auf der Startseite (lässt sich mit „Nicht jetzt“ ausblenden) und im Profil unter „App“.
   Android/Chrome/Edge öffnen direkt den Installationsdialog, auf dem iPhone erklärt der Knopf den Weg über

@@ -227,7 +227,7 @@
 {/each}
 
 {#if data.group.status === 'active'}
-	<label class="button fab secondary" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
+	<label class="button primary fab camera" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
 		{snapping ? '…' : '📷'}
 		<!-- while the camera is open, a pending update must not reload the page (the photo would be lost) -->
 		<input
