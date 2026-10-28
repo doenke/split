@@ -5,13 +5,15 @@
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { flushPending } from '$lib/offline';
+	import { isBusy } from '$lib/busy';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, children } = $props();
 	let online = $state(true);
 
 	// pages where a reload could throw away what the user is typing
-	const editing = () => /\/(neu|ausgaben\/[^/]+)$/.test(location.pathname) || document.querySelector('form :focus') !== null;
+	const editing = () =>
+		isBusy() || /\/(neu|ausgaben\/[^/]+)$/.test(location.pathname) || document.querySelector('form :focus') !== null;
 
 	onMount(() => {
 		// a new server version: reload as soon as it doesn't disturb

@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { and, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, count, eq, isNotNull, isNull } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { audit } from '$lib/server/audit';
 import { db, schema } from '$lib/server/db';
@@ -19,6 +19,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		rows.map(async ({ group, kasseId }) => {
 			const state = await loadGroupState(group.id);
 			const kasse = state.balances.kassen.get(kasseId);
+			const [{ drafts }] = await db
+				.select({ drafts: count() })
+				.from(schema.expenses)
+				.where(and(eq(schema.expenses.groupId, group.id), eq(schema.expenses.status, 'draft'), isNull(schema.expenses.deletedAt)));
 			return {
 				id: group.id,
 				name: group.name,
@@ -27,6 +31,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				currency: group.baseCurrency,
 				startDate: group.startDate,
 				memberCount: state.members.length,
+				drafts,
 				myBalance: kasse?.balance ?? 0,
 				lastActivity: state.expenses[0]?.date ?? group.createdAt.toISOString().slice(0, 10)
 			};

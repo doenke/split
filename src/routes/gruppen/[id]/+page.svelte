@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { uploadErrorMessage } from '$lib/upload-error';
+	import { clearBusy, markBusy } from '$lib/busy';
 	import { formatAmount, formatDate } from '$lib/format';
 	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { onMount } from 'svelte';
@@ -36,7 +37,7 @@
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		input.value = '';
-		if (!file) return;
+		if (!file) return clearBusy();
 		snapping = true;
 		snapMessage = null;
 		try {
@@ -51,6 +52,7 @@
 			snapMessage = navigator.onLine ? (err as Error).message : 'Offline – bitte später erneut fotografieren.';
 		} finally {
 			snapping = false;
+			clearBusy();
 		}
 	}
 	const cur = (e: { amount: number; currency: string }) => formatAmount(e.amount, e.currency);
@@ -227,7 +229,17 @@
 {#if data.group.status === 'active'}
 	<label class="button fab secondary" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
 		{snapping ? '…' : '📷'}
-		<input type="file" accept="image/*" capture="environment" hidden onchange={snap} disabled={snapping} />
+		<!-- while the camera is open, a pending update must not reload the page (the photo would be lost) -->
+		<input
+			type="file"
+			accept="image/*"
+			capture="environment"
+			hidden
+			onclick={() => markBusy()}
+			oncancel={clearBusy}
+			onchange={snap}
+			disabled={snapping}
+		/>
 	</label>
 	<a class="button primary fab" href="{base}/ausgaben/neu" aria-label="Neue Ausgabe">+</a>
 {/if}

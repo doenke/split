@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.14.1
+- Kamera: Kam beim Zurückkehren aus der Kamera gerade eine neue Server-Version, lud die App neu und das Foto ging
+  verloren. Solange Kamera oder Dateiauswahl offen sind, wartet das Neuladen jetzt
+- Startseite: Gruppen zeigen die Zahl der vorbereiteten Ausgaben („📷 1 vorbereitet“)
+
 ## 0.14.0
 - Docker: der Container setzt beim Start die Rechte des Upload-Ordners selbst (z.B. bei Bind-Mounts, die root gehören)
   und läuft danach als Benutzer `node` – vorher scheiterten Fotos dann mit „Internal Error“

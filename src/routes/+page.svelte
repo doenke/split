@@ -30,7 +30,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{g.memberCount} Personen{#if g.status === 'archived'} · archiviert{/if}
+						{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}{#if g.status === 'archived'} · archiviert{/if}
 					</div>
 				</div>
 				<div class="right">

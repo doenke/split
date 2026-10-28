@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { shrinkImage as shrink } from '$lib/image';
 	import { uploadErrorMessage } from '$lib/upload-error';
+	import { clearBusy, markBusy } from '$lib/busy';
 	let {
 		groupId,
 		existing = [],
@@ -53,8 +54,12 @@
 
 	async function onChange(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
-		for (const f of input.files ?? []) await upload(f);
-		input.value = '';
+		try {
+			for (const f of input.files ?? []) await upload(f);
+		} finally {
+			input.value = '';
+			clearBusy();
+		}
 	}
 </script>
 
@@ -71,7 +76,7 @@
 		</div>
 	{/each}
 	<label class="add" class:busy>
-		<input type="file" accept="image/*,application/pdf" multiple onchange={onChange} disabled={busy} />
+		<input type="file" accept="image/*,application/pdf" multiple onclick={() => markBusy()} oncancel={clearBusy} onchange={onChange} disabled={busy} />
 		<span>{busy ? '…' : '📷'}</span>
 		<span class="small">{busy ? 'Lädt' : 'Beleg'}</span>
 	</label>
