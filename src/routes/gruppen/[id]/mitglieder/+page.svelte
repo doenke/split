@@ -21,6 +21,7 @@
 		personId === data.user?.id ||
 		(data.kassenByPerson[personId] ?? []).some((k) => data.managedKassen.includes(k.id));
 	let join = $state<'all' | 'today' | 'date'>('all');
+	let addCount = $state(0);
 	let editing = $state<string | null>(null);
 	let copied = $state(false);
 
@@ -111,7 +112,11 @@
 		use:enhance={() =>
 			async ({ result, update }) => {
 				await update();
-				if (result.type === 'success') join = 'all';
+				if (result.type === 'success') {
+					join = 'all';
+					// fresh tag selection for the next person
+					addCount++;
+				}
 			}}
 	>
 		{#if data.known.length || data.myKassen.length}
@@ -155,7 +160,7 @@
 			</div>
 			<div class="field">
 				<span class="label">Merkmale</span>
-				<TagInput value={[DEFAULT_TAG]} suggestions={tagSuggestions} />
+				{#key addCount}<TagInput value={[DEFAULT_TAG]} suggestions={tagSuggestions} />{/key}
 				<p class="hint">Profile wie „Alkohol“ nutzen Merkmale, z.B. werden Personen mit „Kind“ dort nicht beteiligt.</p>
 			</div>
 		{/if}

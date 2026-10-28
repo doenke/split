@@ -82,11 +82,51 @@
 	const initRule = init?.rule;
 	let mode = $state<Mode>(initRule?.type ?? 'all');
 	let profileId = $state<string | null>(init?.profileId ?? null);
+
+	// quick split by tag: "nur Kinder", "nur Erwachsene" (= everyone without "Kind") or any other tag
+	const KID = 'Kind';
+	type TagChoice = { kind: 'require'; tag: string } | { kind: 'adults' };
+	const initTag = ((): TagChoice | null => {
+		if (initRule?.type !== 'all' || init?.profileId || initRule.factorOverrides) return null;
+		const f = initRule.tagFilter;
+		if (f?.require?.length === 1 && !f.exclude?.length) return { kind: 'require', tag: f.require[0] };
+		if (f?.exclude?.length === 1 && f.exclude[0] === KID && !f.require?.length) return { kind: 'adults' };
+		return null;
+	})();
+	let tagChoice = $state<TagChoice | null>(initTag);
+	const sameTag = (a: TagChoice | null, b: TagChoice) =>
+		!!a && a.kind === b.kind && (a.kind === 'adults' || a.tag === (b as { tag: string }).tag);
+	function chooseTag(t: TagChoice) {
+		if (sameTag(tagChoice, t)) {
+			tagChoice = null;
+			return;
+		}
+		tagChoice = t;
+		profileId = null;
+		mode = 'all';
+	}
+	const tagChips = $derived.by(() => {
+		const active = members.filter((m) => !m.participationTo || m.participationTo >= date);
+		const count = (fn: (tags: string[]) => boolean) => active.filter((m) => fn(m.tags)).length;
+		const chips: { label: string; choice: TagChoice; count: number }[] = [
+			{ label: 'Nur Kinder', choice: { kind: 'require', tag: KID }, count: count((t) => t.includes(KID)) },
+			{ label: 'Nur Erwachsene', choice: { kind: 'adults' }, count: count((t) => !t.includes(KID)) }
+		];
+		const others = [...new Set(members.flatMap((m) => m.tags))].filter((t) => t !== KID).sort((a, b) => a.localeCompare(b, 'de'));
+		for (const t of others) {
+			const n = count((tags) => tags.includes(t));
+			// "alle" is only interesting once somebody does not have it
+			if (t === 'alle' && n === active.length) continue;
+			chips.push({ label: `Nur „${t}“`, choice: { kind: 'require', tag: t }, count: n });
+		}
+		return chips;
+	});
 	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
 	const factorOf = (m: PersonOption) =>
 		effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
 	function chooseProfile(id: string) {
 		profileId = id;
+		tagChoice = null;
 		mode = 'all';
 		const p = profiles.find((x) => x.id === id);
 		if (p?.defaultCategoryId && !categoryId) categoryId = p.defaultCategoryId;
@@ -189,6 +229,11 @@
 
 	const rule = $derived.by((): SplitRule => {
 		if (profile) return profile.rule;
+		if (tagChoice && mode === 'all') {
+			return tagChoice.kind === 'adults'
+				? { type: 'all', tagFilter: { exclude: [KID] } }
+				: { type: 'all', tagFilter: { require: [tagChoice.tag] } };
+		}
 		const ids = Object.keys(selected).filter((id) => selected[id]);
 		switch (mode) {
 			case 'all':
@@ -428,11 +473,32 @@
 				{/each}
 			</div>
 		{/if}
-		<div class="segmented" style="margin-bottom: 0.75rem">
+		<div class="segmented" style="margin-bottom: 0.6rem">
 			{#each Object.entries(modeLabels) as [k, label] (k)}
-				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null))}>{label}</button>
+				<button type="button" class:active={!profile && !tagChoice && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (tagChoice = null))}>{label}</button>
 			{/each}
 		</div>
+		<div class="chips tags" style="margin-bottom: 0.75rem">
+			<span class="small muted">Merkmal:</span>
+			{#each tagChips as c (c.label)}
+				<button
+					type="button"
+					class="chip tag"
+					class:active={sameTag(tagChoice, c.choice)}
+					disabled={c.count === 0}
+					title={c.count === 0 ? 'Niemand in der Gruppe hat dieses Merkmal – vergib es bei den Mitgliedern.' : ''}
+					onclick={() => chooseTag(c.choice)}
+				>
+					{c.label} <span class="muted">({c.count})</span>
+				</button>
+			{/each}
+		</div>
+		{#if tagChoice}
+			<p class="hint" style="margin-top: -0.4rem">
+				{tagChoice.kind === 'adults' ? 'Alle ohne das Merkmal „Kind“.' : `Alle mit dem Merkmal „${tagChoice.tag}“.`}
+				Wer später dazukommt, wird automatisch richtig einsortiert.
+			</p>
+		{/if}
 
 		{#if profile}
 			<p class="hint" style="margin-top: -0.4rem">Profil „{profile.name}“: Ändert sich das Profil oder kommen Personen dazu, wird die Ausgabe automatisch neu aufgeteilt.</p>
@@ -524,6 +590,17 @@
 		padding: 0.25rem 0.75rem 0.25rem 0.3rem;
 		font-weight: 500;
 		min-height: 40px;
+	}
+	.tags {
+		align-items: center;
+	}
+	.chip.tag {
+		padding: 0.2rem 0.7rem;
+		min-height: 34px;
+		font-size: 0.85rem;
+	}
+	.chip.tag:disabled {
+		opacity: 0.45;
 	}
 	.chip.profile {
 		padding: 0.25rem 0.75rem;

@@ -23,6 +23,8 @@
 		const r = e.rule;
 		const prof = data.profiles.find((p) => p.id === e.profileId);
 		if (!r && prof) return `${prof.icon} ${prof.name}`;
+		if (r?.type === 'all' && r.tagFilter?.require?.length === 1 && !r.tagFilter.exclude?.length) return `Alle mit Merkmal „${r.tagFilter.require[0]}“`;
+		if (r?.type === 'all' && r.tagFilter?.exclude?.length === 1 && r.tagFilter.exclude[0] === 'Kind' && !r.tagFilter.require?.length) return 'Nur Erwachsene (ohne „Kind“)';
 		if (!r || r.type === 'all') return 'Alle';
 		const names = (ids: string[]) => ids.map((id) => people.get(id)?.name ?? '?').join(', ');
 		if (r.type === 'all_except') return `Alle außer ${names(r.excluded)}`;
