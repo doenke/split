@@ -17,6 +17,8 @@ export interface ExpenseInput {
 	notes: string;
 	/** generated in the browser; the same id is never saved twice */
 	clientId?: string;
+	/** items of a recognized receipt that the user deselected (not shared) */
+	receiptSelection?: { attachmentId: string; deselected: number[] };
 	/** uploaded receipts to attach */
 	attachmentIds?: string[];
 }

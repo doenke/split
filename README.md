@@ -33,6 +33,10 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 - „Ich habe alles eingetragen“ – für sich oder die ganze Kasse; wenn alle fertig sind, steht die
   Endabrechnung automatisch (Anteile festgeschrieben, alle werden benachrichtigt)
 
+**Bon-Erkennung** (optional): Mit gesetztem `ANTHROPIC_API_KEY` werden fotografierte Kassenbons und PDFs
+von Claude ausgelesen. Händler, Datum, Betrag, Währung und Kategorie werden vorgeschlagen, einzelne Positionen
+lassen sich abwählen (privater Anteil). Das Bild wird dafür an die Anthropic-API übertragen.
+
 ## Betrieb mit Docker Compose
 
 ```bash

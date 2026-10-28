@@ -2,8 +2,17 @@
 	let {
 		groupId,
 		existing = [],
-		ids = $bindable([])
-	}: { groupId: string; existing?: { id: string; mime: string }[]; ids?: string[] } = $props();
+		ids = $bindable([]),
+		reading = null,
+		onuploaded
+	}: {
+		groupId: string;
+		existing?: { id: string; mime: string }[];
+		ids?: string[];
+		/** id of the receipt that is being read right now */
+		reading?: string | null;
+		onuploaded?: (file: { id: string; mime: string }) => void;
+	} = $props();
 
 	// svelte-ignore state_referenced_locally
 	let files = $state<{ id: string; mime: string; preview?: string }[]>([...existing]);
@@ -40,6 +49,7 @@
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message ?? 'Hochladen fehlgeschlagen');
 			files.push({ id: data.id, mime: data.mime, preview: blob.type.startsWith('image/') ? URL.createObjectURL(blob) : undefined });
+			onuploaded?.({ id: data.id, mime: data.mime });
 		} catch (e) {
 			message = (e as Error).message;
 		} finally {
@@ -69,6 +79,7 @@
 				<a href="/belege/{f.id}" target="_blank" rel="noopener" class="pdf">📄 PDF</a>
 			{/if}
 			<button type="button" class="remove" onclick={() => remove(f.id)} aria-label="Beleg entfernen">✕</button>
+			{#if reading === f.id}<span class="reading">liest …</span>{/if}
 		</div>
 	{/each}
 	<label class="add" class:busy>
@@ -122,6 +133,15 @@
 		background: rgb(0 0 0 / 0.55);
 		color: #fff;
 		border: 0;
+	}
+	.reading {
+		position: absolute;
+		inset: auto 0 0 0;
+		background: rgb(0 0 0 / 0.6);
+		color: #fff;
+		font-size: 0.75rem;
+		text-align: center;
+		padding: 0.15rem 0;
 	}
 	.add {
 		display: flex;

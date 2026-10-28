@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 	const beleg = url.searchParams.get('beleg');
 	const shared = beleg
 		? await db
-				.select({ id: schema.attachments.id, mime: schema.attachments.mime })
+				.select({ id: schema.attachments.id, mime: schema.attachments.mime, ocr: schema.attachments.ocrResult })
 				.from(schema.attachments)
 				.where(
 					and(

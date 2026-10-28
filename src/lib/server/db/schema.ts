@@ -12,6 +12,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import type { SplitRule } from '../../core/types';
+import type { ReceiptRecognition } from '../../receipt';
 import { DEFAULT_TAG } from '../../core/tags';
 
 const id = () => text('id').primaryKey();
@@ -321,6 +322,9 @@ export const attachments = pgTable(
 		mime: text('mime').notNull(),
 		size: integer('size').notNull(),
 		uploadedBy: text('uploaded_by').notNull(),
+		/** result of the automatic receipt recognition */
+		ocrStatus: text('ocr_status', { enum: ['done', 'failed', 'skipped'] }),
+		ocrResult: jsonb('ocr_result').$type<ReceiptRecognition>(),
 		createdAt: createdAt()
 	},
 	(t) => [index('attachments_expense').on(t.expenseId)]

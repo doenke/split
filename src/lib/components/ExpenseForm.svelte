@@ -9,6 +9,8 @@
 	import { today } from '$lib/format';
 	import Avatar from './Avatar.svelte';
 	import ReceiptPicker from './ReceiptPicker.svelte';
+	import { onMount } from 'svelte';
+	import { receiptDifference, type ReceiptRecognition } from '$lib/receipt';
 
 	interface PersonOption {
 		personId: string;
@@ -33,6 +35,7 @@
 		attachments = [],
 		initialAttachmentIds = [],
 		groupPeriod = null,
+		receiptRecognition = false,
 		initial = null,
 		error = null
 	}: {
@@ -44,11 +47,13 @@
 		meId: string;
 		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
 		initial?: ExpenseInput | null;
-		attachments?: { id: string; mime: string }[];
+		attachments?: { id: string; mime: string; ocr?: ReceiptRecognition | null }[];
+		/** whether uploaded receipts are read automatically */
+		receiptRecognition?: boolean;
 		/** travel dates of the group, used as default stay period */
 		groupPeriod?: { from: string | null; to: string | null } | null;
 		/** receipts uploaded before the form opened (e.g. shared from another app) */
-		initialAttachmentIds?: { id: string; mime: string }[];
+		initialAttachmentIds?: { id: string; mime: string; ocr?: ReceiptRecognition | null }[];
 		error?: string | null;
 	} = $props();
 
@@ -63,6 +68,75 @@
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
 	let attachmentIds = $state<string[]>([]);
+
+	// receipt recognition: fills the form and lets the user take out single items
+	let receipt = $state<{ attachmentId: string; result: ReceiptRecognition; deselected: number[] } | null>(null);
+	let reading = $state<string | null>(null);
+	let readMessage = $state<string | null>(null);
+	const DIFF = -1; // index of the "difference / not recognized" row
+
+	function applyReceipt(attachmentId: string, r: ReceiptRecognition, fillForm: boolean) {
+		if (r.error) {
+			readMessage = r.error;
+			return;
+		}
+		readMessage = null;
+		if (fillForm) {
+			if (!title.trim() && r.merchant) title = r.merchant;
+			if (!amountText.trim() && r.total !== null) {
+				if (r.currency) currency = r.currency;
+				amountText = amountToInput(r.total, r.currency ?? currency);
+			}
+			if (r.date && !init) date = r.date;
+			if (r.categoryId && !categoryId) categoryId = r.categoryId;
+		}
+		if (r.items.length) receipt = { attachmentId, result: r, deselected: r.deselected ?? [] };
+	}
+
+	async function recognize(file: { id: string; mime: string }) {
+		if (!receiptRecognition || !navigator.onLine) return;
+		if (!/^(image\/(jpeg|png|webp|gif)|application\/pdf)$/.test(file.mime)) return;
+		reading = file.id;
+		readMessage = null;
+		try {
+			const res = await fetch(`/belege/${file.id}/erkennen`, { method: 'POST' });
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.message ?? 'Der Bon konnte nicht gelesen werden.');
+			applyReceipt(file.id, data, true);
+		} catch (e) {
+			readMessage = (e as Error).message;
+		} finally {
+			reading = null;
+		}
+	}
+
+	onMount(() => {
+		for (const a of [...attachments, ...initialAttachmentIds]) {
+			if (a.ocr) applyReceipt(a.id, a.ocr, !init);
+			else if (!init) recognize(a);
+		}
+	});
+
+	const receiptRows = $derived(
+		receipt
+			? [
+					...receipt.result.items.map((it, i) => ({ index: i, description: it.description, amount: it.amount })),
+					...(receiptDifference(receipt.result) !== 0
+						? [{ index: DIFF, description: 'Differenz / nicht erkannt (z.B. Pfand, Rundung)', amount: receiptDifference(receipt.result) }]
+						: [])
+				]
+			: []
+	);
+
+	function toggleItem(index: number) {
+		if (!receipt) return;
+		receipt.deselected = receipt.deselected.includes(index)
+			? receipt.deselected.filter((i) => i !== index)
+			: [...receipt.deselected, index];
+		const priv = receiptRows.filter((r) => receipt!.deselected.includes(r.index)).reduce((s, r) => s + r.amount, 0);
+		showPrivate = priv > 0;
+		privateText = priv > 0 ? amountToInput(priv, receipt.result.currency ?? currency) : '';
+	}
 	// one id per form: retries and offline sync never create duplicates
 	const clientId =
 		typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -326,6 +400,7 @@
 			period: showPeriod ? { from: periodFrom, to: periodTo, unit: periodUnit } : null,
 			notes,
 			clientId: init ? undefined : clientId,
+			receiptSelection: receipt ? { attachmentId: receipt.attachmentId, deselected: receipt.deselected } : undefined,
 			attachmentIds: [...new Set([...attachmentIds, ...initialAttachmentIds.map((a) => a.id)])]
 		} satisfies ExpenseInput)
 	);
@@ -414,8 +489,38 @@
 		{/if}
 
 		<div class="field">
-			<ReceiptPicker {groupId} existing={[...attachments, ...initialAttachmentIds]} bind:ids={attachmentIds} />
+			<ReceiptPicker
+				{groupId}
+				existing={[...attachments, ...initialAttachmentIds]}
+				bind:ids={attachmentIds}
+				{reading}
+				onuploaded={(f) => recognize(f)}
+			/>
+			{#if reading}
+				<p class="hint">📷 Bon wird gelesen …</p>
+			{:else if readMessage}
+				<p class="hint error">{readMessage}</p>
+			{:else if receiptRecognition}
+				<p class="hint">Fotografierte Bons werden automatisch ausgelesen (über Claude von Anthropic).</p>
+			{/if}
 		</div>
+
+		{#if receipt && receiptRows.length}
+			<div class="field receipt-items">
+				<span class="label">Positionen auf dem Bon</span>
+				<p class="hint" style="margin-top: 0">Abgewählte Positionen werden nicht geteilt – sie trägt {type === 'income' ? 'der Empfänger' : 'der Zahler'} selbst.</p>
+				{#each receiptRows as r (r.index)}
+					<label class="check item" class:off={receipt.deselected.includes(r.index)}>
+						<input type="checkbox" checked={!receipt.deselected.includes(r.index)} onchange={() => toggleItem(r.index)} />
+						<span class="grow">{r.description}</span>
+						<span class="amount">{formatAmount(r.amount, receipt.result.currency ?? currency)}</span>
+					</label>
+				{/each}
+				{#if receipt.deselected.length}
+					<p class="hint"><strong>Gemeinsam: {formatAmount(amount - privateAmount, currency)}</strong> von {formatAmount(amount, currency)}</p>
+				{/if}
+			</div>
+		{/if}
 
 		<div class="row">
 			<div class="field grow">
@@ -601,6 +706,25 @@
 	}
 	.chip.tag:disabled {
 		opacity: 0.45;
+	}
+	.label {
+		display: block;
+		font-weight: 600;
+		font-size: 0.9rem;
+		margin-bottom: 0.25rem;
+	}
+	.receipt-items {
+		background: var(--surface-2);
+		border-radius: 10px;
+		padding: 0.6rem 0.75rem;
+	}
+	.item {
+		font-size: 0.9rem;
+		margin: 0.15rem 0;
+	}
+	.item.off span {
+		text-decoration: line-through;
+		color: var(--muted);
 	}
 	.chip.profile {
 		padding: 0.25rem 0.75rem;

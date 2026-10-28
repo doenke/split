@@ -27,6 +27,10 @@ services:
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
       OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Anmelden}
       WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Split}
+      # receipt recognition: active as soon as an Anthropic API key is set
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      RECEIPT_OCR_ENGINE: ${RECEIPT_OCR_ENGINE:-anthropic}
+      RECEIPT_MODEL: ${RECEIPT_MODEL:-}
     volumes:
       - uploads:/data/uploads      # receipts, avatars
     healthcheck:

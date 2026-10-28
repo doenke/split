@@ -1,5 +1,6 @@
 import { loadCategories, loadGroupState, requireGroup } from '$lib/server/groups';
 import { completionState } from '$lib/server/completion';
+import { receiptRecognitionEnabled } from '$lib/server/receipts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
@@ -24,6 +25,7 @@ export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
 		kassen,
 		balances,
 		transfers: state.transfers,
-		completion: await completionState(state.members, state.group)
+		completion: await completionState(state.members, state.group),
+		receiptRecognition: receiptRecognitionEnabled()
 	};
 };

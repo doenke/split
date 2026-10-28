@@ -97,14 +97,19 @@ export async function loadExpenses(groupId: string) {
 		: [];
 	const files = rows.length
 		? await db
-				.select({ id: schema.attachments.id, expenseId: schema.attachments.expenseId, mime: schema.attachments.mime })
+				.select({
+					id: schema.attachments.id,
+					expenseId: schema.attachments.expenseId,
+					mime: schema.attachments.mime,
+					ocrResult: schema.attachments.ocrResult
+				})
 				.from(schema.attachments)
 				.where(inArray(schema.attachments.expenseId, rows.map((r) => r.id)))
 		: [];
 	return rows.map((r) => ({
 		...r,
 		payers: payers.filter((p) => p.expenseId === r.id),
-		attachments: files.filter((f) => f.expenseId === r.id).map((f) => ({ id: f.id, mime: f.mime }))
+		attachments: files.filter((f) => f.expenseId === r.id).map((f) => ({ id: f.id, mime: f.mime, ocr: f.ocrResult }))
 	}));
 }
 

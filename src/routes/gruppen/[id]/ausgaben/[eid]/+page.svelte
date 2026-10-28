@@ -51,6 +51,7 @@
 		categories={data.categories}
 		profiles={data.profiles}
 	groupPeriod={{ from: data.group.startDate, to: data.group.endDate }}
+	receiptRecognition={data.receiptRecognition}
 		attachments={e.attachments}
 		currencies={data.currencies}
 		meId={data.user!.id}

@@ -133,7 +133,12 @@ export async function prepareExpense(
 	}
 	const attachmentIds = Array.isArray(input.attachmentIds) ? input.attachmentIds.filter((x) => typeof x === 'string').slice(0, 20) : [];
 	const clientId = typeof input.clientId === 'string' && /^[\w-]{8,64}$/.test(input.clientId) ? input.clientId : null;
-	return { row, payers, attachmentIds, clientId };
+	const sel = input.receiptSelection;
+	const receiptSelection =
+		sel && typeof sel.attachmentId === 'string' && Array.isArray(sel.deselected)
+			? { attachmentId: sel.attachmentId, deselected: sel.deselected.filter((n) => Number.isInteger(n)).slice(0, 500) }
+			: null;
+	return { row, payers, attachmentIds, clientId, receiptSelection };
 }
 
 export async function saveExpense(
@@ -173,6 +178,19 @@ export async function saveExpense(
 						isNull(schema.attachments.expenseId)
 					)
 				);
+		}
+		// remember which receipt items were taken out, so the selection can be changed later
+		if (prepared.receiptSelection) {
+			const [a] = await tx
+				.select()
+				.from(schema.attachments)
+				.where(and(eq(schema.attachments.id, prepared.receiptSelection.attachmentId), eq(schema.attachments.groupId, groupId)));
+			if (a?.ocrResult) {
+				await tx
+					.update(schema.attachments)
+					.set({ ocrResult: { ...a.ocrResult, deselected: prepared.receiptSelection.deselected } })
+					.where(eq(schema.attachments.id, a.id));
+			}
 		}
 		await audit(tx, {
 			groupId,

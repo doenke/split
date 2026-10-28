@@ -71,6 +71,13 @@
       "when": 1793169826282,
       "tag": "0009_default_tag_alle",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793171220124,
+      "tag": "0010_receipt_ocr",
+      "breakpoints": true
     }
   ]
 }
