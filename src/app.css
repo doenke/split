@@ -292,4 +292,11 @@ button:disabled {
 	.noprint {
 		display: none !important;
 	}
+	html,
+	body {
+		background: #fff;
+	}
+	main.container {
+		padding-bottom: 0;
+	}
 }

@@ -12,7 +12,11 @@
 	const sum = (t: Record<string, number>) => Object.values(t).reduce((s, v) => s + v, 0);
 </script>
 
-<svelte:head><title>Abrechnung {data.group.name}</title></svelte:head>
+<svelte:head>
+	<title>Abrechnung {data.group.name}</title>
+	<!-- many person columns: print in landscape -->
+	{@html '<style>@page { size: A4 landscape; margin: 12mm; }</style>'}
+</svelte:head>
 
 <div class="noprint row" style="margin-bottom: 1rem">
 	<a href="/gruppen/{data.group.id}/einstellungen" class="small grow">← Zurück</a>
@@ -83,23 +87,58 @@
 		</tbody>
 	</table>
 
-	<h2>Alle Ausgaben</h2>
-	<table class="small">
-		<thead><tr><th>Datum</th><th>Wofür</th><th>Bezahlt von</th><th class="r">Betrag</th></tr></thead>
-		<tbody>
-			{#each sorted as e (e.id)}
+	<h2 class="pagebreak">Alle Ausgaben mit Anteilen pro Person</h2>
+	<div class="scroll">
+		<table class="matrix">
+			<thead>
 				<tr>
-					<td>{formatDate(e.date, { day: '2-digit', month: '2-digit' })}</td>
-					<td>{e.categoryId ? cats.get(e.categoryId)?.icon : ''} {e.title}{#if e.type === 'income'} (Einnahme){/if}</td>
-					<td>{e.payers.map((p) => people.get(p.personId) ?? '?').join(', ')}</td>
-					<td class="r">
-						{e.type === 'income' ? '−' : ''}{formatAmount(e.amount, e.currency)}
-						{#if e.currency !== c}<br /><span class="muted">≈ {formatAmount(e.baseAmount, c)}</span>{/if}
-					</td>
+					<th>Datum</th>
+					<th>Wofür</th>
+					<th>Bezahlt von</th>
+					<th class="r">Betrag</th>
+					{#each data.members as m (m.personId)}<th class="r person">{m.name}</th>{/each}
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{#each sorted as e (e.id)}
+					{@const sh = data.shares[e.id] ?? {}}
+					<tr>
+						<td class="nowrap">{formatDate(e.date, { day: '2-digit', month: '2-digit' })}</td>
+						<td>
+							{e.categoryId ? cats.get(e.categoryId)?.icon : ''} {e.title}{#if e.type === 'income'} (Einnahme){/if}
+							{#if e.privateAmount > 0}<div class="muted">davon privat {formatAmount(e.privateAmount, c)}</div>{/if}
+						</td>
+						<td>{e.payers.map((p) => people.get(p.personId) ?? '?').join(', ')}</td>
+						<td class="r">
+							{e.type === 'income' ? '−' : ''}{formatAmount(e.baseAmount, c)}
+							{#if e.currency !== c}<div class="muted">{formatAmount(e.amount, e.currency)}</div>{/if}
+						</td>
+						{#each data.members as m (m.personId)}
+							<td class="r" class:muted={!sh[m.personId]}>{sh[m.personId] ? formatAmount(sh[m.personId], c) : '–'}</td>
+						{/each}
+					</tr>
+				{/each}
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="3">Anteil gesamt</td>
+					<td class="r">{formatAmount(total, c)}</td>
+					{#each data.members as m (m.personId)}<td class="r">{formatAmount(data.balances.persons[m.personId]?.consumed ?? 0, c)}</td>{/each}
+				</tr>
+				<tr>
+					<td colspan="4">Bezahlt</td>
+					{#each data.members as m (m.personId)}<td class="r">{formatAmount(data.balances.persons[m.personId]?.paid ?? 0, c)}</td>{/each}
+				</tr>
+				<tr class="saldo">
+					<td colspan="4">Saldo (bezahlt − Anteil, vor Ausgleichszahlungen)</td>
+					{#each data.members as m (m.personId)}
+						{@const b = data.balances.persons[m.personId]?.balance ?? 0}
+						<td class="r">{b > 0 ? '+' : ''}{formatAmount(b, c)}</td>
+					{/each}
+				</tr>
+			</tfoot>
+		</table>
+	</div>
 </article>
 
 <style>
@@ -133,11 +172,50 @@
 	h2 {
 		margin-top: 1.25rem;
 	}
+	.scroll {
+		overflow-x: auto;
+	}
+	.matrix {
+		font-size: 0.8rem;
+	}
+	.matrix th.person {
+		max-width: 6rem;
+		overflow-wrap: anywhere;
+	}
+	.matrix td .muted {
+		font-size: 0.75rem;
+	}
+	.matrix tfoot td {
+		font-weight: 600;
+		border-top: 2px solid var(--border);
+	}
+	.matrix .saldo td {
+		border-top: 1px solid var(--border);
+	}
+	.nowrap {
+		white-space: nowrap;
+	}
 	@media print {
+		.scroll {
+			overflow: visible;
+		}
+		.matrix {
+			font-size: 8pt;
+		}
+		.pagebreak {
+			break-before: page;
+		}
+		tr {
+			break-inside: avoid;
+		}
+		thead {
+			display: table-header-group;
+		}
 		:global(header),
 		.noprint {
 			display: none !important;
 		}
+		:global(html),
 		:global(body),
 		.doc {
 			background: #fff !important;

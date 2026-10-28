@@ -76,7 +76,7 @@
 	{@render children()}
 </main>
 
-<footer class="small muted">Split {versionLabel}</footer>
+<footer class="small muted noprint">Split {versionLabel}</footer>
 
 <style>
 	header {
