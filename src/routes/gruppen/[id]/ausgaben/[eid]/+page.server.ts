@@ -5,6 +5,8 @@ import { canEditExpense, loadMembers, loadProfiles, requireGroup, toCoreExpense,
 import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { isClosed } from '$lib/server/closing';
+import { groupRecipients, notify } from '$lib/server/push';
+import { formatAmount } from '$lib/core/currency';
 import { audit } from '$lib/server/audit';
 import { computeShares, effectiveFactor } from '$lib/core/split';
 import type { ExpenseInput } from '$lib/expense-input';
@@ -21,7 +23,8 @@ async function requireExpense(groupId: string, expenseId: string) {
 
 export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	const data = await parent();
-	const expense = data.expenses.find((e) => e.id === params.eid);
+	const expense = data.expenses.find((e) => e.id === params.eid) ?? data.drafts.find((e) => e.id === params.eid);
+	const draft = expense?.status === 'draft';
 	if (!expense) error(404, 'Ausgabe nicht gefunden.');
 	const g = await requireGroup(params.id, locals.user);
 
@@ -38,6 +41,7 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		// an explicit rule overrides the profile
 		profileId: expense.rule && !expense.rule.equalWeights ? null : expense.profileId,
 		equalWeights: expense.rule?.equalWeights === true,
+		awaitingCharge: expense.awaitingCharge,
 		rule: expense.rule ?? { type: 'all' },
 		privateAmount: privateOriginal,
 		rate: {
@@ -97,6 +101,7 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		history,
 		canEdit: canEditExpense(g, g.user.id, expense) && !expense.frozenShares,
 		frozen: Boolean(expense.frozenShares),
+		draft,
 		currencies: await currencyOptions(data.group.baseCurrency, used)
 	};
 };
@@ -125,6 +130,16 @@ export const actions: Actions = {
 			return fail(400, { message: `Die Abrechnung ist bis ${g.group.closedUntil} abgeschlossen. Wähle ein späteres Datum.` });
 		}
 		await saveExpense(params.id, g.user.id, prepared, params.eid);
+		if (existing.status === 'draft') {
+			void groupRecipients(params.id, g.user.id).then((ids) =>
+				notify(ids, {
+					title: `${g.group.emoji} ${g.group.name}`,
+					body: `${g.user.name}: ${prepared.row.title} – ${formatAmount(prepared.row.amount, prepared.row.currency)}`,
+					url: `/gruppen/${params.id}/ausgaben/${params.eid}`
+				})
+			);
+			redirect(303, `/gruppen/${params.id}`);
+		}
 		redirect(303, `/gruppen/${params.id}/ausgaben/${params.eid}`);
 	},
 	delete: async ({ params, locals }) => {

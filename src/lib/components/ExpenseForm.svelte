@@ -36,6 +36,7 @@
 		initialAttachmentIds = [],
 		groupPeriod = null,
 		receiptRecognition = false,
+		draft = false,
 		initial = null,
 		error = null
 	}: {
@@ -48,6 +49,8 @@
 		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
 		initial?: ExpenseInput | null;
 		attachments?: { id: string; mime: string; ocr?: ReceiptRecognition | null }[];
+		/** a prepared expense (photo only): treated like a new one when filling from the receipt */
+		draft?: boolean;
 		/** whether uploaded receipts are read automatically */
 		receiptRecognition?: boolean;
 		/** travel dates of the group, used as default stay period */
@@ -60,10 +63,12 @@
 	// svelte-ignore state_referenced_locally
 	const init = initial;
 	let type = $state<'expense' | 'income'>(init?.type ?? 'expense');
-	let title = $state(init?.title ?? '');
+	// svelte-ignore state_referenced_locally
+	let title = $state(draft ? '' : (init?.title ?? ''));
 	// svelte-ignore state_referenced_locally
 	let currency = $state(init?.currency ?? baseCurrency);
-	let amountText = $state(init ? amountToInput(init.amount, init.currency) : '');
+	// svelte-ignore state_referenced_locally
+	let amountText = $state(init && !draft ? amountToInput(init.amount, init.currency) : '');
 	let date = $state(init?.date ?? today());
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
@@ -87,7 +92,7 @@
 				if (r.currency) currency = r.currency;
 				amountText = amountToInput(r.total, r.currency ?? currency);
 			}
-			if (r.date && !init) date = r.date;
+			if (r.date && (!init || draft)) date = r.date;
 			if (r.categoryId && !categoryId) categoryId = r.categoryId;
 		}
 		if (r.items.length) receipt = { attachmentId, result: r, deselected: r.deselected ?? [] };
@@ -112,8 +117,8 @@
 
 	onMount(() => {
 		for (const a of [...attachments, ...initialAttachmentIds]) {
-			if (a.ocr) applyReceipt(a.id, a.ocr, !init);
-			else if (!init) recognize(a);
+			if (a.ocr) applyReceipt(a.id, a.ocr, !init || draft);
+			else if (!init || draft) recognize(a);
 		}
 	});
 
@@ -236,6 +241,7 @@
 	);
 
 	// exchange rate
+	let awaitingCharge = $state(init?.awaitingCharge ?? false);
 	let rateSource = $state<'auto' | 'manual' | 'charged'>(init?.rate.source ?? 'auto');
 	let manualRate = $state(init?.rate.value ? String(init.rate.value).replace('.', ',') : '');
 	// svelte-ignore state_referenced_locally
@@ -381,6 +387,7 @@
 			notes,
 			clientId: init ? undefined : clientId,
 			equalWeights: equalWeights && rule.type !== 'individual',
+			awaitingCharge: currency !== baseCurrency && rateSource === 'auto' && awaitingCharge,
 			receiptSelection: receipt ? { attachmentId: receipt.attachmentId, deselected: receipt.deselected } : undefined,
 			attachmentIds: [...new Set([...attachmentIds, ...initialAttachmentIds.map((a) => a.id)])]
 		} satisfies ExpenseInput)
@@ -457,6 +464,10 @@
 					{:else if rateError}
 						<p class="hint error">{rateError}</p>
 					{/if}
+					<label class="check small">
+						<input type="checkbox" bind:checked={awaitingCharge} />
+						Abgebuchten {baseCurrency}-Betrag später nachtragen (z.B. aus der Kreditkartenabrechnung)
+					</label>
 				{:else if rateSource === 'charged'}
 					<input bind:value={chargedText} inputmode="decimal" placeholder="Tatsächlich abgebucht in {baseCurrency}" />
 					<p class="hint">Am fairsten: der Betrag laut Kontoauszug, inklusive Gebühren.</p>
@@ -574,13 +585,10 @@
 			</p>
 		{/if}
 		{#if profile || mode !== 'individual'}
-			<div class="row weighting">
-				<span class="small muted">Gewichtung:</span>
-				<div class="segmented small-seg grow">
-					<button type="button" class:active={!equalWeights} onclick={() => (equalWeights = false)}>Voreingestellte Faktoren</button>
-					<button type="button" class:active={equalWeights} onclick={() => (equalWeights = true)}>Alle gleich</button>
-				</div>
-			</div>
+			<label class="check small weighting">
+				<input type="checkbox" bind:checked={equalWeights} />
+				Alle gleich gewichten (Faktoren ignorieren)
+			</label>
 		{/if}
 
 
@@ -736,8 +744,8 @@
 		margin: -0.1rem 0 0.3rem 2.4rem;
 	}
 	.weighting {
-		flex-wrap: nowrap;
-		margin-bottom: 0.75rem;
+		margin: -0.2rem 0 0.5rem;
+		color: var(--muted);
 	}
 	.label {
 		display: block;

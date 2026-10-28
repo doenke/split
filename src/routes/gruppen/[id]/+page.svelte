@@ -2,10 +2,13 @@
 	import { formatAmount, formatDate } from '$lib/format';
 	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { onMount } from 'svelte';
-	import { preloadData } from '$app/navigation';
+	import { invalidateAll, preloadData } from '$app/navigation';
+	import { enhance } from '$app/forms';
+	import { shrinkToFile } from '$lib/image';
+	import { today } from '$lib/format';
 	import { discardPending, flushPending, pendingExpenses, type PendingExpense } from '$lib/offline';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const base = $derived(`/gruppen/${data.group.id}`);
 	const currency = $derived(data.group.baseCurrency);
 	const people = $derived(new Map(data.members.map((m) => [m.personId, m])));
@@ -24,6 +27,38 @@
 		window.addEventListener('split:pending', loadPending);
 		return () => window.removeEventListener('split:pending', loadPending);
 	});
+
+	// camera button: photograph a receipt now, complete the expense later
+	let snapping = $state(false);
+	let snapMessage = $state<string | null>(null);
+	async function snap(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		snapping = true;
+		snapMessage = null;
+		try {
+			const body = new FormData();
+			body.append('file', await shrinkToFile(file));
+			body.append('date', today());
+			const res = await fetch(`/gruppen/${data.group.id}/ausgaben/vorbereiten`, { method: 'POST', body });
+			if (!res.ok) throw new Error((await res.json().catch(() => null))?.message ?? 'Speichern fehlgeschlagen');
+			snapMessage = '📷 Bon gespeichert – du findest ihn unter „Vorbereitet“.';
+			await invalidateAll();
+		} catch (err) {
+			snapMessage = navigator.onLine ? (err as Error).message : 'Offline – bitte später erneut fotografieren.';
+		} finally {
+			snapping = false;
+		}
+	}
+	const cur = (e: { amount: number; currency: string }) => formatAmount(e.amount, e.currency);
+	// foreign-currency expenses whose charged amount the user still has to enter
+	const awaiting = $derived(
+		data.expenses.filter(
+			(e) => e.awaitingCharge && !e.frozenShares && (e.createdBy === data.user?.id || e.payers.some((p) => p.personId === data.user?.id))
+		)
+	);
 
 	let query = $state('');
 	const filtered = $derived(
@@ -65,7 +100,7 @@
 	</a>
 </div>
 
-{#if data.expenses.length || data.completion.final}
+{#if data.expenses.length || data.drafts.length || data.completion.final}
 	<CompletionCard
 		completion={data.completion}
 		members={data.members}
@@ -74,7 +109,52 @@
 		kasseName={data.kassen[data.myKasseId]?.name ?? ''}
 		groupId={data.group.id}
 		isAdmin={data.isAdmin}
+	draftCount={data.drafts.length}
 	/>
+{/if}
+
+{#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}
+{#if snapMessage}<p class="notice small">{snapMessage}</p>{/if}
+
+{#if data.drafts.length}
+	<h2 class="section">📷 Vorbereitet ({data.drafts.length})</h2>
+	<div class="list drafts">
+		{#each data.drafts as d (d.id)}
+			{@const ocr = d.attachments[0]?.ocr}
+			<a href="{base}/ausgaben/{d.id}">
+				{#if d.attachments[0]?.mime.startsWith('image/')}
+					<img class="thumb" src="/belege/{d.attachments[0].id}" alt="Bon" />
+				{:else}
+					<span class="cat" style:background="#999">📄</span>
+				{/if}
+				<div class="grow">
+					<div class="ellipsis"><strong>{ocr?.merchant ?? 'Bon'}</strong></div>
+					<div class="small muted">
+						{formatDate(d.date, { day: 'numeric', month: 'short' })} · {people.get(d.payers[0]?.personId)?.name ?? '?'}
+						{#if ocr?.total}· erkannt {cur({ amount: ocr.total, currency: ocr.currency ?? currency })}{/if}
+					</div>
+				</div>
+				<span class="small">Vervollständigen →</span>
+			</a>
+		{/each}
+	</div>
+{/if}
+
+{#if awaiting.length}
+	<h2 class="section">💳 Abgebuchten Betrag nachtragen ({awaiting.length})</h2>
+	<div class="list">
+		{#each awaiting as e (e.id)}
+			<form method="POST" action="?/charged" class="charge" use:enhance>
+				<input type="hidden" name="id" value={e.id} />
+				<div class="grow">
+					<a href="{base}/ausgaben/{e.id}"><strong>{e.title}</strong></a>
+					<div class="small muted">{formatDate(e.date, { day: 'numeric', month: 'short' })} · {cur(e)} · bisher ≈ {formatAmount(e.baseAmount, currency)} (Tageskurs)</div>
+				</div>
+				<input name="charged" inputmode="decimal" placeholder={currency} class="charged" aria-label="Abgebucht in {currency}" />
+				<button class="small-btn primary">OK</button>
+			</form>
+		{/each}
+	</div>
 {/if}
 
 {#if pending.length}
@@ -103,10 +183,13 @@
 	<input type="search" placeholder="Ausgaben durchsuchen …" bind:value={query} class="search" />
 {/if}
 
-{#if data.expenses.length === 0 && pending.length === 0}
+{#if data.expenses.length === 0 && pending.length === 0 && data.drafts.length === 0}
 	<div class="card">
 		<p>Noch keine Ausgaben.</p>
-		<p class="muted small">Tippe auf <strong>+</strong>, um die erste Ausgabe einzutragen.</p>
+		<p class="muted small">
+			Tippe auf <strong>+</strong>, um eine Ausgabe einzutragen – oder auf <strong>📷</strong>, um einen Bon direkt im
+			Laden zu fotografieren und die Ausgabe später zu vervollständigen.
+		</p>
 	</div>
 {/if}
 
@@ -124,6 +207,7 @@
 						{payerText(e)}
 						{#if e.privateAmount > 0}· {formatAmount(e.privateAmount, currency)} privat{/if}
 						{#if e.attachments.length}· 📎{/if}
+						{#if e.awaitingCharge}· <span title="Abgebuchter Betrag fehlt noch">💳 Kurs vorläufig</span>{/if}
 					</div>
 				</div>
 				<div class="right">
@@ -140,6 +224,10 @@
 {/each}
 
 {#if data.group.status === 'active'}
+	<label class="button fab secondary" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
+		{snapping ? '…' : '📷'}
+		<input type="file" accept="image/*" capture="environment" hidden onchange={snap} disabled={snapping} />
+	</label>
 	<a class="button primary fab" href="{base}/ausgaben/neu" aria-label="Neue Ausgabe">+</a>
 {/if}
 
@@ -155,6 +243,28 @@
 	}
 	.big {
 		font-size: 1.35rem;
+	}
+	.charge {
+		align-items: center;
+	}
+	.charged {
+		width: 6rem;
+		text-align: right;
+	}
+	.small-btn {
+		min-height: 38px;
+		padding: 0.3rem 0.7rem;
+	}
+	.section {
+		margin: 0.5rem 0.25rem 0.5rem;
+		font-size: 1rem;
+	}
+	.thumb {
+		width: 38px;
+		height: 38px;
+		border-radius: 10px;
+		object-fit: cover;
+		flex-shrink: 0;
 	}
 	.pending {
 		border-style: dashed;

@@ -18,7 +18,8 @@
 		myKasseId,
 		kasseName,
 		groupId,
-		isAdmin = false
+		isAdmin = false,
+		draftCount = 0
 	}: {
 		completion: { required: string[]; done: string[]; final: boolean };
 		members: M[];
@@ -27,6 +28,7 @@
 		kasseName: string;
 		groupId: string;
 		isAdmin?: boolean;
+		draftCount?: number;
 	} = $props();
 
 	const done = $derived(new Set(completion.done));
@@ -52,6 +54,9 @@
 			</div>
 			<button class="link small" onclick={() => (open = !open)}>{open ? 'Weniger' : 'Wer fehlt?'}</button>
 		</div>
+		{#if draftCount}
+			<p class="small notice" style="margin: 0.5rem 0 0">📷 Noch {draftCount} vorbereitete Ausgabe(n) – die Endabrechnung wartet, bis sie vervollständigt oder gelöscht sind.</p>
+		{/if}
 		<div class="progress"><span style:width="{(completion.done.length / completion.required.length) * 100}%"></span></div>
 		{#if open}
 			<div class="people small">

@@ -121,7 +121,9 @@ export async function prepareExpense(
 		periodFrom: period?.from ?? null,
 		periodTo: period?.to ?? null,
 		periodUnit: period?.unit ?? null,
-		notes: String(input.notes ?? '').trim() || null
+		notes: String(input.notes ?? '').trim() || null,
+		// until the charged amount is entered, the ECB rate is used
+		awaitingCharge: rateSource === 'ecb' && input.awaitingCharge === true
 	};
 
 	// make sure it can be split at all
@@ -163,7 +165,8 @@ export async function saveExpense(
 		if (existingId) {
 			await tx
 				.update(schema.expenses)
-				.set({ ...prepared.row, updatedAt: new Date() })
+				// saving a prepared expense completes it
+				.set({ ...prepared.row, status: 'final', updatedAt: new Date() })
 				.where(eq(schema.expenses.id, existingId));
 			await tx.delete(schema.expensePayers).where(eq(schema.expensePayers.expenseId, existingId));
 		} else {

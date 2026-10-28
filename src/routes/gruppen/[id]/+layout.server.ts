@@ -1,4 +1,4 @@
-import { loadCategories, loadGroupState, requireGroup } from '$lib/server/groups';
+import { loadCategories, loadExpenses, loadGroupState, requireGroup } from '$lib/server/groups';
 import { completionState } from '$lib/server/completion';
 import { receiptRecognitionEnabled } from '$lib/server/receipts';
 import type { LayoutServerLoad } from './$types';
@@ -6,7 +6,11 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
 	depends('app:group');
 	const g = await requireGroup(params.id, locals.user);
-	const [state, categories] = await Promise.all([loadGroupState(params.id), loadCategories(params.id)]);
+	const [state, categories, drafts] = await Promise.all([
+		loadGroupState(params.id),
+		loadCategories(params.id),
+		loadExpenses(params.id, 'draft')
+	]);
 	const kassen = Object.fromEntries(state.kassen.map((k) => [k.id, { id: k.id, name: k.name, personalOf: k.personalOf }]));
 	const balances = {
 		persons: Object.fromEntries(state.balances.persons),
@@ -19,6 +23,7 @@ export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
 		myKasseId: g.membership.kasseId,
 		members: state.members,
 		expenses: state.expenses,
+		drafts,
 		settlements: state.settlements,
 		profiles: state.profiles,
 		categories,

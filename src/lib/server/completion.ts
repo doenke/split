@@ -4,7 +4,7 @@ import { today } from '$lib/format';
 import { db, schema } from './db';
 import { audit } from './audit';
 import { closeUntil } from './closing';
-import { loadGroupState, type GroupMember } from './groups';
+import { loadExpenses, loadGroupState, type GroupMember } from './groups';
 import { claimedPersonIds } from './persons';
 import { kasseRecipients, notify } from './push';
 
@@ -51,6 +51,8 @@ export async function finalizeIfComplete(groupId: string, actorId: string) {
 	if (state.group.status === 'settled') return false;
 	const c = await completionState(state.members, state.group);
 	if (!c.required.length || c.done.length < c.required.length) return false;
+	// prepared expenses would silently be left out of the final statement
+	if ((await loadExpenses(groupId, 'draft')).length) return false;
 
 	const lastDate = state.expenses.reduce((max, e) => (e.date > max ? e.date : max), today());
 	await closeUntil(groupId, lastDate);

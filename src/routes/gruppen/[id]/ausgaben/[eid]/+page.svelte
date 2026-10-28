@@ -5,7 +5,9 @@
 	import { formatAmount, formatDate } from '$lib/format';
 
 	let { data, form } = $props();
-	let editing = $state(false);
+	// prepared expenses open right away in the form
+	// svelte-ignore state_referenced_locally
+	let editing = $state(data.draft);
 	$effect(() => {
 		if (form?.message) editing = true;
 	});
@@ -43,7 +45,10 @@
 <a href="/gruppen/{data.group.id}" class="small">← Zurück</a>
 
 {#if editing}
-	<h2 style="margin-top: 0.75rem">Ausgabe bearbeiten</h2>
+	<h2 style="margin-top: 0.75rem">{data.draft ? 'Vorbereitete Ausgabe vervollständigen' : 'Ausgabe bearbeiten'}</h2>
+	{#if data.draft}
+		<p class="small muted">Fotografiert am {formatDate(e.date)}. Ergänze Betrag und Aufteilung – erst dann zählt die Ausgabe.</p>
+	{/if}
 	<ExpenseForm
 		groupId={data.group.id}
 		baseCurrency={base}
@@ -53,12 +58,28 @@
 	groupPeriod={{ from: data.group.startDate, to: data.group.endDate }}
 	receiptRecognition={data.receiptRecognition}
 		attachments={e.attachments}
+		draft={data.draft}
 		currencies={data.currencies}
 		meId={data.user!.id}
 		initial={data.initial}
 		error={form?.message}
 	/>
-	<button class="full" style="margin-top: 0.5rem" onclick={() => (editing = false)}>Abbrechen</button>
+	{#if data.draft}
+		<div class="row" style="margin-top: 0.5rem">
+			<a class="button grow" href="/gruppen/{data.group.id}">Später</a>
+			<form
+				method="POST"
+				action="?/delete"
+				use:enhance={({ cancel }) => {
+					if (!confirm('Vorbereitete Ausgabe löschen?')) cancel();
+				}}
+			>
+				<button class="danger">Löschen</button>
+			</form>
+		</div>
+	{:else}
+		<button class="full" style="margin-top: 0.5rem" onclick={() => (editing = false)}>Abbrechen</button>
+	{/if}
 {:else}
 	<div class="card" style="margin-top: 0.75rem">
 		<div class="row" style="justify-content: space-between; align-items: flex-start">

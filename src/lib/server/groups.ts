@@ -83,11 +83,12 @@ export async function loadProfiles(groupId: string) {
 		.orderBy(asc(schema.profiles.sort), asc(schema.profiles.name));
 }
 
-export async function loadExpenses(groupId: string) {
+/** Expenses of a group. Drafts (photographed, not processed yet) are left out unless asked for. */
+export async function loadExpenses(groupId: string, status: 'final' | 'draft' = 'final') {
 	const rows = await db
 		.select()
 		.from(schema.expenses)
-		.where(and(eq(schema.expenses.groupId, groupId), isNull(schema.expenses.deletedAt)))
+		.where(and(eq(schema.expenses.groupId, groupId), isNull(schema.expenses.deletedAt), eq(schema.expenses.status, status)))
 		.orderBy(desc(schema.expenses.date), desc(schema.expenses.createdAt));
 	const payers = rows.length
 		? await db

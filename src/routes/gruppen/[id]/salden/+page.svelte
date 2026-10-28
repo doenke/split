@@ -37,6 +37,7 @@
 	kasseName={data.kassen[data.myKasseId]?.name ?? ''}
 	groupId={data.group.id}
 	isAdmin={data.isAdmin}
+	draftCount={data.drafts.length}
 />
 
 <h2>Salden</h2>

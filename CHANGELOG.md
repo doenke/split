@@ -3,6 +3,14 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.13.0
+- Kamera-Button neben dem Plus: Bon direkt im Laden fotografieren. Daraus wird eine „vorbereitete“ Ausgabe (nur Foto,
+  Datum, Zahler), die später vervollständigt wird – automatisch ausgelesen (läuft schon im Hintergrund) oder von Hand.
+  Vorbereitete Ausgaben zählen noch nicht; solange es welche gibt, wartet die Endabrechnung
+- Fremdwährung: „Abgebuchten Betrag später nachtragen“ – erst mit Tageskurs erfassen, den Euro-Betrag aus der
+  Kreditkartenabrechnung dann in der Gruppe unter „Abgebuchten Betrag nachtragen“ eintragen
+- Gewichtung als kompaktes Kästchen „Alle gleich gewichten“ statt großem Umschalter
+
 ## 0.12.0
 - Ausgabe erfassen vereinfacht: die Merkmal-Auswahl ist wieder raus (bestehende Ausgaben behalten ihre Aufteilung)
 - Profile haben einen eigenen Menüpunkt; neue Profile starten mit „Bestimmte Personen“, neue Gruppen bekommen

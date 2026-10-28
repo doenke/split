@@ -190,6 +190,10 @@ export const expenses = pgTable(
 			.notNull()
 			.references(() => groups.id, { onDelete: 'cascade' }),
 		type: text('type', { enum: ['expense', 'income'] }).notNull().default('expense'),
+		/** draft = photographed receipt, not processed yet (no amount, not part of any balance) */
+		status: text('status', { enum: ['draft', 'final'] }).notNull().default('final'),
+		/** foreign currency: the amount charged in base currency (credit card statement) is still to be entered */
+		awaitingCharge: boolean('awaiting_charge').notNull().default(false),
 		title: text('title').notNull(),
 		date: date('date').notNull(),
 		/** in minor units of `currency` */
