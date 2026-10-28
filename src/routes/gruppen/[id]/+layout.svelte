@@ -50,6 +50,9 @@
 	}
 	.tabs {
 		margin-bottom: 1rem;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
 	}
 	.tabs a {
 		flex: 1;
@@ -60,6 +63,13 @@
 		text-decoration: none;
 		font-weight: 500;
 		font-size: 0.9rem;
+		white-space: nowrap;
+	}
+	@media (max-width: 400px) {
+		.tabs a {
+			font-size: 0.82rem;
+			padding: 0.5rem 0.2rem;
+		}
 	}
 	.tabs a.active {
 		background: var(--surface);

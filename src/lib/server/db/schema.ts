@@ -12,6 +12,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import type { SplitRule } from '../../core/types';
+import { DEFAULT_TAG } from '../../core/tags';
 
 const id = () => text('id').primaryKey();
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -142,7 +143,8 @@ export const memberships = pgTable(
 			.references(() => persons.id, { onDelete: 'cascade' }),
 		role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
 		factor: doublePrecision('factor').notNull().default(1),
-		tags: text('tags').array().notNull().default([]),
+		/** every member starts with the tag "alle" (can be removed per person) */
+		tags: text('tags').array().notNull().default([DEFAULT_TAG]),
 		participationFrom: date('participation_from'),
 		participationTo: date('participation_to'),
 		kasseId: text('kasse_id')

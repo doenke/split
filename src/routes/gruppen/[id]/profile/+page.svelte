@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import TagInput from '$lib/components/TagInput.svelte';
+	import { DEFAULT_TAG } from '$lib/core/tags';
 	import type { SplitRule } from '$lib/core/types';
 
 	let { data, form } = $props();
 	let editing = $state<string | null>(null);
 	const cats = $derived(new Map(data.categories.map((c) => [c.id, c])));
-	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags)])]);
+	const tagSuggestions = $derived([...new Set([DEFAULT_TAG, 'Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags)])]);
 
 	function describe(rule: SplitRule) {
 		const parts: string[] = [];

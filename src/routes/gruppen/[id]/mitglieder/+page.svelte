@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import TagInput from '$lib/components/TagInput.svelte';
+	import { DEFAULT_TAG } from '$lib/core/tags';
 	import { formatDate, today } from '$lib/format';
 
 	let { data, form } = $props();
@@ -43,7 +44,7 @@
 	}
 
 	const factorLabel = (f: number) => String(f).replace('.', ',');
-	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags), ...data.profiles.flatMap((p) => [...(p.rule.tagFilter?.require ?? []), ...(p.rule.tagFilter?.exclude ?? [])])])]);
+	const tagSuggestions = $derived([...new Set([DEFAULT_TAG, 'Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags), ...data.profiles.flatMap((p) => [...(p.rule.tagFilter?.require ?? []), ...(p.rule.tagFilter?.exclude ?? [])])])]);
 </script>
 
 <svelte:head><title>Mitglieder · {data.group.name}</title></svelte:head>
@@ -154,7 +155,7 @@
 			</div>
 			<div class="field">
 				<span class="label">Merkmale</span>
-				<TagInput suggestions={tagSuggestions} />
+				<TagInput value={[DEFAULT_TAG]} suggestions={tagSuggestions} />
 				<p class="hint">Profile wie „Alkohol“ nutzen Merkmale, z.B. werden Personen mit „Kind“ dort nicht beteiligt.</p>
 			</div>
 		{/if}
@@ -180,7 +181,7 @@
 			<div class="row top">
 				<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={38} />
 				<div class="grow">
-					<div class="ellipsis">
+					<div class="badges">
 						<strong>{m.name}</strong>
 						{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
 						{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
@@ -316,6 +317,14 @@
 		font-weight: 600;
 		font-size: 0.9rem;
 		margin-bottom: 0.25rem;
+	}
+	/* name and tags wrap onto further lines instead of being cut off */
+	.badges {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.3rem;
+		overflow-wrap: anywhere;
 	}
 	.done {
 		background: var(--primary-soft);

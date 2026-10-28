@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.7.0
+- Jedes Mitglied bekommt automatisch das Merkmal „alle“ (pro Person entfernbar, in Profilen nutzbar);
+  bestehende Mitglieder erhalten es beim Update
+- Mitgliederliste: lange Namen und viele Merkmale brechen in die nächste Zeile um statt abgeschnitten zu werden
+- Gruppen-Reiter passen auch auf schmalen Handys in eine Zeile
+
 ## 0.6.0
 - Gruppenadmins können jede Person einzeln oder alle auf einmal abschließen (und wieder öffnen) –
   auch Personen ohne Login
