@@ -40,7 +40,8 @@
 	let personFactors = $state<Record<string, string>>({});
 	function startEdit(id: string | null, rule?: SplitRule) {
 		editing = id ?? 'new';
-		mode = rule?.type === 'only' ? 'persons' : 'tags';
+		// new profiles start with concrete people; tag-based ones stay available
+		mode = !rule || rule.type === 'only' ? 'persons' : 'tags';
 		picked = Object.fromEntries(data.members.map((m) => [m.personId, rule?.type === 'only' ? rule.included.includes(m.personId) : true]));
 		const pf = rule?.factorOverrides?.persons ?? {};
 		personFactors = Object.fromEntries(data.members.map((m) => [m.personId, pf[m.personId] !== undefined ? fmt(pf[m.personId]) : '']));
@@ -54,12 +55,11 @@
 
 <svelte:head><title>Profile · {data.group.name}</title></svelte:head>
 
-<a href="/gruppen/{data.group.id}/einstellungen" class="small">← Einstellungen</a>
-<h2 style="margin-top: 0.75rem">Ausgaben-Profile</h2>
+<h2>Ausgaben-Profile</h2>
 <p class="small muted">
-	Profile sind Vorlagen für die Aufteilung: entweder nach <strong>Merkmalen</strong> der Mitglieder – z.B. „Alkohol“
-	ohne alle mit dem Merkmal „Kind“, dann wird auch einsortiert, wer später dazukommt – oder mit
-	<strong>bestimmten Personen</strong> und eigenen Faktoren, z.B. „Mietwagen“ nur für die Mitfahrer.
+	Profile sind Vorlagen für wiederkehrende Aufteilungen, z.B. „Mietwagen“ nur für die Mitfahrer – mit
+	<strong>bestimmten Personen</strong> und auf Wunsch eigenen Faktoren. Beim Erfassen einer Ausgabe wählst du das
+	Profil mit einem Tipp.
 </p>
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
@@ -79,8 +79,8 @@
 		</div>
 		<input type="hidden" name="mode" value={mode} />
 		<div class="segmented" style="margin-bottom: 0.75rem">
-			<button type="button" class:active={mode === 'tags'} onclick={() => (mode = 'tags')}>Nach Merkmalen</button>
 			<button type="button" class:active={mode === 'persons'} onclick={() => (mode = 'persons')}>Bestimmte Personen</button>
+			<button type="button" class:active={mode === 'tags'} onclick={() => (mode = 'tags')}>Nach Merkmalen</button>
 		</div>
 		{#if mode === 'persons'}
 			<div class="field">

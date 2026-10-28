@@ -3,6 +3,14 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.12.0
+- Ausgabe erfassen vereinfacht: die Merkmal-Auswahl ist wieder raus (bestehende Ausgaben behalten ihre Aufteilung)
+- Profile haben einen eigenen Menüpunkt; neue Profile starten mit „Bestimmte Personen“, neue Gruppen bekommen
+  keine vorgefertigten Profile mehr
+- Faktoren sichtbar: bei jeder beteiligten Person steht ihr Faktor (×0,5), ein Tipp zeigt, woher er kommt;
+  auch in der Detailansicht einer Ausgabe
+- Privater Anteil: Rechnung „Betrag − privat = wird geteilt“ direkt am Eingabefeld
+
 ## 0.11.0
 - Abrechnung (PDF): alle Ausgaben mit dem Anteil jeder Person, dazu Summen für Anteil, bezahlt und Saldo;
   Druck im Querformat, die Tabelle beginnt auf einer neuen Seite

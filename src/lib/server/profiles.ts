@@ -1,18 +1,4 @@
 import type { SplitRule } from '$lib/core/types';
-import type { Tx } from './db';
-import { db, schema } from './db';
-import { newId } from './ids';
-
-export const defaultProfiles: { name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[] = [
-	{ name: 'Alkohol', icon: '🍺', rule: { type: 'all', tagFilter: { exclude: ['Kind'] } }, defaultCategoryId: 'food' },
-	{ name: 'Unterkunft', icon: '🏠', rule: { type: 'all', factorOverrides: { tags: { Kind: 1 } } }, defaultCategoryId: 'accommodation' }
-];
-
-export async function createDefaultProfiles(tx: Tx | typeof db, groupId: string) {
-	await tx.insert(schema.profiles).values(
-		defaultProfiles.map((p, i) => ({ id: newId(), groupId, sort: i, ...p }))
-	);
-}
 
 /** Builds a profile rule from the editor form. */
 export function ruleFromForm(f: FormData, memberIds: string[]): SplitRule {

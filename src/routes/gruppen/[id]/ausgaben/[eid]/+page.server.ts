@@ -6,7 +6,7 @@ import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { isClosed } from '$lib/server/closing';
 import { audit } from '$lib/server/audit';
-import { computeShares } from '$lib/core/split';
+import { computeShares, effectiveFactor } from '$lib/core/split';
 import type { ExpenseInput } from '$lib/expense-input';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -54,6 +54,30 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 
 	// current shares in base currency, for the detail view
 	let shares: Record<string, number> = {};
+	// factor each person was weighted with, and why (not for individual splits or frozen shares)
+	const factors: Record<string, { value: number; source: string }> = {};
+	const core = toCoreExpense(expense, data.profiles);
+	if (core.rule.type !== 'individual' && !core.frozenShares) {
+		const profile = data.profiles.find((p) => p.id === expense.profileId);
+		const where = profile ? `Profil „${profile.name}“` : 'dieser Ausgabe';
+		for (const m of data.members) {
+			const o = core.rule.factorOverrides;
+			const tag = m.tags.find((t) => o?.tags?.[t] !== undefined);
+			factors[m.personId] = core.rule.equalWeights
+				? { value: 1, source: 'alle gleich gewichtet' }
+				: {
+						value: effectiveFactor(toCoreMember(m), o),
+						source:
+							o?.persons?.[m.personId] !== undefined
+								? `festgelegt in ${where}`
+								: tag
+									? `Merkmal „${tag}“ in ${where}`
+									: m.factor === 1
+										? 'Standard'
+										: `Standardfaktor von ${m.name}`
+					};
+		}
+	}
 	try {
 		shares = Object.fromEntries(computeShares(toCoreExpense(expense, data.profiles), data.members.map(toCoreMember)));
 	} catch {
@@ -69,6 +93,7 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		expense,
 		initial,
 		shares,
+		factors,
 		history,
 		canEdit: canEditExpense(g, g.user.id, expense) && !expense.frozenShares,
 		frozen: Boolean(expense.frozenShares),

@@ -86,7 +86,6 @@
 	<div class="card small muted">Nur Gruppenadmins können die Einstellungen ändern.</div>
 {/if}
 
-<a class="button full" href="/gruppen/{data.group.id}/profile" style="margin-bottom: 1rem">🏷️ Ausgaben-Profile ({data.profiles.length})</a>
 
 <form method="POST" action="?/toggleMute" class="card row" use:enhance>
 	<span class="grow">{data.muted ? '🔕 Benachrichtigungen für diese Gruppe sind aus' : '🔔 Benachrichtigungen für diese Gruppe sind an'}</span>

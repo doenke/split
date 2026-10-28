@@ -7,6 +7,7 @@
 		{ href: base, label: 'Ausgaben' },
 		{ href: `${base}/salden`, label: 'Salden' },
 		{ href: `${base}/mitglieder`, label: 'Mitglieder' },
+		{ href: `${base}/profile`, label: 'Profile' },
 		{ href: `${base}/einstellungen`, label: 'Einstellungen' }
 	]);
 	const active = (href: string) =>

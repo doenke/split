@@ -159,50 +159,28 @@
 	// weighting: the members' factors (default) or everybody the same
 	let equalWeights = $state(init?.equalWeights ?? initRule?.equalWeights ?? false);
 
-	// quick split by tag: "nur Kinder", "nur Erwachsene" (= everyone without "Kind") or any other tag
-	const KID = 'Kind';
-	type TagChoice = { kind: 'require'; tag: string } | { kind: 'adults' };
-	const initTag = ((): TagChoice | null => {
-		if (initRule?.type !== 'all' || init?.profileId || initRule.factorOverrides) return null;
-		const f = initRule.tagFilter;
-		if (f?.require?.length === 1 && !f.exclude?.length) return { kind: 'require', tag: f.require[0] };
-		if (f?.exclude?.length === 1 && f.exclude[0] === KID && !f.require?.length) return { kind: 'adults' };
-		return null;
-	})();
-	let tagChoice = $state<TagChoice | null>(initTag);
-	const sameTag = (a: TagChoice | null, b: TagChoice) =>
-		!!a && a.kind === b.kind && (a.kind === 'adults' || a.tag === (b as { tag: string }).tag);
-	function chooseTag(t: TagChoice) {
-		if (sameTag(tagChoice, t)) {
-			tagChoice = null;
-			return;
-		}
-		tagChoice = t;
-		profileId = null;
-		mode = 'all';
-	}
-	const tagChips = $derived.by(() => {
-		const active = members.filter((m) => !m.participationTo || m.participationTo >= date);
-		const count = (fn: (tags: string[]) => boolean) => active.filter((m) => fn(m.tags)).length;
-		const chips: { label: string; choice: TagChoice; count: number }[] = [
-			{ label: 'Nur Kinder', choice: { kind: 'require', tag: KID }, count: count((t) => t.includes(KID)) },
-			{ label: 'Nur Erwachsene', choice: { kind: 'adults' }, count: count((t) => !t.includes(KID)) }
-		];
-		const others = [...new Set(members.flatMap((m) => m.tags))].filter((t) => t !== KID).sort((a, b) => a.localeCompare(b, 'de'));
-		for (const t of others) {
-			const n = count((tags) => tags.includes(t));
-			chips.push({ label: `Nur „${t}“`, choice: { kind: 'require', tag: t }, count: n });
-		}
-		return chips;
-	});
+	// expenses from earlier versions may filter by tag; keep that filter until the user picks another split
+	const legacyFilter = !init?.profileId && initRule && initRule.type !== 'individual' ? (initRule.tagFilter ?? null) : null;
+	let keepFilter = $state(Boolean(legacyFilter?.require?.length || legacyFilter?.exclude?.length));
 	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
 	const factorOf = (m: PersonOption) =>
 		equalWeights && mode !== 'individual'
 			? 1
 			: effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
+	/** Where the factor of a person comes from – shown when tapping the factor. */
+	function factorSource(m: PersonOption): string {
+		if (equalWeights) return 'alle gleich gewichtet';
+		const o = rule.factorOverrides;
+		const where = profile ? `Profil „${profile.name}“` : 'diese Ausgabe';
+		if (o?.persons?.[m.personId] !== undefined) return `festgelegt in ${where}`;
+		const tag = m.tags.find((t) => o?.tags?.[t] !== undefined);
+		if (tag) return `Merkmal „${tag}“ in ${where}`;
+		return m.factor === 1 ? 'Standard' : `Standardfaktor von ${m.name} (Mitglieder)`;
+	}
+	let factorOpen = $state<string | null>(null);
 	function chooseProfile(id: string) {
 		profileId = id;
-		tagChoice = null;
+		keepFilter = false;
 		mode = 'all';
 		const p = profiles.find((x) => x.id === id);
 		if (p?.defaultCategoryId && !categoryId) categoryId = p.defaultCategoryId;
@@ -309,11 +287,7 @@
 	});
 	function baseRule(): SplitRule {
 		if (profile) return profile.rule;
-		if (tagChoice && mode === 'all') {
-			return tagChoice.kind === 'adults'
-				? { type: 'all', tagFilter: { exclude: [KID] } }
-				: { type: 'all', tagFilter: { require: [tagChoice.tag] } };
-		}
+		if (keepFilter && legacyFilter && mode === initRule?.type && initRule.type !== 'individual') return initRule;
 		const ids = Object.keys(selected).filter((id) => selected[id]);
 		switch (mode) {
 			case 'all':
@@ -576,6 +550,9 @@
 
 	<div class="card">
 		<h2>{type === 'income' ? 'Gutgeschrieben für' : 'Aufgeteilt auf'}</h2>
+		{#if showPrivate && privateAmount > 0 && amount > privateAmount}
+			<p class="hint" style="margin-top: -0.3rem">Geteilt werden {formatAmount(amount - privateAmount, currency)} (ohne die {formatAmount(privateAmount, currency)} privaten Anteil).</p>
+		{/if}
 		{#if profiles.length}
 			<div class="chips" style="margin-bottom: 0.6rem">
 				{#each profiles as p (p.id)}
@@ -587,24 +564,15 @@
 		{/if}
 		<div class="segmented" style="margin-bottom: 0.6rem">
 			{#each Object.entries(modeLabels) as [k, label] (k)}
-				<button type="button" class:active={!profile && !tagChoice && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (tagChoice = null))}>{label}</button>
+				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (keepFilter = false))}>{label}</button>
 			{/each}
 		</div>
-		<div class="chips tags" style="margin-bottom: 0.75rem">
-			<span class="small muted">Merkmal:</span>
-			{#each tagChips as c (c.label)}
-				<button
-					type="button"
-					class="chip tag"
-					class:active={sameTag(tagChoice, c.choice)}
-					disabled={c.count === 0}
-					title={c.count === 0 ? 'Niemand in der Gruppe hat dieses Merkmal – vergib es bei den Mitgliedern.' : ''}
-					onclick={() => chooseTag(c.choice)}
-				>
-					{c.label} <span class="muted">({c.count})</span>
-				</button>
-			{/each}
-		</div>
+		{#if keepFilter && legacyFilter}
+			<p class="hint" style="margin-top: -0.3rem">
+				Diese Ausgabe ist nach Merkmalen aufgeteilt{legacyFilter.require?.length ? ` (nur „${legacyFilter.require.join('“, „')}“)` : ''}{legacyFilter.exclude?.length ? ` (ohne „${legacyFilter.exclude.join('“, „')}“)` : ''}.
+				<button type="button" class="link small" onclick={() => (keepFilter = false)}>Filter entfernen</button>
+			</p>
+		{/if}
 		{#if profile || mode !== 'individual'}
 			<div class="row weighting">
 				<span class="small muted">Gewichtung:</span>
@@ -614,12 +582,7 @@
 				</div>
 			</div>
 		{/if}
-		{#if tagChoice}
-			<p class="hint" style="margin-top: -0.4rem">
-				{tagChoice.kind === 'adults' ? 'Alle ohne das Merkmal „Kind“.' : `Alle mit dem Merkmal „${tagChoice.tag}“.`}
-				Wer später dazukommt, wird automatisch richtig einsortiert.
-			</p>
-		{/if}
+
 
 		{#if profile}
 			<p class="hint" style="margin-top: -0.4rem">Profil „{profile.name}“: Ändert sich das Profil oder kommen Personen dazu, wird die Ausgabe automatisch neu aufgeteilt.</p>
@@ -641,7 +604,15 @@
 				<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={28} />
 				<span class="grow">
 					{m.name}
-					{#if factorOf(m) !== 1 && (profile || mode !== 'individual')}<span class="badge">×{String(factorOf(m)).replace('.', ',')}</span>{/if}
+					{#if share && (profile || mode !== 'individual')}
+						<button
+							type="button"
+							class="badge factor"
+							class:std={factorOf(m) === 1}
+							title="Faktor {String(factorOf(m)).replace('.', ',')}: {factorSource(m)}"
+							onclick={() => (factorOpen = factorOpen === m.personId ? null : m.personId)}
+						>×{String(factorOf(m)).replace('.', ',')}</button>
+					{/if}
 					{#if mode === 'all_except' && selected[m.personId]}<span class="badge">ausgenommen</span>{/if}
 				</span>
 				{#if !profile && mode === 'individual'}
@@ -655,7 +626,16 @@
 				{#if showPeriod}<span class="badge">{unitLabel(unitsOf(m))}</span>{/if}
 				<span class="amount share">{share ? formatAmount(share, currency) : '–'}</span>
 			</div>
+			{#if factorOpen === m.personId && share}
+				<p class="hint factor-info">
+					Faktor {String(factorOf(m)).replace('.', ',')} – {factorSource(m)}{#if showPeriod}{` × ${unitLabel(unitsOf(m))}`}{/if}.
+					{#if !equalWeights}Mit „Alle gleich“ zählt jede Person 1.{/if}
+				</p>
+			{/if}
 		{/each}
+		{#if (profile || mode !== 'individual') && preview && 'shares' in preview}
+			<p class="hint">Tippe auf ×-Faktor einer Person, um zu sehen, woher er kommt.</p>
+		{/if}
 		{#if preview && 'error' in preview}<p class="hint error">{preview.error}</p>{/if}
 		{#if mode === 'all' || mode === 'all_except'}
 			<p class="hint">Personen, die später dazukommen, werden automatisch beteiligt (je nach Teilnahmezeitraum).</p>
@@ -665,8 +645,22 @@
 	<div class="card">
 		<label class="check"><input type="checkbox" bind:checked={showPrivate} /> Privater Anteil (z.B. eigener Einkauf auf dem Bon)</label>
 		{#if showPrivate}
-			<input bind:value={privateText} inputmode="decimal" placeholder="0,00" />
-			<p class="hint">Dieser Teil wird nicht geteilt; ihn trägt {type === 'income' ? 'der Empfänger' : 'der Zahler'} selbst.</p>
+			<input bind:value={privateText} inputmode="decimal" placeholder="0,00" aria-label="Privater Anteil" />
+			{#if privateAmount > 0 && amount > 0}
+				<div class="private-calc">
+					<div class="row"><span class="grow">Betrag (ganzer Bon)</span><span class="amount">{formatAmount(amount, currency)}</span></div>
+					<div class="row"><span class="grow">− privat, wird abgezogen</span><span class="amount">{formatAmount(privateAmount, currency)}</span></div>
+					<div class="row total"><span class="grow">= wird geteilt</span><span class="amount">{formatAmount(amount - privateAmount, currency)}</span></div>
+				</div>
+				<p class="hint">
+					Oben bleibt der volle Betrag stehen. Den privaten Teil trägt {type === 'income' ? 'der Empfänger' : 'der Zahler'} allein.
+				</p>
+			{:else}
+				<p class="hint">
+					Trage oben den <strong>vollen Betrag</strong> ein und hier nur den privaten Teil – er wird vom Betrag abgezogen und
+					nicht geteilt.
+				</p>
+			{/if}
 		{/if}
 
 		<label class="check"><input type="checkbox" bind:checked={showPeriod} /> Nach Aufenthaltsdauer aufteilen (z.B. Unterkunft)</label>
@@ -712,20 +706,38 @@
 		font-weight: 500;
 		min-height: 40px;
 	}
-	.tags {
-		align-items: center;
+	.badge.factor {
+		border: 0;
+		min-height: 0;
+		padding: 0.1rem 0.45rem;
+		font-size: 0.75rem;
+		cursor: pointer;
+		background: var(--primary-soft);
+		color: var(--text);
+	}
+	.badge.factor.std {
+		background: var(--surface-2);
+		color: var(--muted);
+	}
+	.private-calc {
+		background: var(--surface-2);
+		border-radius: 10px;
+		padding: 0.5rem 0.75rem;
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+	}
+	.private-calc .total {
+		border-top: 1px solid var(--border);
+		margin-top: 0.25rem;
+		padding-top: 0.25rem;
+		font-weight: 700;
+	}
+	.factor-info {
+		margin: -0.1rem 0 0.3rem 2.4rem;
 	}
 	.weighting {
 		flex-wrap: nowrap;
 		margin-bottom: 0.75rem;
-	}
-	.chip.tag {
-		padding: 0.2rem 0.7rem;
-		min-height: 34px;
-		font-size: 0.85rem;
-	}
-	.chip.tag:disabled {
-		opacity: 0.45;
 	}
 	.label {
 		display: block;

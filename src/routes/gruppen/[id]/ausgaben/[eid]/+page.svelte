@@ -102,7 +102,14 @@
 			{@const m = people.get(personId)}
 			<div class="row person">
 				<Avatar name={m?.name ?? '?'} color={m?.color} url={m?.avatarUrl} size={28} />
-				<span class="grow">{m?.name ?? 'Ehemaliges Mitglied'}</span>
+				<span class="grow">
+					{m?.name ?? 'Ehemaliges Mitglied'}
+					{#if data.factors[personId]}
+						{@const f = data.factors[personId]}
+						<span class="badge" title="Faktor {String(f.value).replace('.', ',')}: {f.source}">×{String(f.value).replace('.', ',')}</span>
+						<span class="small muted">{f.source}</span>
+					{/if}
+				</span>
 				<span class="amount">{formatAmount(Math.abs(amount), base)}</span>
 			</div>
 		{/each}
