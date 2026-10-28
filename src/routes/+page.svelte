@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatAmount } from '$lib/format';
+	import InstallButton from '$lib/components/InstallButton.svelte';
 
 	let { data } = $props();
 </script>
@@ -12,6 +13,8 @@
 		<a class="button primary" href="/gruppen/neu">+ Neue Gruppe</a>
 	{/if}
 </div>
+
+<InstallButton banner />
 
 {#if data.groups.length === 0}
 	<div class="card">

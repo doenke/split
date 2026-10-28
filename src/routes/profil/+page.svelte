@@ -4,6 +4,7 @@
 	import Avatar from '$lib/components/Avatar.svelte';
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
 	import PushToggle from '$lib/components/PushToggle.svelte';
+	import InstallButton from '$lib/components/InstallButton.svelte';
 	import { formatDate } from '$lib/format';
 
 	let { data, form } = $props();
@@ -57,6 +58,11 @@
 		<p class="notice small">Du hast noch keinen Passkey. Ohne Passkey bist du nur auf diesem Gerät angemeldet.</p>
 	{/if}
 	<PasskeySetup ondone={() => invalidateAll()} />
+</div>
+
+<div class="card">
+	<h2>App</h2>
+	<InstallButton />
 </div>
 
 <div class="card">
