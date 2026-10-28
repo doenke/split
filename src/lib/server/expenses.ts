@@ -75,7 +75,9 @@ export async function prepareExpense(
 	// rule: with a profile the expense follows the profile (stored rule = null)
 	const profile = input.profileId ? profiles.find((p) => p.id === input.profileId) : undefined;
 	if (input.profileId && !profile) throw new InputError('Unbekanntes Profil.');
-	const rule = profile ? profile.rule : input.rule;
+	const equal = input.equalWeights === true;
+	let rule: SplitRule = profile ? profile.rule : input.rule;
+	if (rule && equal && rule.type !== 'individual') rule = { ...rule, equalWeights: true };
 	if (!rule || !['all', 'all_except', 'only', 'individual'].includes(rule.type)) throw new InputError('Ungültige Aufteilung.');
 	const ids = rule.type === 'all_except' ? rule.excluded : rule.type === 'only' ? rule.included : rule.type === 'individual' ? Object.keys(rule.values) : [];
 	if (ids.some((id) => !memberIds.has(id))) throw new InputError('Unbekannte Person in der Aufteilung.');
@@ -114,7 +116,8 @@ export async function prepareExpense(
 		privateAmount: privateBase,
 		categoryId: input.categoryId || null,
 		profileId: profile?.id ?? null,
-		rule: profile ? null : rule,
+		// a profile used as is stays linked (and follows later profile changes)
+		rule: profile && !equal ? null : rule,
 		periodFrom: period?.from ?? null,
 		periodTo: period?.to ?? null,
 		periodUnit: period?.unit ?? null,

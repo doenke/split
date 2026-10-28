@@ -36,7 +36,8 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		payers: expense.payers.map((p) => ({ personId: p.personId, amount: p.amount })),
 		categoryId: expense.categoryId,
 		// an explicit rule overrides the profile
-		profileId: expense.rule ? null : expense.profileId,
+		profileId: expense.rule && !expense.rule.equalWeights ? null : expense.profileId,
+		equalWeights: expense.rule?.equalWeights === true,
 		rule: expense.rule ?? { type: 'all' },
 		privateAmount: privateOriginal,
 		rate: {

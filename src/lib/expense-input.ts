@@ -15,6 +15,8 @@ export interface ExpenseInput {
 	rate: { source: 'auto' | 'manual' | 'charged'; value?: number; charged?: number };
 	period: { from: string; to: string; unit: 'days' | 'nights' } | null;
 	notes: string;
+	/** everybody counts 1, regardless of their factors */
+	equalWeights?: boolean;
 	/** generated in the browser; the same id is never saved twice */
 	clientId?: string;
 	/** items of a recognized receipt that the user deselected (not shared) */

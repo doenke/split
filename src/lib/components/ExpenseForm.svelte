@@ -156,6 +156,8 @@
 	const initRule = init?.rule;
 	let mode = $state<Mode>(initRule?.type ?? 'all');
 	let profileId = $state<string | null>(init?.profileId ?? null);
+	// weighting: the members' factors (default) or everybody the same
+	let equalWeights = $state(init?.equalWeights ?? initRule?.equalWeights ?? false);
 
 	// quick split by tag: "nur Kinder", "nur Erwachsene" (= everyone without "Kind") or any other tag
 	const KID = 'Kind';
@@ -189,15 +191,15 @@
 		const others = [...new Set(members.flatMap((m) => m.tags))].filter((t) => t !== KID).sort((a, b) => a.localeCompare(b, 'de'));
 		for (const t of others) {
 			const n = count((tags) => tags.includes(t));
-			// "alle" is only interesting once somebody does not have it
-			if (t === 'alle' && n === active.length) continue;
 			chips.push({ label: `Nur „${t}“`, choice: { kind: 'require', tag: t }, count: n });
 		}
 		return chips;
 	});
 	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
 	const factorOf = (m: PersonOption) =>
-		effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
+		equalWeights && mode !== 'individual'
+			? 1
+			: effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
 	function chooseProfile(id: string) {
 		profileId = id;
 		tagChoice = null;
@@ -302,6 +304,10 @@
 	);
 
 	const rule = $derived.by((): SplitRule => {
+		const r = baseRule();
+		return equalWeights && r.type !== 'individual' ? { ...r, equalWeights: true } : r;
+	});
+	function baseRule(): SplitRule {
 		if (profile) return profile.rule;
 		if (tagChoice && mode === 'all') {
 			return tagChoice.kind === 'adults'
@@ -325,7 +331,7 @@
 				return { type: 'individual', mode: indivMode, values };
 			}
 		}
-	});
+	}
 
 	const coreMembers = $derived(
 		members.map(
@@ -400,6 +406,7 @@
 			period: showPeriod ? { from: periodFrom, to: periodTo, unit: periodUnit } : null,
 			notes,
 			clientId: init ? undefined : clientId,
+			equalWeights: equalWeights && rule.type !== 'individual',
 			receiptSelection: receipt ? { attachmentId: receipt.attachmentId, deselected: receipt.deselected } : undefined,
 			attachmentIds: [...new Set([...attachmentIds, ...initialAttachmentIds.map((a) => a.id)])]
 		} satisfies ExpenseInput)
@@ -598,6 +605,15 @@
 				</button>
 			{/each}
 		</div>
+		{#if profile || mode !== 'individual'}
+			<div class="row weighting">
+				<span class="small muted">Gewichtung:</span>
+				<div class="segmented small-seg grow">
+					<button type="button" class:active={!equalWeights} onclick={() => (equalWeights = false)}>Voreingestellte Faktoren</button>
+					<button type="button" class:active={equalWeights} onclick={() => (equalWeights = true)}>Alle gleich</button>
+				</div>
+			</div>
+		{/if}
 		{#if tagChoice}
 			<p class="hint" style="margin-top: -0.4rem">
 				{tagChoice.kind === 'adults' ? 'Alle ohne das Merkmal „Kind“.' : `Alle mit dem Merkmal „${tagChoice.tag}“.`}
@@ -698,6 +714,10 @@
 	}
 	.tags {
 		align-items: center;
+	}
+	.weighting {
+		flex-wrap: nowrap;
+		margin-bottom: 0.75rem;
 	}
 	.chip.tag {
 		padding: 0.2rem 0.7rem;

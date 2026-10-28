@@ -1,15 +1,21 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import TagInput from '$lib/components/TagInput.svelte';
-	import { DEFAULT_TAG } from '$lib/core/tags';
 	import type { SplitRule } from '$lib/core/types';
 
 	let { data, form } = $props();
 	let editing = $state<string | null>(null);
 	const cats = $derived(new Map(data.categories.map((c) => [c.id, c])));
-	const tagSuggestions = $derived([...new Set([DEFAULT_TAG, 'Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags)])]);
+	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags)])]);
+
+	const names = $derived(new Map(data.members.map((m) => [m.personId, m.name])));
+	const fmt = (n: number) => String(n).replace('.', ',');
 
 	function describe(rule: SplitRule) {
+		if (rule.type === 'only') {
+			const f = rule.factorOverrides?.persons ?? {};
+			return rule.included.map((id) => `${names.get(id) ?? '?'}${f[id] !== undefined ? ` ×${fmt(f[id])}` : ''}`).join(', ') || 'niemand';
+		}
 		const parts: string[] = [];
 		if (rule.tagFilter?.require?.length) parts.push(`nur mit ${rule.tagFilter.require.join(', ')}`);
 		if (rule.tagFilter?.exclude?.length) parts.push(`ohne ${rule.tagFilter.exclude.join(', ')}`);
@@ -20,6 +26,7 @@
 	}
 
 	function membersFor(rule: SplitRule) {
+		if (rule.type === 'only') return data.members.filter((m) => rule.included.includes(m.personId));
 		return data.members.filter((m) => {
 			if (rule.tagFilter?.require?.some((t) => !m.tags.includes(t))) return false;
 			if (rule.tagFilter?.exclude?.some((t) => m.tags.includes(t))) return false;
@@ -28,8 +35,15 @@
 	}
 
 	let overrides = $state<{ tag: string; factor: string }[]>([]);
+	let mode = $state<'tags' | 'persons'>('tags');
+	let picked = $state<Record<string, boolean>>({});
+	let personFactors = $state<Record<string, string>>({});
 	function startEdit(id: string | null, rule?: SplitRule) {
 		editing = id ?? 'new';
+		mode = rule?.type === 'only' ? 'persons' : 'tags';
+		picked = Object.fromEntries(data.members.map((m) => [m.personId, rule?.type === 'only' ? rule.included.includes(m.personId) : true]));
+		const pf = rule?.factorOverrides?.persons ?? {};
+		personFactors = Object.fromEntries(data.members.map((m) => [m.personId, pf[m.personId] !== undefined ? fmt(pf[m.personId]) : '']));
 		overrides = Object.entries(rule?.factorOverrides?.tags ?? {}).map(([tag, f]) => ({ tag, factor: String(f).replace('.', ',') }));
 	}
 	const keep = () => async ({ result, update }: { result: { type: string }; update: (o?: { reset?: boolean }) => Promise<void> }) => {
@@ -43,8 +57,9 @@
 <a href="/gruppen/{data.group.id}/einstellungen" class="small">← Einstellungen</a>
 <h2 style="margin-top: 0.75rem">Ausgaben-Profile</h2>
 <p class="small muted">
-	Profile sind Vorlagen für die Aufteilung. Sie arbeiten mit den <strong>Merkmalen</strong> der Mitglieder – z.B.
-	„Alkohol“ ohne alle mit dem Merkmal „Kind“. Wer später dazukommt, wird automatisch richtig einsortiert.
+	Profile sind Vorlagen für die Aufteilung: entweder nach <strong>Merkmalen</strong> der Mitglieder – z.B. „Alkohol“
+	ohne alle mit dem Merkmal „Kind“, dann wird auch einsortiert, wer später dazukommt – oder mit
+	<strong>bestimmten Personen</strong> und eigenen Faktoren, z.B. „Mietwagen“ nur für die Mitfahrer.
 </p>
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
@@ -62,6 +77,34 @@
 				<input id="name-{p?.id}" name="name" value={p?.name ?? ''} required placeholder="z.B. Alkohol" />
 			</div>
 		</div>
+		<input type="hidden" name="mode" value={mode} />
+		<div class="segmented" style="margin-bottom: 0.75rem">
+			<button type="button" class:active={mode === 'tags'} onclick={() => (mode = 'tags')}>Nach Merkmalen</button>
+			<button type="button" class:active={mode === 'persons'} onclick={() => (mode = 'persons')}>Bestimmte Personen</button>
+		</div>
+		{#if mode === 'persons'}
+			<div class="field">
+				<span class="label">Wer ist beteiligt – mit welchem Faktor?</span>
+				{#each data.members as m (m.personId)}
+					<div class="row person">
+						<label class="check grow">
+							<input type="checkbox" name="person" value={m.personId} bind:checked={picked[m.personId]} />
+							{m.name}
+						</label>
+						<input
+							name="factor_{m.personId}"
+							bind:value={personFactors[m.personId]}
+							inputmode="decimal"
+							placeholder={fmt(m.factor)}
+							disabled={!picked[m.personId]}
+							style="width: 5rem"
+							aria-label="Faktor für {m.name}"
+						/>
+					</div>
+				{/each}
+				<p class="hint">Leer = Standard-Faktor der Person. Personen, die später dazukommen, sind hier nicht automatisch dabei.</p>
+			</div>
+		{:else}
 		<div class="field">
 			<span class="label">Nur Personen mit Merkmal</span>
 			<TagInput name="require" value={p?.rule.tagFilter?.require ?? []} suggestions={tagSuggestions} />
@@ -82,6 +125,7 @@
 			<button type="button" class="link" onclick={() => overrides.push({ tag: '', factor: '1' })}>+ Faktor für ein Merkmal</button>
 			<p class="hint">Z.B. „Kind = 1“ bei der Unterkunft: Kinder zahlen hier voll, obwohl ihr Standard-Faktor 0,5 ist.</p>
 		</div>
+		{/if}
 		<div class="field">
 			<label for="cat-{p?.id}">Kategorie vorschlagen</label>
 			<select id="cat-{p?.id}" name="defaultCategoryId">
@@ -109,7 +153,7 @@
 				<span class="icon">{p.icon}</span>
 				<div class="grow">
 					<strong>{p.name}</strong>
-					<div class="small muted">{describe(p.rule)}{#if p.defaultCategoryId && cats.get(p.defaultCategoryId)} · {cats.get(p.defaultCategoryId)?.name}{/if}</div>
+					<div class="small muted">{describe(p.rule)}{#if p.defaultCategoryId && cats.get(p.defaultCategoryId)}{` · ${cats.get(p.defaultCategoryId)?.name}`}{/if}</div>
 					<div class="small muted">Derzeit: {membersFor(p.rule).map((m) => m.name).join(', ') || 'niemand'}</div>
 				</div>
 				{#if data.isAdmin && editing !== p.id}
@@ -155,6 +199,10 @@
 	}
 	.edit {
 		margin-top: 0.75rem;
+	}
+	.person {
+		flex-wrap: nowrap;
+		margin-bottom: 0.25rem;
 	}
 	.label {
 		display: block;

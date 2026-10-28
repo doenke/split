@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
-import { requireGroupAdmin } from '$lib/server/groups';
+import { loadMembers, requireGroupAdmin } from '$lib/server/groups';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
 import { ruleFromForm } from '$lib/server/profiles';
@@ -16,7 +16,7 @@ export const actions: Actions = {
 		const values = {
 			name,
 			icon: String(f.get('icon') ?? '').trim() || '🏷️',
-			rule: ruleFromForm(f),
+			rule: ruleFromForm(f, (await loadMembers(params.id)).map((m) => m.personId)),
 			defaultCategoryId: String(f.get('defaultCategoryId') ?? '') || null
 		};
 		const id = String(f.get('id') ?? '');

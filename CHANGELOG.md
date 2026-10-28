@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.10.0
+- Ausgaben-Profile mit bestimmten Personen und eigenen Faktoren (z.B. „Mietwagen“: Anna ×2, Sönke)
+- Ausgabe: Schalter „Voreingestellte Faktoren“ / „Alle gleich“ für die Gewichtung
+- Das automatische Merkmal „alle“ wurde wieder entfernt – auch aus bestehenden Mitgliedern, Profilen und Ausgaben
+
 ## 0.9.0
 - Bon-Erkennung: Fotos und PDFs von Kassenbons werden mit Claude (Anthropic) ausgelesen – Händler, Datum,
   Betrag, Währung, Kategorie-Vorschlag und Positionen füllen das Formular vor

@@ -77,6 +77,16 @@ describe('computeShares', () => {
 		expect(effectiveFactor(lea, { tags: { Kind: 1 }, persons: { lea: 0 } })).toBe(0);
 	});
 
+	it('ignores factors when all count equally', () => {
+		const e = expense({ rule: { type: 'all', equalWeights: true, factorOverrides: { tags: { Kind: 3 } } } });
+		expect(obj(computeShares(e, family))).toEqual({ anna: 2250, ben: 2250, lea: 2250, tim: 2250 });
+	});
+
+	it('supports concrete people with own factors (profile)', () => {
+		const e = expense({ rule: { type: 'only', included: ['anna', 'lea'], factorOverrides: { persons: { lea: 2 } } } });
+		expect(obj(computeShares(e, family))).toEqual({ anna: 3000, lea: 6000 });
+	});
+
 	it('supports fixed amounts plus rest', () => {
 		const e = expense({ rule: { type: 'all', fixed: { ben: 1200 } } });
 		expect(obj(computeShares(e, [m('anna'), m('ben')]))).toEqual({ anna: 3900, ben: 5100 });

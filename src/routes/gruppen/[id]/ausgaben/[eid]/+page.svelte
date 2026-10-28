@@ -92,7 +92,7 @@
 			<p class="small muted">davon privat (nicht geteilt): {formatAmount(e.privateAmount, base)}</p>
 		{/if}
 
-		<h3 style="margin-top: 1rem">Aufteilung: {ruleText}</h3>
+		<h3 style="margin-top: 1rem">Aufteilung: {ruleText}{#if e.rule?.equalWeights}{' · alle gleich gewichtet'}{/if}</h3>
 		{#if e.periodFrom && e.periodTo}
 			<p class="small muted">
 				nach Aufenthalt, {formatDate(e.periodFrom)} – {formatDate(e.periodTo)}, gezählt in {e.periodUnit === 'nights' ? 'Nächten (Abreisetag zählt nicht)' : 'Tagen (An- und Abreisetag zählen)'}

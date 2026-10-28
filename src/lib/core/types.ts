@@ -32,6 +32,8 @@ export interface TagFilter {
 interface RuleBase {
 	tagFilter?: TagFilter;
 	factorOverrides?: FactorOverrides;
+	/** Ignore all factors: everybody taking part counts 1 (times days/nights for stay-based splits). */
+	equalWeights?: boolean;
 	/** Fixed amounts per person (minor units of the expense's base amount); the rest is split by the rule. */
 	fixed?: Record<string, Minor>;
 }

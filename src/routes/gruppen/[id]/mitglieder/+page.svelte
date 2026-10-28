@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import TagInput from '$lib/components/TagInput.svelte';
-	import { DEFAULT_TAG } from '$lib/core/tags';
 	import { formatDate, today } from '$lib/format';
 
 	let { data, form } = $props();
@@ -45,7 +44,7 @@
 	}
 
 	const factorLabel = (f: number) => String(f).replace('.', ',');
-	const tagSuggestions = $derived([...new Set([DEFAULT_TAG, 'Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags), ...data.profiles.flatMap((p) => [...(p.rule.tagFilter?.require ?? []), ...(p.rule.tagFilter?.exclude ?? [])])])]);
+	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags), ...data.profiles.flatMap((p) => [...(p.rule.tagFilter?.require ?? []), ...(p.rule.tagFilter?.exclude ?? [])])])]);
 </script>
 
 <svelte:head><title>Mitglieder · {data.group.name}</title></svelte:head>
@@ -160,7 +159,7 @@
 			</div>
 			<div class="field">
 				<span class="label">Merkmale</span>
-				{#key addCount}<TagInput value={[DEFAULT_TAG]} suggestions={tagSuggestions} />{/key}
+				{#key addCount}<TagInput suggestions={tagSuggestions} />{/key}
 				<p class="hint">Profile wie „Alkohol“ nutzen Merkmale, z.B. werden Personen mit „Kind“ dort nicht beteiligt.</p>
 			</div>
 		{/if}

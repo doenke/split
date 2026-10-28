@@ -8,7 +8,6 @@ import { personalKasseId } from '$lib/server/persons';
 import { audit } from '$lib/server/audit';
 import { createDefaultProfiles } from '$lib/server/profiles';
 import { commonCurrencies, knownCurrencies } from '$lib/server/rates';
-import { DEFAULT_TAG } from '$lib/core/tags';
 import type { Actions, PageServerLoad } from './$types';
 
 async function myGroups(userId: string) {
@@ -75,7 +74,7 @@ export const actions: Actions = {
 				personId: userId,
 				role: 'admin',
 				factor: me?.factor ?? 1,
-				tags: me?.tags ?? [DEFAULT_TAG],
+				tags: me?.tags ?? [],
 				kasseId: me?.kasseId ?? (await personalKasseId(tx, userId))
 			});
 			for (const m of members) {

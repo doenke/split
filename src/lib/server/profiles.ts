@@ -15,7 +15,23 @@ export async function createDefaultProfiles(tx: Tx | typeof db, groupId: string)
 }
 
 /** Builds a profile rule from the editor form. */
-export function ruleFromForm(f: FormData): SplitRule {
+export function ruleFromForm(f: FormData, memberIds: string[]): SplitRule {
+	const num = (v: FormDataEntryValue | null) => {
+		const n = parseFloat(String(v ?? '').replace(',', '.'));
+		return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+	};
+	// concrete people, each with an optional own factor
+	if (f.get('mode') === 'persons') {
+		const included = f.getAll('person').map(String).filter((id) => memberIds.includes(id));
+		const persons: Record<string, number> = {};
+		for (const id of included) {
+			const n = num(f.get(`factor_${id}`));
+			if (n !== null) persons[id] = n;
+		}
+		const rule: SplitRule = { type: 'only', included };
+		if (Object.keys(persons).length) rule.factorOverrides = { persons };
+		return rule;
+	}
 	const list = (key: string) =>
 		[...new Set(String(f.get(key) ?? '').split(',').map((t) => t.trim()).filter(Boolean))];
 	const require = list('require');

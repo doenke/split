@@ -135,7 +135,7 @@ export function computeShares(expense: Expense, members: Member[]): Map<string, 
 		if (rule.type === 'individual') {
 			w = rule.values[m.personId] ?? 0;
 		} else {
-			w = effectiveFactor(m, rule.factorOverrides);
+			w = rule.equalWeights ? 1 : effectiveFactor(m, rule.factorOverrides);
 			if (expense.period) w *= presentUnits(m, expense.period);
 		}
 		if (w > 0) weights.set(m.personId, w);
