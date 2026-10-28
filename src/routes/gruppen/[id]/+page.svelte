@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uploadErrorMessage } from '$lib/upload-error';
 	import { formatAmount, formatDate } from '$lib/format';
 	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { onMount } from 'svelte';
@@ -43,7 +44,7 @@
 			body.append('file', await shrinkToFile(file));
 			body.append('date', today());
 			const res = await fetch(`/gruppen/${data.group.id}/ausgaben/vorbereiten`, { method: 'POST', body });
-			if (!res.ok) throw new Error((await res.json().catch(() => null))?.message ?? 'Speichern fehlgeschlagen');
+			if (!res.ok) throw new Error(await uploadErrorMessage(res));
 			snapMessage = '📷 Bon gespeichert – du findest ihn unter „Vorbereitet“.';
 			await invalidateAll();
 		} catch (err) {

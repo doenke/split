@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { shrinkImage as shrink } from '$lib/image';
+	import { uploadErrorMessage } from '$lib/upload-error';
 	let {
 		groupId,
 		existing = [],
@@ -33,8 +34,8 @@
 			const name = blob === file ? file.name : file.name.replace(/\.\w+$/, '') + '.jpg';
 			body.append('file', new File([blob], name, { type: blob.type || file.type }));
 			const res = await fetch(`/gruppen/${groupId}/belege`, { method: 'POST', body });
+			if (!res.ok) throw new Error(await uploadErrorMessage(res));
 			const data = await res.json();
-			if (!res.ok) throw new Error(data.message ?? 'Hochladen fehlgeschlagen');
 			files.push({ id: data.id, mime: data.mime, preview: blob.type.startsWith('image/') ? URL.createObjectURL(blob) : undefined });
 			onuploaded?.({ id: data.id, mime: data.mime });
 		} catch (e) {

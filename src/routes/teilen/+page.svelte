@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uploadErrorMessage } from '$lib/upload-error';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
@@ -33,8 +34,8 @@
 			const body = new FormData();
 			body.append('file', file);
 			const res = await fetch(`/gruppen/${groupId}/belege`, { method: 'POST', body });
+			if (!res.ok) throw new Error(await uploadErrorMessage(res));
 			const json = await res.json();
-			if (!res.ok) throw new Error(json.message);
 			await (await caches.open('split-share')).delete('/shared-file');
 			await goto(`/gruppen/${groupId}/ausgaben/neu?beleg=${json.id}`);
 		} catch (e) {

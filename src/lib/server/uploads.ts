@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, constants, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { and, eq, isNull, lt } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
@@ -25,8 +25,13 @@ export async function storeUpload(file: File, groupId: string, userId: string) {
 	if (file.size > MAX_BYTES) throw new UploadError('Die Datei ist zu groß (max. 15 MB).');
 	const id = newId();
 	const fileName = `${id}.${ext}`;
-	await mkdir(dir(), { recursive: true });
-	await writeFile(path.join(dir(), fileName), Buffer.from(await file.arrayBuffer()));
+	try {
+		await mkdir(dir(), { recursive: true });
+		await writeFile(path.join(dir(), fileName), Buffer.from(await file.arrayBuffer()));
+	} catch (e) {
+		console.error(`Beleg konnte nicht in ${dir()} gespeichert werden:`, e);
+		throw new UploadError('Der Beleg konnte auf dem Server nicht gespeichert werden (Upload-Ordner nicht beschreibbar?).');
+	}
 	await db.insert(schema.attachments).values({
 		id,
 		groupId,
@@ -55,4 +60,15 @@ export async function cleanupOrphans() {
 		.from(schema.attachments)
 		.where(and(isNull(schema.attachments.expenseId), lt(schema.attachments.createdAt, new Date(Date.now() - 86_400_000))));
 	for (const a of old) await deleteUpload(a.id);
+}
+
+/** True when uploads can be stored (shown in /api/health). */
+export async function uploadsWritable() {
+	try {
+		await mkdir(dir(), { recursive: true });
+		await access(dir(), constants.W_OK);
+		return true;
+	} catch {
+		return false;
+	}
 }

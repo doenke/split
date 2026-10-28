@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.14.0
+- Docker: der Container setzt beim Start die Rechte des Upload-Ordners selbst (z.B. bei Bind-Mounts, die root gehören)
+  und läuft danach als Benutzer `node` – vorher scheiterten Fotos dann mit „Internal Error“
+- Fehler beim Hochladen von Fotos werden verständlich angezeigt (auch ein zu kleines Upload-Limit im Reverse-Proxy);
+  `/api/health` meldet, ob der Upload-Ordner beschreibbar ist
+
 ## 0.13.0
 - Kamera-Button neben dem Plus: Bon direkt im Laden fotografieren. Daraus wird eine „vorbereitete“ Ausgabe (nur Foto,
   Datum, Zahler), die später vervollständigt wird – automatisch ausgelesen (läuft schon im Hintergrund) oder von Hand.

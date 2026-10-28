@@ -23,8 +23,8 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY --from=build /app/drizzle ./drizzle
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN mkdir -p /data/uploads && chown -R node:node /data && chmod +x /usr/local/bin/docker-entrypoint.sh
-USER node
+# the entrypoint starts as root only to fix the rights of the upload folder, the app runs as "node"
+RUN apk add --no-cache su-exec && mkdir -p /data/uploads && chown -R node:node /data && chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8347
 VOLUME /data/uploads
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
