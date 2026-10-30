@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BookmarkLink from '$lib/components/BookmarkLink.svelte';
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
 
 	let { data } = $props();
@@ -10,12 +11,13 @@
 	<h1>Willkommen, {data.user?.name}! 🎉</h1>
 	<div class="card stack">
 		{#if !data.hasPasskey}
-			{#if data.viaLink}
+			{#if data.link}
 				<p>
 					Ein Konto brauchst du nicht: Mit deinem Link kommst du jederzeit wieder rein – auch auf einem anderen Gerät.
-					Hebe ihn also gut auf. Bequemer geht es mit einem <strong>Passkey</strong> (Face ID, Fingerabdruck oder
-					Geräte-PIN) – dann brauchst du den Link nicht mehr.
+					Bequemer geht es mit einem <strong>Passkey</strong> (Face ID, Fingerabdruck oder Geräte-PIN) – dann brauchst
+					du den Link nicht mehr.
 				</p>
+				<BookmarkLink url={data.link} />
 			{:else}
 				<p>
 					Damit du auch später – oder auf einem anderen Gerät – wieder reinkommst, lege jetzt einen

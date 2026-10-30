@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.26.1
+- Einladungs- und Willkommensseite zeigen die persönliche Link-Adresse zum Speichern als Lesezeichen, mit
+  Kopieren-Knopf
+
 ## 0.26.0
 - Persönliche Zugangslinks sind jetzt mehrfach nutzbar: Der Link ist der Schlüssel, jede Nutzung verlängert ihn auf
   90 Tage. Ein neu erstellter Link ersetzt den alten. Der Link zum Koppeln eines weiteren Geräts bleibt einmalig

@@ -38,7 +38,8 @@ export const actions: Actions = {
 		await createSession(cookies, person.id, false);
 		await inviteUsed(params.token, invite.type);
 		const next = encodeURIComponent(group ? `/gruppen/${group.id}` : '/');
-		redirect(303, `/willkommen?next=${next}${invite.type === 'personal' ? '&link=1' : ''}`);
+		// the welcome page shows the link again, to bookmark it
+		redirect(303, `/willkommen?next=${next}${invite.type === 'personal' ? `&link=${encodeURIComponent(params.token)}` : ''}`);
 	},
 	/** Already logged in as someone else: the invited placeholder is me – merge it into my person. */
 	merge: async ({ params, locals }) => {

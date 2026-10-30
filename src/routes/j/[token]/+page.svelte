@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import BookmarkLink from '$lib/components/BookmarkLink.svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 
@@ -42,6 +44,7 @@
 			ist dein persönlicher Zugang: Um später – auch auf einem anderen Gerät – wieder reinzukommen, öffnest du einfach
 			wieder diesen Link. Oder du speicherst gleich im Anschluss einen <strong>Passkey</strong> (Face ID, Fingerabdruck
 			oder Geräte-PIN), dann geht es auch ohne Link.
+			<BookmarkLink url={page.url.origin + page.url.pathname} />
 		</div>
 	{/if}
 </div>
