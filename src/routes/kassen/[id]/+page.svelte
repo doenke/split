@@ -1,4 +1,5 @@
 <script lang="ts">
+	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { formatAmount } from '$lib/format';
@@ -29,6 +30,7 @@
 
 <a href="/kassen" class="small">← Alle Kassen</a>
 
+<KasseSwitchDialog switched={form && 'switched' in form ? form.switched : []} />
 {#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}
 
 {#if data.isManager}
@@ -149,7 +151,7 @@
 				{#each data.known as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
 			</select>
 		{/if}
-		<label class="check"><input type="checkbox" name="applyToGroups" checked /> In Gruppen, in denen die Kasse schon verwendet wird, übernehmen</label>
+		<p class="hint">Ist die Person in einer offenen Gruppe zusammen mit jemandem aus dieser Kasse, rechnet sie dort ab jetzt über die Kasse ab.</p>
 		<div class="row" style="margin-top: 0.5rem">
 			<button class="primary grow">Hinzufügen</button>
 			<button type="button" onclick={() => (adding = false)}>Fertig</button>

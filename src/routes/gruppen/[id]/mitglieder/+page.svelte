@@ -1,4 +1,5 @@
 <script lang="ts">
+	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -56,6 +57,7 @@
 	</div>
 {/if}
 
+<KasseSwitchDialog switched={form && 'switched' in form ? form.switched : []} />
 {#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}
 
 {#if invite}

@@ -1,10 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { and, eq, inArray, or } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
 import { createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
-import { kasseOverview, requireKasse } from '$lib/server/kassen';
+import { kasseOverview, requireKasse, syncKasseToGroups } from '$lib/server/kassen';
 import { groupCosts } from '$lib/server/costs';
 import { defaultCategories } from '$lib/server/defaults';
 import { today } from '$lib/format';
@@ -39,15 +39,6 @@ async function requireManager(id: string, user: App.Locals['user']) {
 	return k;
 }
 
-/** Groups in which this Kasse is used. */
-async function groupsOfKasse(kasseId: string) {
-	const rows = await db
-		.selectDistinct({ groupId: schema.memberships.groupId })
-		.from(schema.memberships)
-		.where(eq(schema.memberships.kasseId, kasseId));
-	return rows.map((r) => r.groupId);
-}
-
 export const actions: Actions = {
 	rename: async ({ params, locals, request }) => {
 		await requireManager(params.id, locals.user);
@@ -74,24 +65,9 @@ export const actions: Actions = {
 		if (k.members.some((m) => m.personId === personId)) return fail(400, { message: 'Schon Mitglied.' });
 		await db.insert(schema.kasseMembers).values({ kasseId: params.id, personId });
 
-		// in groups where this Kasse is already used, the person now settles with it too
-		if (f.get('applyToGroups') === 'on') {
-			const groups = await groupsOfKasse(params.id);
-			const personal = await personalKasseId(db, personId);
-			if (groups.length) {
-				await db
-					.update(schema.memberships)
-					.set({ kasseId: params.id })
-					.where(
-						and(
-							eq(schema.memberships.personId, personId),
-							eq(schema.memberships.kasseId, personal),
-							inArray(schema.memberships.groupId, groups)
-						)
-					);
-			}
-		}
-		return { added: true };
+		// open groups with at least two people of this Kasse now settle with it
+		const switched = await syncKasseToGroups(params.id);
+		return { added: true, switched };
 	},
 
 	removeMember: async ({ params, locals, request }) => {

@@ -3,6 +3,13 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.20.0
+- Kassen automatisch: Sind mindestens zwei Personen einer Kasse in derselben offenen Gruppe, rechnen sie dort über
+  die Kasse ab – nach dem Hinzufügen einer Person zur Kasse, einer Person zur Gruppe oder einer ganzen Kasse.
+  Umgestellt wird nur, wer bisher „sich allein“ abrechnet; abgeschlossene und archivierte Gruppen bleiben, ebenso
+  Personen mit schon eingetragenen Zahlungen. Ein Pop-up zeigt, was umgestellt wurde
+- Kasse: das Kästchen „In Gruppen übernehmen“ beim Hinzufügen entfällt (passiert jetzt automatisch)
+
 ## 0.19.0
 - Updates kommen zuverlässiger an: eine offene App lädt die neue Version, sobald sie erkannt ist (spätestens nach
   einer Minute) – außer man tippt gerade etwas, dann beim nächsten Seitenwechsel. Vorher wird jeweils auch der neue

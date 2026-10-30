@@ -119,3 +119,73 @@ export async function kasseOverview(kasseId: string) {
 		kasseNames: Object.fromEntries(kasseNames)
 	};
 }
+
+export interface KasseSwitch {
+	groupId: string;
+	groupName: string;
+	kasseName: string;
+	names: string[];
+}
+
+/**
+ * As soon as at least two people of a shared Kasse are in the same open group, they settle together:
+ * members who still settle alone (personal Kasse) are switched to this Kasse. Settled and archived
+ * groups stay as they are, and so does anyone who already uses another shared Kasse there or whose
+ * personal Kasse already has payments in that group. Returns what was switched, for the user to see.
+ */
+export async function syncKasseToGroups(kasseId: string, onlyGroupId?: string): Promise<KasseSwitch[]> {
+	const [kasse] = await db.select().from(schema.kassen).where(eq(schema.kassen.id, kasseId));
+	if (!kasse || kasse.personalOf) return [];
+	const members = await kasseMembersOf(kasseId);
+	if (members.length < 2) return [];
+	const rows = await db
+		.select({
+			groupId: schema.memberships.groupId,
+			groupName: schema.groups.name,
+			personId: schema.memberships.personId,
+			kasseId: schema.memberships.kasseId,
+			personalOf: schema.kassen.personalOf
+		})
+		.from(schema.memberships)
+		.innerJoin(schema.groups, eq(schema.groups.id, schema.memberships.groupId))
+		.innerJoin(schema.kassen, eq(schema.kassen.id, schema.memberships.kasseId))
+		.where(
+			and(
+				inArray(schema.memberships.personId, members.map((m) => m.personId)),
+				eq(schema.groups.status, 'active'),
+				isNull(schema.groups.deletedAt),
+				onlyGroupId ? eq(schema.memberships.groupId, onlyGroupId) : undefined
+			)
+		);
+	const byGroup = new Map<string, typeof rows>();
+	for (const r of rows) byGroup.set(r.groupId, [...(byGroup.get(r.groupId) ?? []), r]);
+
+	const names = new Map(members.map((m) => [m.personId, m.name]));
+	const result: KasseSwitch[] = [];
+	for (const [groupId, list] of byGroup) {
+		if (list.length < 2) continue;
+		// only those who settle alone; a personal Kasse with payments in this group must stay
+		const candidates = list.filter((r) => r.kasseId !== kasseId && r.personalOf === r.personId);
+		if (!candidates.length) continue;
+		const paid = await db
+			.selectDistinct({ from: schema.settlements.fromKasseId, to: schema.settlements.toKasseId })
+			.from(schema.settlements)
+			.where(and(eq(schema.settlements.groupId, groupId), isNull(schema.settlements.deletedAt)));
+		const withPayments = new Set(paid.flatMap((p) => [p.from, p.to]));
+		const switching = candidates.filter((r) => !withPayments.has(r.kasseId));
+		if (!switching.length) continue;
+		await db
+			.update(schema.memberships)
+			.set({ kasseId })
+			.where(and(eq(schema.memberships.groupId, groupId), inArray(schema.memberships.personId, switching.map((r) => r.personId))));
+		result.push({ groupId, groupName: list[0].groupName, kasseName: kasse.name, names: switching.map((r) => names.get(r.personId) ?? '?') });
+	}
+	return result;
+}
+
+/** syncKasseToGroups for all shared Kassen of a person (e.g. after joining a group). */
+export async function syncPersonKassen(personId: string, onlyGroupId?: string) {
+	const result: KasseSwitch[] = [];
+	for (const k of await sharedKassenOf(personId)) result.push(...(await syncKasseToGroups(k.id, onlyGroupId)));
+	return result;
+}

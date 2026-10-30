@@ -1,11 +1,11 @@
 import { error, fail } from '@sveltejs/kit';
-import { and, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, eq, isNull, or } from 'drizzle-orm';
 import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
 import { claimedPersonIds, createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, revokeGroupInvite } from '$lib/server/auth/invites';
-import { pickKasseForGroup, sharedKassenOf, kasseMembersOf } from '$lib/server/kassen';
+import { pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import { today } from '$lib/format';
 import type { Actions, PageServerLoad } from './$types';
@@ -106,7 +106,9 @@ export const actions: Actions = {
 			kasseId
 		});
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.add', entityId: personId, data: { from } });
-		return { added: personId };
+		// someone of the same Kasse is already here: they settle together from now on
+		const switched = await syncPersonKassen(personId, params.id);
+		return { added: personId, switched };
 	},
 
 	/** Adds all members of one of my Kassen that are not in the group yet. */
@@ -124,21 +126,9 @@ export const actions: Actions = {
 			await db.insert(schema.memberships).values({ groupId: params.id, personId: m.personId, participationFrom: from, kasseId });
 			await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
 		}
-		// members already in the group switch to the Kasse as well
-		await db
-			.update(schema.memberships)
-			.set({ kasseId })
-			.where(
-				and(
-					eq(schema.memberships.groupId, params.id),
-					inArray(
-						schema.memberships.personId,
-						(await kasseMembersOf(kasseId)).map((m) => m.personId)
-					),
-					isNull(schema.memberships.participationTo)
-				)
-			);
-		return { addedKasse: members.length };
+		// members already in the group (settling alone so far) switch to the Kasse as well
+		const switched = await syncKasseToGroups(kasseId, params.id);
+		return { addedKasse: members.length, switched };
 	},
 
 	update: async ({ params, locals, request }) => {
