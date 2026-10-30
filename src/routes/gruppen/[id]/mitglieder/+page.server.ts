@@ -5,7 +5,7 @@ import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
 import { claimedPersonIds, createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, revokeGroupInvite } from '$lib/server/auth/invites';
-import { pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
+import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import { today } from '$lib/format';
 import type { Actions, PageServerLoad } from './$types';
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 	);
 	// my Kassen with members that are not in the group yet (to add a whole family at once)
 	const myKassen = [];
-	const mine = await sharedKassenOf(g.user.id);
+	const mine = await accessibleKassenOf(g.user.id);
 	const managedKassen = mine.filter((k) => k.isManager).map((k) => k.id);
 	for (const k of mine) {
 		const missing = (await kasseMembersOf(k.id)).filter((m) => !ids.includes(m.personId));
@@ -117,7 +117,7 @@ export const actions: Actions = {
 		if (!canAddPeople(g)) error(403, 'Du darfst keine Personen hinzufügen.');
 		const f = await request.formData();
 		const kasseId = String(f.get('kasseId'));
-		if (!(await sharedKassenOf(g.user.id)).some((k) => k.id === kasseId)) error(404);
+		if (!(await accessibleKassenOf(g.user.id)).some((k) => k.id === kasseId)) error(404);
 		const join = String(f.get('join') ?? 'all');
 		const from = join === 'today' ? today() : join === 'date' && isDate(String(f.get('from'))) ? String(f.get('from')) : null;
 		const current = new Set((await loadMembers(params.id)).map((m) => m.personId));
@@ -138,7 +138,7 @@ export const actions: Actions = {
 		const self = personId === g.user.id;
 		// managers of a shared Kasse may edit its members (e.g. their kids)
 		const targetKassen = new Set((await sharedKassenOf(personId)).map((k) => k.id));
-		const managesPerson = (await sharedKassenOf(g.user.id)).some((k) => k.isManager && targetKassen.has(k.id));
+		const managesPerson = (await accessibleKassenOf(g.user.id)).some((k) => k.isManager && targetKassen.has(k.id));
 		if (!g.isAdmin && !self && !managesPerson) error(403, 'Nur Gruppenadmins dürfen andere bearbeiten.');
 		const factor = parseFactor(f.get('factor'));
 		if (factor === null) return fail(400, { message: 'Ungültiger Faktor.' });

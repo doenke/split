@@ -27,6 +27,8 @@
 			<input id="name" name="name" placeholder="z.B. Familie Jacobs" required class="grow" style="width: auto" />
 			<button class="primary">Anlegen</button>
 		</div>
+		<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked /> Ich gehöre selbst dazu</label>
+		<p class="hint">Ohne Haken legst du die Kasse für andere an, z.B. für befreundete Familien. Du verwaltest sie dann, ohne selbst mitzurechnen.</p>
 	</form>
 {/if}
 
@@ -42,8 +44,8 @@
 					{/each}
 				</div>
 				<div class="grow">
-					<div class="ellipsis"><strong>{k.name}</strong></div>
-					<div class="small muted ellipsis">{k.members.map((m) => m.name).join(', ')}</div>
+					<div class="ellipsis"><strong>{k.name}</strong>{#if !k.isMember} <span class="badge">von dir verwaltet</span>{/if}</div>
+					<div class="small muted ellipsis">{k.members.map((m) => m.name).join(', ') || 'noch niemand'}</div>
 				</div>
 				<div class="right">
 					{#each k.totals.filter((t) => t.amount !== 0) as t (t.currency)}

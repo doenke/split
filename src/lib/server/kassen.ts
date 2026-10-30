@@ -19,6 +19,21 @@ export async function sharedKassenOf(personId: string) {
 		.orderBy(schema.kassen.name);
 }
 
+/**
+ * Kassen a person can open and manage: the shared ones they belong to, plus those they created for
+ * others without being a member themselves (e.g. for friends).
+ */
+export async function accessibleKassenOf(personId: string) {
+	const own = (await sharedKassenOf(personId)).map((k) => ({ ...k, isMember: true }));
+	const created = await db
+		.select({ id: schema.kassen.id, name: schema.kassen.name })
+		.from(schema.kassen)
+		.where(and(eq(schema.kassen.createdBy, personId), isNull(schema.kassen.personalOf)));
+	const ids = new Set(own.map((k) => k.id));
+	const forOthers = created.filter((k) => !ids.has(k.id)).map((k) => ({ ...k, isManager: true, isPreferred: false, isMember: false }));
+	return [...own, ...forOthers].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+}
+
 export async function kasseMembersOf(kasseId: string) {
 	return db
 		.select({
@@ -41,8 +56,10 @@ export async function requireKasse(kasseId: string, user: SessionUser | null) {
 	if (!kasse || kasse.personalOf) error(404, 'Kasse nicht gefunden.');
 	const members = await kasseMembersOf(kasseId);
 	const me = members.find((m) => m.personId === user.id);
-	if (!me) error(404, 'Kasse nicht gefunden.');
-	return { kasse, members, isManager: me.isManager, user };
+	// whoever created a Kasse for others manages it without being a member
+	const creator = kasse.createdBy === user.id;
+	if (!me && !creator) error(404, 'Kasse nicht gefunden.');
+	return { kasse, members, isManager: me ? me.isManager : creator, isMember: !!me, user };
 }
 
 /**

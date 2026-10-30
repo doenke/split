@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.22.0
+- Kassen für andere anlegen (z.B. für befreundete Familien): beim Anlegen „Ich gehöre selbst dazu“ abwählen. Du
+  verwaltest die Kasse dann, ohne mitzurechnen, und kannst sie in Gruppen als „Ganze Kasse“ hinzufügen. Die erste
+  hinzugefügte Person wird Verwalter und Zahlungsempfänger
+
 ## 0.21.0
 - Salden: „+ Zahlung eintragen“ für beliebige Zahlungen zwischen Personen bzw. Kassen der Gruppe – z.B. Bargeld,
   das jemand braucht, oder eine Teilzahlung –, mit Von, An, Betrag, Art und Datum. Wird mit den Salden verrechnet
