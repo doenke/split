@@ -45,22 +45,40 @@
 	{#each kassen as k (k.kasseId)}
 		{@const ms = kasseMembers(k.kasseId)}
 		<div class="kasse">
-			<div class="avatars">
-				{#each ms.slice(0, 3) as m (m.personId)}
-					<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={30} />
-				{/each}
+			<div class="head">
+				<div class="avatars">
+					{#each ms.slice(0, 3) as m (m.personId)}
+						<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={30} />
+					{/each}
+				</div>
+				<div class="grow">
+					<div class="ellipsis"><strong>{kasseName(k.kasseId)}</strong>{#if k.kasseId === data.myKasseId} <span class="badge">du</span>{/if}</div>
+					<div class="small muted">bezahlt {formatAmount(k.paid, currency)} · verbraucht {formatAmount(k.consumed, currency)}</div>
+					<div class="bar"><span class={k.balance >= 0 ? 'pos' : 'neg'} style:width="{(Math.abs(k.balance) / maxAbs) * 100}%"></span></div>
+				</div>
+				<div class="amount right {k.balance > 0 ? 'positive' : k.balance < 0 ? 'negative' : 'muted'}">
+					{k.balance > 0 ? '+' : ''}{formatAmount(k.balance, currency)}
+				</div>
 			</div>
-			<div class="grow">
-				<div class="ellipsis"><strong>{kasseName(k.kasseId)}</strong>{#if k.kasseId === data.myKasseId} <span class="badge">du</span>{/if}</div>
-				<div class="small muted">bezahlt {formatAmount(k.paid, currency)} · verbraucht {formatAmount(k.consumed, currency)}</div>
-				<div class="bar"><span class={k.balance >= 0 ? 'pos' : 'neg'} style:width="{(Math.abs(k.balance) / maxAbs) * 100}%"></span></div>
-			</div>
-			<div class="amount right {k.balance > 0 ? 'positive' : k.balance < 0 ? 'negative' : 'muted'}">
-				{k.balance > 0 ? '+' : ''}{formatAmount(k.balance, currency)}
-			</div>
+			<!-- a shared Kasse (family): who is in it and what each one paid and used -->
+			{#if ms.length > 1}
+				<div class="members">
+					{#each ms as m (m.personId)}
+						{@const p = data.balances.persons[m.personId]}
+						<div class="member">
+							<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={22} />
+							<span class="grow ellipsis">{m.name}</span>
+							<span class="small muted">bezahlt {formatAmount(p?.paid ?? 0, currency)} · Anteil {formatAmount(p?.consumed ?? 0, currency)}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{/each}
 </div>
+{#if kassen.some((k) => kasseMembers(k.kasseId).length > 1)}
+	<p class="hint" style="margin-top: -0.5rem">Wer in einer gemeinsamen Kasse ist, gleicht zusammen aus – der Saldo steht bei der Kasse.</p>
+{/if}
 
 <a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
 
@@ -170,7 +188,26 @@
 
 <style>
 	.kasse {
+		display: block !important;
+	}
+	.head {
+		display: flex;
 		align-items: center;
+		gap: 0.75rem;
+	}
+	.members {
+		margin: 0.5rem 0 0 calc(30px + 0.75rem);
+		padding-left: 0.6rem;
+		border-left: 2px solid var(--border);
+	}
+	.member {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.2rem 0;
+	}
+	.member .small {
+		white-space: nowrap;
 	}
 	.avatars {
 		display: flex;

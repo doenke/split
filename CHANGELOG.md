@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.18.0
+- Salden: gemeinsame Kassen (z.B. Familien) zeigen ihre Personen eingerückt darunter, jeweils mit „bezahlt“ und
+  „Anteil“; der Saldo steht weiterhin bei der Kasse
+
 ## 0.17.0
 - Wero-Zahlungslink entfernt (die Links der Banking-Apps laufen nach kurzer Zeit ab). Für Wero bleibt die
   E-Mail-Adresse bzw. Handynummer; gespeicherte Links werden gelöscht
