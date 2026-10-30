@@ -303,6 +303,8 @@ export const paymentDetails = pgTable('payment_details', {
 	weroContact: text('wero_contact'),
 	/** open payment link created in the banking app */
 	weroLink: text('wero_link'),
+	/** banking apps let such links expire (Sparkasse: after 30 days); afterwards it is not shown anymore */
+	weroLinkExpires: date('wero_link_expires'),
 	iban: text('iban'),
 	accountHolder: text('account_holder'),
 	paypalMe: text('paypal_me'),

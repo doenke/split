@@ -1,0 +1,1 @@
+ALTER TABLE "payment_details" ADD COLUMN "wero_link_expires" date;
