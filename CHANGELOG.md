@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.23.0
+- Gruppenübersicht nach Status gruppiert: „Laufend“, „Abgerechnet“ und – zugeklappt – „Archiviert“
+
 ## 0.22.0
 - Kassen für andere anlegen (z.B. für befreundete Familien): beim Anlegen „Ich gehöre selbst dazu“ abwählen. Du
   verwaltest die Kasse dann, ohne mitzurechnen, und kannst sie in Gruppen als „Ganze Kasse“ hinzufügen. Die erste

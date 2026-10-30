@@ -3,6 +3,16 @@
 	import InstallButton from '$lib/components/InstallButton.svelte';
 
 	let { data } = $props();
+
+	// groups by status: running ones first, archived ones folded away
+	const sections = [
+		{ status: 'active', title: 'Laufend' },
+		{ status: 'settled', title: 'Abgerechnet' },
+		{ status: 'archived', title: 'Archiviert' }
+	] as const;
+	const byStatus = $derived(
+		Object.fromEntries(sections.map(({ status }) => [status, data.groups.filter((g) => g.status === status)]))
+	);
 </script>
 
 <svelte:head><title>Meine Gruppen · Split</title></svelte:head>
@@ -26,14 +36,31 @@
 		{/if}
 	</div>
 {:else}
+	{#each sections as sec (sec.status)}
+		{@const list = byStatus[sec.status]}
+		{#if list.length}
+			{#if sec.status === 'archived'}
+				<details class="archived">
+					<summary><h2 class="section">{sec.title} ({list.length})</h2></summary>
+					{@render groupList(list)}
+				</details>
+			{:else}
+				<h2 class="section">{sec.title} ({list.length})</h2>
+				{@render groupList(list)}
+			{/if}
+		{/if}
+	{/each}
+{/if}
+
+{#snippet groupList(list: typeof data.groups)}
 	<div class="list">
-		{#each data.groups as g (g.id)}
+		{#each list as g (g.id)}
 			<a href="/gruppen/{g.id}">
 				<span class="emoji">{g.emoji}</span>
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}{#if g.status === 'archived'} · archiviert{/if}
+						{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
 					</div>
 				</div>
 				<div class="right">
@@ -49,7 +76,7 @@
 			</a>
 		{/each}
 	</div>
-{/if}
+{/snippet}
 
 {#if data.deleted.length}
 	<details class="card small">
@@ -66,6 +93,23 @@
 {/if}
 
 <style>
+	.section {
+		margin: 0.5rem 0.25rem;
+		font-size: 1rem;
+	}
+	.archived summary {
+		cursor: pointer;
+		list-style: none;
+	}
+	.archived summary::-webkit-details-marker {
+		display: none;
+	}
+	.archived summary h2::before {
+		content: '▸ ';
+	}
+	.archived[open] summary h2::before {
+		content: '▾ ';
+	}
 	.emoji {
 		font-size: 1.8rem;
 		width: 2.4rem;
