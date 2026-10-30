@@ -25,6 +25,7 @@ services:
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
       OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Anmelden}
       WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Split}
       # receipt recognition: active as soon as an Anthropic API key is set

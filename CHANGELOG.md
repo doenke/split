@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.24.0
+- Admin: „Personen verwalten“ (im Profil, nur für Instanz-Admins) – Personen deaktivieren und wieder aktivieren.
+  Deaktivierte werden nirgends mehr als „bekannte Person“ angeboten; Gruppen, Kassen und Salden bleiben erhalten
+- Instanz-Admins lassen sich jetzt auch per `ADMIN_EMAILS` festlegen (statt oder zusätzlich zu `OIDC_ADMIN_GROUP`),
+  wirksam beim nächsten Login
+
 ## 0.23.0
 - Gruppenübersicht nach Status gruppiert: „Laufend“, „Abgerechnet“ und – zugeklappt – „Archiviert“
 

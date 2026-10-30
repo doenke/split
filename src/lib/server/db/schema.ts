@@ -29,7 +29,9 @@ export const persons = pgTable('persons', {
 	createdBy: text('created_by'),
 	createdAt: createdAt(),
 	/** Set when this person was merged into another one. */
-	mergedInto: text('merged_into')
+	mergedInto: text('merged_into'),
+	/** Deactivated by an instance admin: no longer offered when picking known people. */
+	deactivatedAt: timestamp('deactivated_at', { withTimezone: true })
 });
 
 /** Ways to log in as a person. */

@@ -75,12 +75,12 @@ export async function knownPersons(userId: string) {
 			.selectDistinct(cols)
 			.from(schema.memberships)
 			.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))
-			.where(and(inArray(schema.memberships.groupId, myGroups), isNull(schema.persons.mergedInto))),
+			.where(and(inArray(schema.memberships.groupId, myGroups), isNull(schema.persons.mergedInto), isNull(schema.persons.deactivatedAt))),
 		db
 			.selectDistinct(cols)
 			.from(schema.kasseMembers)
 			.innerJoin(schema.persons, eq(schema.persons.id, schema.kasseMembers.personId))
-			.where(and(inArray(schema.kasseMembers.kasseId, myKassen), isNull(schema.persons.mergedInto)))
+			.where(and(inArray(schema.kasseMembers.kasseId, myKassen), isNull(schema.persons.mergedInto), isNull(schema.persons.deactivatedAt)))
 	]);
 	const all = new Map([...fromGroups, ...fromKassen].map((p) => [p.id, p]));
 	all.delete(userId);

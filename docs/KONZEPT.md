@@ -677,6 +677,7 @@ OIDC_CLIENT_ID=split
 OIDC_CLIENT_SECRET=<aus dem IdP>
 OIDC_SCOPES="openid profile email"
 OIDC_ADMIN_GROUP=split-admins            # Mitglieder dieser IdP-Gruppe sind Instanz-Admins
+ADMIN_EMAILS=soenke@example.de           # alternativ/zusätzlich: Instanz-Admins per E-Mail (kommagetrennt)
 OIDC_BUTTON_LABEL="Mit Authentik anmelden"
 # Redirect-URI im IdP eintragen: https://split.example.de/auth/oidc/callback
 

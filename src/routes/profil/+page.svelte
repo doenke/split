@@ -24,6 +24,10 @@
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
+{#if user.isInstanceAdmin}
+	<a href="/admin/personen" class="button full" style="margin-bottom: 1rem">👥 Personen verwalten (Admin)</a>
+{/if}
+
 {#if !user.isOidc}
 	<form method="POST" action="?/rename" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
 		<label for="name">Dein Name</label>
