@@ -3,7 +3,7 @@ import { and, eq, isNull, or } from 'drizzle-orm';
 import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
-import { claimedPersonIds, createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
+import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
@@ -69,7 +69,7 @@ export const actions: Actions = {
 		if (!canAddPeople(g)) error(403, 'Du darfst keine Personen hinzufügen.');
 		const f = await request.formData();
 		const existingId = String(f.get('personId') ?? '');
-		const name = String(f.get('name') ?? '').trim();
+		const name = nameFromForm(f);
 		const factor = parseFactor(f.get('factor'));
 		if (factor === null) return fail(400, { message: 'Ungültiger Faktor.' });
 		const join = String(f.get('join') ?? 'all');
@@ -86,7 +86,10 @@ export const actions: Actions = {
 			if (!known.some((p) => p.id === existingId)) return fail(400, { message: 'Unbekannte Person.' });
 			personId = existingId;
 		} else {
-			if (!name) return fail(400, { message: 'Bitte einen Namen angeben.' });
+			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben.' });
+			// the same name twice only confuses: pick the known person or add the last name
+			const twin = sameName(name, [...(await loadMembers(params.id)), ...(await knownPersons(g.user.id))]);
+			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Person“ oder ergänze den Nachnamen.` });
 			personId = await createPerson(db, { name, createdBy: g.user.id });
 		}
 		const [already] = await db

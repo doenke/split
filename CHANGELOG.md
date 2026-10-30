@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.25.0
+- Neue Personen mit Vorname und (optionalem) Nachname – in der Gruppe, in der Kasse und beim Beitreten über den
+  Gruppenlink. Gibt es den Namen schon (in der Gruppe/Kasse oder unter den bekannten Personen), kommt ein Hinweis,
+  die bekannte Person zu wählen oder den Nachnamen zu ergänzen
+- `OIDC_ADMIN_GROUP` hat jetzt den Standardwert `admins`
+
 ## 0.24.0
 - Admin: „Personen verwalten“ (im Profil, nur für Instanz-Admins) – Personen deaktivieren und wieder aktivieren.
   Deaktivierte werden nirgends mehr als „bekannte Person“ angeboten; Gruppen, Kassen und Salden bleiben erhalten

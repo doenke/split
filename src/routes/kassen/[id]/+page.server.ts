@@ -3,7 +3,7 @@ import { and, eq, or } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
-import { createPerson, knownPersons, personalKasseId } from '$lib/server/persons';
+import { createPerson, knownPersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
 import { kasseOverview, requireKasse, syncKasseToGroups } from '$lib/server/kassen';
 import { groupCosts } from '$lib/server/costs';
 import { defaultCategories } from '$lib/server/defaults';
@@ -52,14 +52,16 @@ export const actions: Actions = {
 		const k = await requireManager(params.id, locals.user);
 		const f = await request.formData();
 		const existingId = String(f.get('personId') ?? '');
-		const name = String(f.get('name') ?? '').trim();
+		const name = nameFromForm(f);
 		let personId: string;
 		if (existingId) {
 			const known = await knownPersons(k.user.id);
 			if (!known.some((p) => p.id === existingId)) return fail(400, { message: 'Unbekannte Person.' });
 			personId = existingId;
 		} else {
-			if (!name) return fail(400, { message: 'Bitte einen Namen angeben.' });
+			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben.' });
+			const twin = sameName(name, [...k.members, ...(await knownPersons(k.user.id))]);
+			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Person“ oder ergänze den Nachnamen.` });
 			personId = await createPerson(db, { name, createdBy: k.user.id });
 		}
 		if (k.members.some((m) => m.personId === personId)) return fail(400, { message: 'Schon Mitglied.' });

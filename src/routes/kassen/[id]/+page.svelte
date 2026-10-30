@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameFields from '$lib/components/NameFields.svelte';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -144,7 +145,7 @@
 			</div>
 		{/if}
 		{#if addMode === 'new'}
-			<input name="name" placeholder="Name, z.B. Lea" required autocomplete="off" />
+			<NameFields id="kasse-name" />
 			<p class="hint">Z.B. ein Kind ohne eigenes Handy. Die Person kann später einen Zugangslink bekommen.</p>
 		{:else}
 			<select name="personId">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameFields from '$lib/components/NameFields.svelte';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
@@ -140,10 +141,7 @@
 				<p class="hint">Alle fehlenden Mitglieder der Kasse kommen dazu und rechnen gemeinsam ab. Faktoren kannst du danach anpassen.</p>
 			</div>
 		{:else if addMode === 'new'}
-			<div class="field">
-				<label for="name">Name</label>
-				<input id="name" name="name" placeholder="z.B. Lea" required autocomplete="off" />
-			</div>
+			<NameFields />
 		{:else}
 			<div class="field">
 				<label for="personId">Person</label>

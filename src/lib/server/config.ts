@@ -20,8 +20,9 @@ export const config = {
 		get scopes() {
 			return env.OIDC_SCOPES ?? 'openid profile email';
 		},
+		/** members of this IdP group are instance admins (default "admins") */
 		get adminGroup() {
-			return env.OIDC_ADMIN_GROUP;
+			return env.OIDC_ADMIN_GROUP || 'admins';
 		},
 		/** alternative to the admin group: e-mail addresses of instance admins, comma separated */
 		get adminEmails() {

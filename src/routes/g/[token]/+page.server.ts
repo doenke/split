@@ -4,7 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { findGroupInvite } from '$lib/server/auth/invites';
 import { createSession } from '$lib/server/auth/session';
 import { loadMembers } from '$lib/server/groups';
-import { claimedPersonIds, createPerson, mergePersons, personalKasseId } from '$lib/server/persons';
+import { claimedPersonIds, createPerson, mergePersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
 import { pickKasseForGroup } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
@@ -71,8 +71,12 @@ export const actions: Actions = {
 			await joinAs(group.id, locals.user.id, locals.user.id);
 			redirect(303, `/gruppen/${group.id}`);
 		}
-		const name = String((await request.formData()).get('name') ?? '').trim();
-		if (!name) return fail(400, { message: 'Bitte gib deinen Namen an.' });
+		const name = nameFromForm(await request.formData());
+		if (!name) return fail(400, { message: 'Bitte gib deinen Vornamen an.' });
+		const twin = sameName(name, await loadMembers(group.id));
+		if (twin) {
+			return fail(400, { message: `„${twin.name}“ ist schon in der Gruppe. Bist du das? Dann wähle dich in der Liste – sonst ergänze deinen Nachnamen.` });
+		}
 		const personId = await createPerson(db, { name });
 		await joinAs(group.id, personId, personId);
 		await createSession(cookies, personId, false);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameFields from '$lib/components/NameFields.svelte';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -55,8 +56,8 @@
 			<button class="link" onclick={() => (newcomer = true)}>Ich stehe nicht in der Liste</button>
 		{:else}
 			<form method="POST" action="?/join" class="card" use:enhance>
-				<label for="name">Wie heißt du?</label>
-				<input id="name" name="name" required autocomplete="given-name" />
+				<p style="margin-top: 0"><strong>Wie heißt du?</strong></p>
+				<NameFields self firstPlaceholder="" />
 				<button class="primary full" style="margin-top: 0.75rem">Beitreten</button>
 				{#if data.people.length}
 					<button type="button" class="link" style="margin-top: 0.5rem" onclick={() => (newcomer = false)}>Zurück zur Liste</button>

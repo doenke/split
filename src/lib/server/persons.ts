@@ -135,3 +135,16 @@ export async function mergePersons(fromId: string, intoId: string) {
 		await tx.execute(sql`update profiles set rule = replace(rule::text, ${'"' + fromId + '"'}, ${'"' + intoId + '"'})::jsonb where rule::text like ${'%' + fromId + '%'}`);
 	});
 }
+
+/** Full name from the "first name" and optional "last name" fields of a form. */
+export function nameFromForm(f: FormData) {
+	const part = (k: string) => String(f.get(k) ?? '').trim().replace(/\s+/g, ' ');
+	return [part('firstName'), part('lastName')].filter(Boolean).join(' ').slice(0, 80);
+}
+
+const normName = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');
+
+/** Someone with exactly this name (ignoring case) among the given people. */
+export function sameName<T extends { name: string }>(name: string, people: T[]) {
+	return people.find((p) => normName(p.name) === normName(name));
+}
