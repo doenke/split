@@ -2,11 +2,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { requireGroup, loadMembers, loadProfiles } from '$lib/server/groups';
-import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
+import { announceExpense, InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { isClosed } from '$lib/server/closing';
-import { groupRecipients, notify } from '$lib/server/push';
-import { formatAmount } from '$lib/core/currency';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent, url }) => {
@@ -47,13 +45,7 @@ export const actions: Actions = {
 			return fail(400, { message: `Die Abrechnung ist bis ${g.group.closedUntil} abgeschlossen. Wähle ein späteres Datum oder öffne die Abrechnung wieder.` });
 		}
 		const expenseId = await saveExpense(params.id, g.user.id, prepared);
-		void groupRecipients(params.id, g.user.id).then((ids) =>
-			notify(ids, {
-				title: `${g.group.emoji} ${g.group.name}`,
-				body: `${g.user.name}: ${prepared.row.title} – ${formatAmount(prepared.row.amount, prepared.row.currency)}`,
-				url: `/gruppen/${params.id}/ausgaben/${expenseId}`
-			})
-		);
+		announceExpense(g.group, g.user, prepared.row, expenseId);
 		redirect(303, `/gruppen/${params.id}`);
 	}
 };

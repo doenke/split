@@ -28,6 +28,10 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 - Abrechnung abschließen (Anteile festschreiben), CSV-Export, druckbare Abrechnung als PDF
 - Push-Benachrichtigungen (neue Ausgaben, Zahlungen, Erinnerungen), pro Gruppe stummschaltbar –
   die VAPID-Schlüssel erzeugt die App beim ersten Start selbst
+
+**KI-Assistenten (MCP)**
+- MCP-Server unter `/mcp` (Streamable HTTP): Gruppen, Salden und Ausgaben lesen, Ausgaben und Zahlungen eintragen –
+  mit den Rechten des Nutzers. Schlüssel unter Profil → KI-Assistenten, Anleitung in der App unter `/hilfe#mcp`
 - Ausgaben offline erfassen, automatische Übertragung bei Verbindung
 - Aufteilung nach Aufenthaltsdauer wahlweise nach Nächten oder Tagen
 - „Ich habe alles eingetragen“ – für sich oder die ganze Kasse; wenn alle fertig sind, steht die

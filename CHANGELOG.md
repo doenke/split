@@ -3,6 +3,13 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.27.0
+- MCP-Server für KI-Assistenten (z.B. Claude) unter `/mcp`: Gruppen, Salden und Ausgaben lesen, Ausgaben eintragen
+  (auch in Fremdwährung, mit Zahler, Beteiligten, Kategorie, Profil) und Zahlungen erfassen – mit den Rechten des
+  Nutzers. Schlüssel im Profil unter „KI-Assistenten“ erzeugen und widerrufen
+- Hilfe in der App (`/hilfe`, verlinkt in der Fußzeile und im Profil): Erklärung aller Funktionen und wie man den
+  MCP-Server in Claude Code, Claude Desktop, Claude.ai und andere Clients einbindet
+
 ## 0.26.2
 - Überall, wo der Passkey erklärt wird (Einladung, Gruppenlink, Willkommen, Profil), steht die allgemeine Adresse von
   Split, unter der man sich mit Passkey anmeldet

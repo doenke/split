@@ -48,21 +48,25 @@ export async function validateSession(token: string | undefined) {
 		await db.update(schema.sessions).set({ personId: person.mergedInto }).where(eq(schema.sessions.id, id));
 		return validateSession(token);
 	}
+	return { sessionId: id, user: await toSessionUser(person, session.isOidc) };
+}
+
+/** The user as the app sees it (also used for API keys). */
+export async function toSessionUser(person: typeof schema.persons.$inferSelect, oidcSession = false): Promise<SessionUser> {
 	const oidc = await db
 		.select({ id: schema.credentials.id })
 		.from(schema.credentials)
 		.where(and(eq(schema.credentials.personId, person.id), eq(schema.credentials.type, 'oidc')))
 		.limit(1);
-	const user: SessionUser = {
+	return {
 		id: person.id,
 		name: person.name,
 		email: person.email,
 		avatarUrl: person.avatarUrl,
 		color: person.color,
-		isOidc: session.isOidc || oidc.length > 0,
+		isOidc: oidcSession || oidc.length > 0,
 		isInstanceAdmin: person.isAdmin
 	};
-	return { sessionId: id, user };
 }
 
 export async function destroySession(cookies: Cookies, sessionId: string | null) {

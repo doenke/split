@@ -113,6 +113,13 @@
       "when": 1793385950485,
       "tag": "0015_person_deactivated",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793393140250,
+      "tag": "0016_api_tokens",
+      "breakpoints": true
     }
   ]
 }

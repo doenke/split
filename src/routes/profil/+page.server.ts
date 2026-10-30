@@ -4,6 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
 import QRCode from 'qrcode';
 import { createPairingInvite } from '$lib/server/auth/invites';
+import { createApiToken, listApiTokens, revokeApiToken } from '$lib/server/auth/apitokens';
 import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -24,7 +25,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		hasOidc: creds.some((c) => c.type === 'oidc'),
 		sessionCount: sessions.length,
 		oidcEnabled: config.oidc.enabled,
-		oidcLabel: config.oidc.buttonLabel
+		oidcLabel: config.oidc.buttonLabel,
+		apiKeys: (await listApiTokens(locals.user.id)).map((k) => ({ ...k, createdAt: k.createdAt.toISOString(), lastUsedAt: k.lastUsedAt?.toISOString() ?? null })),
+		mcpUrl: `${config.publicUrl}/mcp`
 	};
 };
 
@@ -67,6 +70,17 @@ export const actions: Actions = {
 			.delete(schema.credentials)
 			.where(and(eq(schema.credentials.id, id), eq(schema.credentials.personId, locals.user.id), eq(schema.credentials.type, 'passkey')));
 		return { deleted: true };
+	},
+	/** Key for an AI assistant (MCP); shown only once. */
+	createApiKey: async ({ locals, request }) => {
+		if (!locals.user) redirect(303, '/login');
+		const label = String((await request.formData()).get('label') ?? '').trim();
+		return { apiKey: await createApiToken(locals.user.id, label || 'KI-Assistent') };
+	},
+	revokeApiKey: async ({ locals, request }) => {
+		if (!locals.user) redirect(303, '/login');
+		await revokeApiToken(locals.user.id, String((await request.formData()).get('id')));
+		return { revoked: true };
 	},
 	/** Short-lived login link for another device of the same person. */
 	pairDevice: async ({ locals }) => {

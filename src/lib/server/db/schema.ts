@@ -66,6 +66,18 @@ export const sessions = pgTable('sessions', {
 	createdAt: createdAt()
 });
 
+/** Keys for AI assistants (MCP): act as the person, like a session without a browser. */
+export const apiTokens = pgTable('api_tokens', {
+	/** sha256 of the key */
+	id: id(),
+	personId: text('person_id')
+		.notNull()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	label: text('label').notNull(),
+	createdAt: createdAt(),
+	lastUsedAt: timestamp('last_used_at', { withTimezone: true })
+});
+
 export const inviteTokens = pgTable('invite_tokens', {
 	/** sha256 of the token */
 	id: id(),

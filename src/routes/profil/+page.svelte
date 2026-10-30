@@ -25,6 +25,8 @@
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
+<a href="/hilfe" class="button full" style="margin-bottom: 1rem">❓ Hilfe & Anleitung</a>
+
 {#if user.isInstanceAdmin}
 	<a href="/admin/personen" class="button full" style="margin-bottom: 1rem">👥 Personen verwalten (Admin)</a>
 {/if}
@@ -114,6 +116,50 @@
 	</div>
 {/if}
 
+<div class="card" id="ki">
+	<h2>KI-Assistenten (MCP)</h2>
+	<p class="small muted">
+		Mit einem Schlüssel kann ein KI-Assistent wie Claude deine Gruppen, Salden und Ausgaben lesen und für dich Ausgaben
+		oder Zahlungen eintragen – mit denselben Rechten wie du. <a href="/hilfe#mcp">So bindest du ihn ein</a>
+	</p>
+	{#if form?.apiKey}
+		<div class="newkey">
+			<p class="small"><strong>Dein neuer Schlüssel</strong> – er wird nur jetzt angezeigt, kopiere ihn gleich:</p>
+			<input readonly value={form.apiKey} onfocus={(e) => e.currentTarget.select()} />
+			<p class="small" style="margin-bottom: 0.25rem">Adresse des MCP-Servers:</p>
+			<input readonly value={data.mcpUrl} onfocus={(e) => e.currentTarget.select()} />
+			<p class="small" style="margin-bottom: 0.25rem">Für Claude Code:</p>
+			<textarea readonly rows="3" onfocus={(e) => e.currentTarget.select()}>claude mcp add --transport http split {data.mcpUrl} --header "Authorization: Bearer {form.apiKey}"</textarea>
+		</div>
+	{/if}
+	{#if data.apiKeys.length}
+		<div class="list">
+			{#each data.apiKeys as k (k.id)}
+				<div>
+					<span class="grow">
+						🤖 {k.label}
+						<span class="small muted">· seit {formatDate(k.createdAt.slice(0, 10))}{k.lastUsedAt ? ` · zuletzt ${formatDate(k.lastUsedAt.slice(0, 10))}` : ' · noch nie benutzt'}</span>
+					</span>
+					<form
+						method="POST"
+						action="?/revokeApiKey"
+						use:enhance={({ cancel }) => {
+							if (!confirm(`Schlüssel „${k.label}“ widerrufen? Der Assistent hat dann keinen Zugriff mehr.`)) cancel();
+						}}
+					>
+						<input type="hidden" name="id" value={k.id} />
+						<button class="link danger">Widerrufen</button>
+					</form>
+				</div>
+			{/each}
+		</div>
+	{/if}
+	<form method="POST" action="?/createApiKey" use:enhance class="row">
+		<input name="label" placeholder="Name, z.B. Claude am Laptop" class="grow" style="width: auto" aria-label="Name des Schlüssels" />
+		<button>Schlüssel erzeugen</button>
+	</form>
+</div>
+
 <div class="card">
 	<h2>Weiteres Gerät</h2>
 	{#if form?.pairing}
@@ -138,6 +184,18 @@
 </div>
 
 <style>
+	.newkey {
+		background: var(--surface-2);
+		border-radius: 10px;
+		padding: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+	.newkey input,
+	.newkey textarea {
+		font-family: ui-monospace, monospace;
+		font-size: 0.8rem;
+		width: 100%;
+	}
 	.center {
 		text-align: center;
 	}

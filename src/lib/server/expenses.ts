@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { computeShares, SplitError } from '$lib/core/split';
-import { convert, rateFromCharged } from '$lib/core/currency';
+import { convert, formatAmount, rateFromCharged } from '$lib/core/currency';
 import type { ExpenseInput } from '$lib/expense-input';
 import type { SplitRule } from '$lib/core/types';
 import { db, schema } from './db';
@@ -8,6 +8,7 @@ import { audit } from './audit';
 import { newId } from './ids';
 import { lookupRate } from './rates';
 import { toCoreExpense, toCoreMember, type GroupMember } from './groups';
+import { groupRecipients, notify } from './push';
 
 export class InputError extends Error {}
 
@@ -207,4 +208,20 @@ export async function saveExpense(
 		});
 	});
 	return id;
+}
+
+/** Tells the others in the group about a new expense (push). */
+export function announceExpense(
+	group: { id: string; name: string; emoji: string },
+	user: { id: string; name: string },
+	row: { title: string; amount: number; currency: string },
+	expenseId: string
+) {
+	void groupRecipients(group.id, user.id).then((ids) =>
+		notify(ids, {
+			title: `${group.emoji} ${group.name}`,
+			body: `${user.name}: ${row.title} – ${formatAmount(row.amount, row.currency)}`,
+			url: `/gruppen/${group.id}/ausgaben/${expenseId}`
+		})
+	);
 }

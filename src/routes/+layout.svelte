@@ -109,7 +109,7 @@
 	{@render children()}
 </main>
 
-<footer class="small muted noprint">Split {versionLabel}</footer>
+<footer class="small muted noprint">Split {versionLabel} · <a href="/hilfe">Hilfe</a></footer>
 
 <style>
 	header {

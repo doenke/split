@@ -3,13 +3,12 @@ import { and, eq, inArray } from 'drizzle-orm';
 import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadGroupState, loadMembers, requireGroup } from '$lib/server/groups';
-import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
 import { parseAmount } from '$lib/core/currency';
-import { today } from '$lib/format';
 import { epcPayload, formatIban, paypalLink } from '$lib/core/payment';
 import { formatAmount } from '$lib/core/currency';
 import { kasseRecipients, notify } from '$lib/server/push';
+import { paymentMethods, recordSettlement, SettlementError } from '$lib/server/settlements';
 import { gt } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -53,48 +52,28 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	return { paymentOptions: options };
 };
 
-const methods = ['cash', 'transfer', 'paypal', 'wero', 'other'] as const;
 
 export const actions: Actions = {
 	record: async ({ params, locals, request }) => {
 		const g = await requireGroup(params.id, locals.user);
 		const f = await request.formData();
-		const from = String(f.get('from'));
-		const to = String(f.get('to'));
 		const amount = parseAmount(String(f.get('amount') ?? ''), g.group.baseCurrency);
-		const method = methods.find((m) => m === f.get('method')) ?? 'other';
 		if (!amount || amount <= 0) return fail(400, { message: 'Ungültiger Betrag.' });
-		const kassen = new Set((await loadMembers(params.id)).map((m) => m.kasseId));
-		if (!kassen.has(from) || !kassen.has(to) || from === to) return fail(400, { message: 'Ungültige Zahlung.' });
 		const dateIn = String(f.get('date') ?? '');
 		// one day of slack: the browser's "today" may already be tomorrow on the server's clock
 		const latest = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
 		if (dateIn && (!/^\d{4}-\d{2}-\d{2}$/.test(dateIn) || dateIn > latest)) return fail(400, { message: 'Ungültiges Datum.' });
-		const id = newId();
-		// the recipient recording a payment confirms it at the same time
-		const confirmed = g.membership.kasseId === to;
-		await db.insert(schema.settlements).values({
-			id,
-			groupId: params.id,
-			fromKasseId: from,
-			toKasseId: to,
-			amount,
-			method,
-			status: confirmed ? 'confirmed' : 'pending',
-			confirmedAt: confirmed ? new Date() : null,
-			date: dateIn || today(),
-			createdBy: g.user.id
-		});
-		await audit(db, { groupId: params.id, personId: g.user.id, action: 'settlement.create', entityId: id, data: { from, to, amount } });
-		const money = formatAmount(amount, g.group.baseCurrency);
-		const url = `/gruppen/${params.id}/salden`;
-		const title = `${g.group.emoji} ${g.group.name}`;
-		if (confirmed) {
-			void kasseRecipients(params.id, from, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat ${money} von dir erhalten. Danke!`, url }));
-		} else {
-			void kasseRecipients(params.id, to, g.user.id).then((ids) =>
-				notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt – bitte den Eingang bestätigen.`, url })
-			);
+		try {
+			await recordSettlement(g, {
+				from: String(f.get('from')),
+				to: String(f.get('to')),
+				amount,
+				method: paymentMethods.find((m) => m === f.get('method')) ?? 'other',
+				date: dateIn || undefined
+			});
+		} catch (e) {
+			if (e instanceof SettlementError) return fail(400, { message: e.message });
+			throw e;
 		}
 		return { ok: true };
 	},
