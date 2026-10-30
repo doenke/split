@@ -1,1 +1,0 @@
-{"version":3,"file":"_server.ts.js-D8qQFUjn.js","sources":["../../../../../../../../.svelte-kit/output/server/entries/endpoints/api/health/live/_server.ts.js"],"sourcesContent":["import { json } from \"@sveltejs/kit\";\nconst GET = () => json({ status: \"ok\" });\nexport {\n  GET\n};\n"],"names":[],"mappings":";;;AACK,MAAC,GAAG,GAAG,MAAM,IAAI,CAAC,EAAE,MAAM,EAAE,IAAI,EAAE;;"}

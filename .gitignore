@@ -7,3 +7,5 @@ node_modules
 !.env.example
 /data
 vite.config.ts.timestamp-*
+/build-a
+/build-b

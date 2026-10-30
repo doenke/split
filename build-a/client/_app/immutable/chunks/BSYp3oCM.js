@@ -1,1 +1,0 @@
-async function s(e){const r=await e.json().catch(()=>null);return r?.message&&r.message!=="Internal Error"?String(r.message):e.status===413?"Das Foto ist zu groß für den Server (Upload-Limit, z.B. im Reverse-Proxy).":`Speichern fehlgeschlagen (Fehler ${e.status}). Details stehen im Server-Log.`}export{s as u};

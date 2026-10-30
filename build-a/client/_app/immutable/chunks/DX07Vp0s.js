@@ -1,1 +1,0 @@
-function a(t,e={day:"numeric",month:"short",year:"numeric"}){return new Date(t+(t.length===10?"T12:00:00":"")).toLocaleDateString("de-DE",e)}function n(){const t=new Date;return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`}export{a as f,n as t};
