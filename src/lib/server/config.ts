@@ -24,13 +24,6 @@ export const config = {
 		get adminGroup() {
 			return env.OIDC_ADMIN_GROUP || 'admins';
 		},
-		/** alternative to the admin group: e-mail addresses of instance admins, comma separated */
-		get adminEmails() {
-			return (env.ADMIN_EMAILS ?? '')
-				.split(',')
-				.map((e) => e.trim().toLowerCase())
-				.filter(Boolean);
-		},
 		get buttonLabel() {
 			return env.OIDC_BUTTON_LABEL ?? 'Mit OIDC anmelden';
 		},

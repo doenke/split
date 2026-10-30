@@ -71,9 +71,7 @@ export async function handleCallback(currentUrl: URL, verifier: string, state: s
 
 /** Finds or creates the person for an OIDC identity and refreshes name/avatar. */
 export async function upsertOidcPerson(profile: OidcProfile, linkToPersonId?: string | null) {
-	const isAdmin =
-		Boolean(config.oidc.adminGroup && profile.groups.includes(config.oidc.adminGroup)) ||
-		Boolean(profile.email && config.oidc.adminEmails.includes(profile.email.toLowerCase()));
+	const isAdmin = Boolean(config.oidc.adminGroup && profile.groups.includes(config.oidc.adminGroup));
 	const [cred] = await db
 		.select()
 		.from(schema.credentials)
