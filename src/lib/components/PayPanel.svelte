@@ -8,8 +8,6 @@
 		holder: string;
 		girocode: string | null;
 		weroContact: string | null;
-		weroLink: string | null;
-		weroQr: string | null;
 		text: string;
 	}
 
@@ -20,7 +18,7 @@
 	const tabs = $derived(
 		options
 			? ([
-					options.weroContact || options.weroLink ? (['wero', 'Wero'] as const) : null,
+					options.weroContact ? (['wero', 'Wero'] as const) : null,
 					options.iban ? (['giro', 'Überweisung'] as const) : null,
 					options.paypal ? (['paypal', 'PayPal'] as const) : null
 				].filter(Boolean) as (readonly ['wero' | 'giro' | 'paypal', string])[])
@@ -60,13 +58,6 @@
 		{@render copyRow('Betrag', amountToInput(amount, currency), 'amount')}
 
 		{#if tab === 'wero'}
-			{#if options.weroLink}
-				<a class="button primary full" href={options.weroLink} target="_blank" rel="noopener">Mit Wero bezahlen</a>
-				<details>
-					<summary class="small">QR-Code für ein anderes Handy</summary>
-					<div class="qr">{@html options.weroQr}</div>
-				</details>
-			{/if}
 			{#if options.weroContact}{@render copyRow('Wero an', options.weroContact, 'wero')}{/if}
 			<p class="hint">Den Betrag musst du in Wero selbst eintragen.</p>
 		{:else if tab === 'giro'}

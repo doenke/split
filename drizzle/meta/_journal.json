@@ -99,6 +99,13 @@
       "when": 1793368042644,
       "tag": "0013_wero_link_expires",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793368284785,
+      "tag": "0014_remove_wero_link",
+      "breakpoints": true
     }
   ]
 }

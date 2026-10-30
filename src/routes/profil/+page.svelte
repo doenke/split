@@ -5,23 +5,11 @@
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
 	import PushToggle from '$lib/components/PushToggle.svelte';
 	import InstallButton from '$lib/components/InstallButton.svelte';
-	import { addDays, formatDate } from '$lib/format';
+	import { formatDate } from '$lib/format';
 
 	let { data, form } = $props();
 	const user = $derived(data.user!);
 
-	// Wero payment links from banking apps expire (Sparkasse: 30 days)
-	// svelte-ignore state_referenced_locally
-	let weroLink = $state(data.payment?.weroLink ?? '');
-	// svelte-ignore state_referenced_locally
-	let weroExpires = $state(data.payment?.weroLinkExpires ?? '');
-	function linkChanged() {
-		// a new link: assume the usual 30 days, the user can change or clear it
-		if (weroLink.trim() && weroLink.trim() !== data.payment?.weroLink) weroExpires = addDays(data.today, 30);
-	}
-	const storedExpires = $derived(data.payment?.weroLink ? data.payment.weroLinkExpires : null);
-	const linkExpired = $derived(!!storedExpires && storedExpires < data.today);
-	const linkExpiresSoon = $derived(!!storedExpires && !linkExpired && storedExpires <= addDays(data.today, 5));
 </script>
 
 <svelte:head><title>Profil · Split</title></svelte:head>
@@ -94,26 +82,6 @@
 		<input id="weroContact" name="weroContact" value={data.payment?.weroContact ?? ''} autocomplete="off" />
 		<p class="hint">Die Adresse oder Nummer, mit der du bei Wero angemeldet bist. Läuft nie ab – damit kann dir jeder Geld schicken.</p>
 	</div>
-	<div class="field">
-		<label for="weroLink">Wero: Zahlungslink (optional)</label>
-		<input id="weroLink" name="weroLink" bind:value={weroLink} onchange={linkChanged} placeholder="https://…" inputmode="url" />
-		{#if linkExpired}
-			<p class="error small">Dein Link ist seit {formatDate(storedExpires!)} abgelaufen und wird nicht mehr angezeigt. Erstelle in deiner Banking-App einen neuen und füge ihn hier ein.</p>
-		{:else if linkExpiresSoon}
-			<p class="notice small">Dein Link läuft am {formatDate(storedExpires!)} ab.</p>
-		{/if}
-		<p class="hint">
-			Banking-App → Wero → Geld anfordern → Link ohne festen Betrag erstellen und hier einfügen. Solche Links gelten meist nur
-			30 Tage (z.B. Sparkasse); danach blendet Split ihn aus.
-		</p>
-	</div>
-	{#if weroLink.trim()}
-		<div class="field">
-			<label for="weroLinkExpires">Link gültig bis</label>
-			<input id="weroLinkExpires" name="weroLinkExpires" type="date" bind:value={weroExpires} />
-			<p class="hint">Leer lassen, wenn der Link nicht abläuft.</p>
-		</div>
-	{/if}
 	<div class="field">
 		<label for="iban">IBAN (für GiroCode / Überweisung)</label>
 		<input id="iban" name="iban" value={data.payment?.iban ?? ''} autocomplete="off" />

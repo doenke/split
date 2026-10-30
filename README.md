@@ -18,7 +18,7 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 - Gemeinsame Kassen (Familien, Paare) über alle Gruppen, ganze Kasse zu einer Gruppe hinzufügen,
   Verrechnung über mehrere Gruppen mit einer einzigen Zahlung
 - Merkmale an Mitgliedern (z.B. „Kind“) und Ausgaben-Profile („Alkohol“, „Unterkunft“), die sich automatisch anpassen
-- Zahlungsdaten im Profil: Wero (Kontakt + Zahlungslink), IBAN mit GiroCode, PayPal.me – mit fertigem Betrag
+- Zahlungsdaten im Profil: Wero (E-Mail oder Handynummer), IBAN mit GiroCode, PayPal.me – mit fertigem Betrag
 - Belegfotos und PDFs, „An Split teilen“ aus der Galerie (PWA Share Target)
 - Kostenübersicht nach Kategorien pro Person, Kasse und Gruppe – für Kassen auch über alle Gruppen und Jahre
 

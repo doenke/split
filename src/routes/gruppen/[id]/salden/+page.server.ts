@@ -37,8 +37,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		const d = details.find((x) => x.personId === receiverId);
 		if (!d || !receiverId) continue;
 		const holder = d.accountHolder ?? names.get(receiverId) ?? '';
-		// expired payment links (banking apps limit them, e.g. to 30 days) are left out
-		const weroLink = d.weroLink && (!d.weroLinkExpires || d.weroLinkExpires >= today()) ? d.weroLink : null;
 		options[t.from + '|' + t.to] = {
 			receiverName: names.get(receiverId),
 			paypal: d.paypalMe ? paypalLink(d.paypalMe, t.amount, currency) : null,
@@ -49,8 +47,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 					? await QRCode.toString(epcPayload({ name: holder, iban: d.iban, amount: t.amount, text }), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
 					: null,
 			weroContact: d.weroContact,
-			weroLink,
-			weroQr: weroLink ? await QRCode.toString(weroLink, { type: 'svg', margin: 1 }) : null,
 			text
 		};
 	}

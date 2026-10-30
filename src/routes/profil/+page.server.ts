@@ -4,7 +4,6 @@ import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
 import QRCode from 'qrcode';
 import { createPersonalInvite } from '$lib/server/auth/invites';
-import { today } from '$lib/format';
 import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -21,7 +20,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [payment] = await db.select().from(schema.paymentDetails).where(eq(schema.paymentDetails.personId, locals.user.id));
 	return {
 		payment: payment ? { ...payment, iban: payment.iban ? formatIban(payment.iban) : null } : null,
-		today: today(),
 		passkeys: creds.filter((c) => c.type === 'passkey'),
 		hasOidc: creds.some((c) => c.type === 'oidc'),
 		sessionCount: sessions.length,
@@ -49,15 +47,8 @@ export const actions: Actions = {
 		const paypalRaw = str('paypalMe');
 		const paypalMe = paypalRaw ? normalizePaypalMe(paypalRaw) : null;
 		if (paypalRaw && !paypalMe) return fail(400, { paymentError: 'Bitte nur deinen PayPal.me-Namen oder -Link angeben.' });
-		const weroLink = str('weroLink');
-		if (weroLink && !/^https:\/\//.test(weroLink)) return fail(400, { paymentError: 'Der Wero-Link muss mit https:// beginnen.' });
-		// empty = the link does not expire (e.g. a permanent personal QR code)
-		const weroLinkExpires = str('weroLinkExpires');
-		if (weroLinkExpires && !/^\d{4}-\d{2}-\d{2}$/.test(weroLinkExpires)) return fail(400, { paymentError: 'Ungültiges Ablaufdatum.' });
 		const values = {
 			weroContact: str('weroContact') || null,
-			weroLink: weroLink || null,
-			weroLinkExpires: (weroLink && weroLinkExpires) || null,
 			iban: iban ? normalizeIban(iban) : null,
 			accountHolder: str('accountHolder') || (iban ? locals.user.name : null),
 			paypalMe,

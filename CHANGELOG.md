@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.17.0
+- Wero-Zahlungslink entfernt (die Links der Banking-Apps laufen nach kurzer Zeit ab). Für Wero bleibt die
+  E-Mail-Adresse bzw. Handynummer; gespeicherte Links werden gelöscht
+
 ## 0.16.0
 - Wero: Zahlungslinks aus der Banking-App laufen ab (Sparkasse: nach 30 Tagen). Im Profil gibt es dafür „Link gültig
   bis“ (bei einem neuen Link auf 30 Tage vorbelegt, leer = läuft nicht ab). Abgelaufene Links werden beim Bezahlen
