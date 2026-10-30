@@ -3,7 +3,7 @@
 	import { page, updated } from '$app/state';
 	import { versionLabel } from '$lib/version';
 	import { onMount } from 'svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { beforeNavigate, invalidateAll } from '$app/navigation';
 	import { flushPending } from '$lib/offline';
 	import { isBusy } from '$lib/busy';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -15,16 +15,47 @@
 	const editing = () =>
 		isBusy() || /\/(neu|ausgaben\/[^/]+)$/.test(location.pathname) || document.querySelector('form :focus') !== null;
 
+	// a new server version: reload as soon as it doesn't disturb – after fetching the new service worker,
+	// so the reloaded page and its assets come from the new version
+	let reloading = false;
+	async function applyUpdate() {
+		if (reloading || editing()) return;
+		reloading = true;
+		const sw = navigator.serviceWorker;
+		const reg = await sw?.getRegistration().catch(() => undefined);
+		if (sw && reg) {
+			const switched = new Promise((resolve) => sw.addEventListener('controllerchange', resolve, { once: true }));
+			await reg.update().catch(() => {});
+			// the new worker activates itself (skipWaiting); don't wait forever if there is none
+			if (reg.installing || reg.waiting) await Promise.race([switched, new Promise((r) => setTimeout(r, 5000))]);
+		}
+		location.reload();
+	}
+
+	// detected by polling (every minute) while the app is open
+	$effect(() => {
+		if (updated.current) void applyUpdate();
+	});
+
+	// SvelteKit keeps running the old code on in-app navigation: load the new version instead
+	beforeNavigate(({ to, willUnload, cancel }) => {
+		if (!updated.current || willUnload || !to?.url || to.url.origin !== location.origin) return;
+		cancel();
+		location.href = to.url.href;
+	});
+
 	onMount(() => {
-		// a new server version: reload as soon as it doesn't disturb
 		const hadController = !!navigator.serviceWorker?.controller;
 		const onControllerChange = () => {
-			if (hadController && !editing()) location.reload();
+			// a new service worker took over (update found by the browser itself)
+			if (hadController && !reloading && !editing()) location.reload();
 		};
 		navigator.serviceWorker?.addEventListener('controllerchange', onControllerChange);
 		const onVisible = async () => {
 			if (document.visibilityState !== 'visible') return;
-			if ((await updated.check()) && !editing()) location.reload();
+			if (await updated.check()) void applyUpdate();
+			// the browser checks the service worker only on full page loads; an installed app rarely has them
+			else void navigator.serviceWorker?.getRegistration().then((r) => r?.update()).catch(() => {});
 		};
 		document.addEventListener('visibilitychange', onVisible);
 

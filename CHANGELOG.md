@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.19.0
+- Updates kommen zuverlässiger an: eine offene App lädt die neue Version, sobald sie erkannt ist (spätestens nach
+  einer Minute) – außer man tippt gerade etwas, dann beim nächsten Seitenwechsel. Vorher wird jeweils auch der neue
+  Service Worker geholt; beim Zurückkehren in die App wird er ebenfalls geprüft
+
 ## 0.18.0
 - Salden: gemeinsame Kassen (z.B. Familien) zeigen ihre Personen eingerückt darunter, jeweils mit „bezahlt“ und
   „Anteil“; der Saldo steht weiterhin bei der Kasse
