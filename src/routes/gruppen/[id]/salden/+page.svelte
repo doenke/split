@@ -4,7 +4,7 @@
 	import PayPanel from '$lib/components/PayPanel.svelte';
 	import CompletionCard from '$lib/components/CompletionCard.svelte';
 	import { amountToInput } from '$lib/core/currency';
-	import { formatAmount, formatDate } from '$lib/format';
+	import { formatAmount, formatDate, today } from '$lib/format';
 
 	let { data, form } = $props();
 	const currency = $derived(data.group.baseCurrency);
@@ -15,6 +15,19 @@
 	const maxAbs = $derived(Math.max(1, ...kassen.map((k) => Math.abs(k.balance))));
 
 	let recording = $state<{ from: string; to: string; amount: string } | null>(null);
+	// a payment of your own choice: cash handed over, a partial payment, …
+	let free = $state<{ from: string; to: string; amount: string; date: string } | null>(null);
+	const groupKassen = $derived(
+		[...new Set(data.members.map((m) => m.kasseId))].map((id) => ({ id, name: kasseName(id) })).sort((a, b) => a.name.localeCompare(b.name, 'de'))
+	);
+	$effect(() => {
+		// payer and receiver must differ
+		if (free && free.to === free.from) free.to = groupKassen.find((k) => k.id !== free!.from)?.id ?? '';
+	});
+	function startFree() {
+		const other = groupKassen.find((k) => k.id !== data.myKasseId);
+		free = { from: data.myKasseId, to: other?.id ?? '', amount: '', date: today() };
+	}
 	let paying = $state<string | null>(null);
 	const methodLabels: Record<string, string> = {
 		cash: 'Bar',
@@ -130,8 +143,9 @@
 				>
 					<input type="hidden" name="from" value={recording.from} />
 					<input type="hidden" name="to" value={recording.to} />
+					<label for="rec-amount" class="small">Gezahlter Betrag – auch ein Teilbetrag ist möglich</label>
 					<div class="row">
-						<input name="amount" bind:value={recording.amount} inputmode="decimal" class="grow" />
+						<input id="rec-amount" name="amount" bind:value={recording.amount} inputmode="decimal" class="grow" />
 						<select name="method" class="grow">
 							{#each Object.entries(methodLabels) as [k, label] (k)}<option value={k}>{label}</option>{/each}
 						</select>
@@ -147,6 +161,63 @@
 			{/if}
 		{/each}
 	</div>
+{/if}
+
+{#if groupKassen.length > 1}
+	{#if free}
+		<form
+			method="POST"
+			action="?/record"
+			class="card"
+			use:enhance={() =>
+				async ({ result, update }) => {
+					await update();
+					if (result.type === 'success') free = null;
+				}}
+		>
+			<h2 style="margin-top: 0">Zahlung eintragen</h2>
+			<div class="row">
+				<div class="field grow">
+					<label for="free-from">Von</label>
+					<select id="free-from" name="from" bind:value={free.from}>
+						{#each groupKassen as k (k.id)}<option value={k.id}>{k.name}{k.id === data.myKasseId ? ' (du)' : ''}</option>{/each}
+					</select>
+				</div>
+				<div class="field grow">
+					<label for="free-to">An</label>
+					<select id="free-to" name="to" bind:value={free.to}>
+						{#each groupKassen.filter((k) => k.id !== free?.from) as k (k.id)}<option value={k.id}>{k.name}{k.id === data.myKasseId ? ' (du)' : ''}</option>{/each}
+					</select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="field grow">
+					<label for="free-amount">Betrag ({currency})</label>
+					<input id="free-amount" name="amount" bind:value={free.amount} inputmode="decimal" placeholder="0,00" required />
+				</div>
+				<div class="field grow">
+					<label for="free-method">Art</label>
+					<select id="free-method" name="method">
+						{#each Object.entries(methodLabels) as [k, label] (k)}<option value={k} selected={k === 'cash'}>{label}</option>{/each}
+					</select>
+				</div>
+			</div>
+			<div class="field">
+				<label for="free-date">Datum</label>
+				<input id="free-date" name="date" type="date" bind:value={free.date} max={today()} />
+			</div>
+			<p class="hint">
+				Z.B. Bargeld, das du jemandem gegeben hast, oder ein Teil dessen, was du schuldest. Die Zahlung wird mit den Salden
+				verrechnet. {free.to === data.myKasseId ? 'Du bist Empfänger – sie gilt sofort als bestätigt.' : 'Der Empfänger bestätigt den Eingang.'}
+			</p>
+			<div class="row">
+				<button class="primary grow">Zahlung eintragen</button>
+				<button type="button" onclick={() => (free = null)}>Abbrechen</button>
+			</div>
+		</form>
+	{:else}
+		<button class="full" style="margin-bottom: 1rem" onclick={startFree}>+ Zahlung eintragen (z.B. Bargeld, Teilzahlung)</button>
+	{/if}
 {/if}
 
 {#if data.settlements.length}

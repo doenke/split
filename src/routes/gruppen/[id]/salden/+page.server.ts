@@ -66,6 +66,10 @@ export const actions: Actions = {
 		if (!amount || amount <= 0) return fail(400, { message: 'Ungültiger Betrag.' });
 		const kassen = new Set((await loadMembers(params.id)).map((m) => m.kasseId));
 		if (!kassen.has(from) || !kassen.has(to) || from === to) return fail(400, { message: 'Ungültige Zahlung.' });
+		const dateIn = String(f.get('date') ?? '');
+		// one day of slack: the browser's "today" may already be tomorrow on the server's clock
+		const latest = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+		if (dateIn && (!/^\d{4}-\d{2}-\d{2}$/.test(dateIn) || dateIn > latest)) return fail(400, { message: 'Ungültiges Datum.' });
 		const id = newId();
 		// the recipient recording a payment confirms it at the same time
 		const confirmed = g.membership.kasseId === to;
@@ -78,7 +82,7 @@ export const actions: Actions = {
 			method,
 			status: confirmed ? 'confirmed' : 'pending',
 			confirmedAt: confirmed ? new Date() : null,
-			date: today(),
+			date: dateIn || today(),
 			createdBy: g.user.id
 		});
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'settlement.create', entityId: id, data: { from, to, amount } });
