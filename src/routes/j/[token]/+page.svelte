@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppAddress from '$lib/components/AppAddress.svelte';
 	import { page } from '$app/state';
 	import BookmarkLink from '$lib/components/BookmarkLink.svelte';
 	import { enhance } from '$app/forms';
@@ -43,7 +44,7 @@
 			<strong>Kein Konto nötig.</strong> Du musst dich nirgends registrieren und brauchst kein Passwort. Dieser Link
 			ist dein persönlicher Zugang: Um später – auch auf einem anderen Gerät – wieder reinzukommen, öffnest du einfach
 			wieder diesen Link. Oder du speicherst gleich im Anschluss einen <strong>Passkey</strong> (Face ID, Fingerabdruck
-			oder Geräte-PIN), dann geht es auch ohne Link.
+			oder Geräte-PIN), dann meldest du dich ganz ohne Link einfach unter <AppAddress /> an.
 			<BookmarkLink url={page.url.origin + page.url.pathname} />
 		</div>
 	{/if}

@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.26.2
+- Überall, wo der Passkey erklärt wird (Einladung, Gruppenlink, Willkommen, Profil), steht die allgemeine Adresse von
+  Split, unter der man sich mit Passkey anmeldet
+
 ## 0.26.1
 - Einladungs- und Willkommensseite zeigen die persönliche Link-Adresse zum Speichern als Lesezeichen, mit
   Kopieren-Knopf

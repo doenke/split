@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppAddress from '$lib/components/AppAddress.svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -40,7 +41,10 @@
 
 <div class="card">
 	<h2>Passkeys</h2>
-	<p class="small muted">Damit kommst du ohne Passwort wieder rein – auch auf anderen Geräten oder nach dem Löschen der Browserdaten.</p>
+	<p class="small muted">
+		Damit kommst du ohne Passwort wieder rein – auch auf anderen Geräten oder nach dem Löschen der Browserdaten:
+		einfach <AppAddress /> öffnen und „Mit Passkey anmelden“ wählen.
+	</p>
 	{#if data.passkeys.length}
 		<div class="list">
 			{#each data.passkeys as p (p.id)}

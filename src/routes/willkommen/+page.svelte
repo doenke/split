@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppAddress from '$lib/components/AppAddress.svelte';
 	import BookmarkLink from '$lib/components/BookmarkLink.svelte';
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
 
@@ -26,6 +27,7 @@
 				</p>
 			{/if}
 			<PasskeySetup />
+			<p class="small muted">Mit Passkey meldest du dich später einfach unter <AppAddress /> an.</p>
 		{/if}
 		<a class="button full" href={data.next}>Weiter</a>
 		<p class="small muted">

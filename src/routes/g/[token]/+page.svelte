@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppAddress from '$lib/components/AppAddress.svelte';
 	import NameFields from '$lib/components/NameFields.svelte';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
@@ -41,7 +42,8 @@
 	{:else}
 		<p class="small muted">
 			<strong>Kein Konto nötig</strong> – du wählst nur aus, wer du bist. Auf diesem Gerät bleibst du angemeldet. Für
-			später oder ein anderes Gerät speicherst du danach einen Passkey (Face ID, Fingerabdruck oder Geräte-PIN).
+			später oder ein anderes Gerät speicherst du danach einen Passkey (Face ID, Fingerabdruck oder Geräte-PIN) und
+			meldest dich damit unter <AppAddress /> an.
 		</p>
 		{#if data.people.length && !newcomer}
 			<h2>Wer bist du?</h2>
