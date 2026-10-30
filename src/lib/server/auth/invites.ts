@@ -1,27 +1,34 @@
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull } from 'drizzle-orm';
 import { config } from '../config';
 import { db, schema } from '../db';
 import { hashToken, newToken } from '../ids';
 
-const PERSONAL_DAYS = 14;
+/** A personal link works again and again; every use extends it by this many days. */
+const PERSONAL_DAYS = 90;
+const PAIRING_MINUTES = 10;
 
-/** Creates a personal login link for a person. Older unused links of that person stay valid. */
-export async function createPersonalInvite(
-	personId: string,
-	groupId: string | null,
-	createdBy: string,
-	validMinutes = PERSONAL_DAYS * 24 * 60
-) {
+const personalExpiry = () => new Date(Date.now() + PERSONAL_DAYS * 86_400_000);
+
+/**
+ * Creates the personal login link of a person (no account needed: the link is the key).
+ * It replaces the person's older links, so a link that got into wrong hands can be renewed.
+ */
+export async function createPersonalInvite(personId: string, groupId: string | null, createdBy: string) {
 	const token = newToken();
-	const expiresAt = new Date(Date.now() + validMinutes * 60_000);
-	await db.insert(schema.inviteTokens).values({
-		id: hashToken(token),
-		type: 'personal',
-		personId,
-		groupId,
-		createdBy,
-		expiresAt
-	});
+	const expiresAt = personalExpiry();
+	await db
+		.update(schema.inviteTokens)
+		.set({ usedAt: new Date() })
+		.where(and(eq(schema.inviteTokens.personId, personId), eq(schema.inviteTokens.type, 'personal'), isNull(schema.inviteTokens.usedAt)));
+	await db.insert(schema.inviteTokens).values({ id: hashToken(token), type: 'personal', personId, groupId, createdBy, expiresAt });
+	return { url: `${config.publicUrl}/j/${token}`, expiresAt };
+}
+
+/** Short-lived, single-use link to log in another device of the same person. */
+export async function createPairingInvite(personId: string) {
+	const token = newToken();
+	const expiresAt = new Date(Date.now() + PAIRING_MINUTES * 60_000);
+	await db.insert(schema.inviteTokens).values({ id: hashToken(token), type: 'pairing', personId, createdBy: personId, expiresAt });
 	return { url: `${config.publicUrl}/j/${token}`, expiresAt };
 }
 
@@ -33,7 +40,7 @@ export async function findInvite(token: string) {
 		.where(
 			and(
 				eq(schema.inviteTokens.id, hashToken(token)),
-				eq(schema.inviteTokens.type, 'personal'),
+				inArray(schema.inviteTokens.type, ['personal', 'pairing']),
 				gt(schema.inviteTokens.expiresAt, new Date()),
 				isNull(schema.inviteTokens.usedAt)
 			)
@@ -42,6 +49,15 @@ export async function findInvite(token: string) {
 	return row ?? null;
 }
 
+/** After logging in with a link: a pairing link is used up, a personal link stays valid for another 90 days. */
+export async function inviteUsed(token: string, type: 'personal' | 'group' | 'pairing') {
+	await db
+		.update(schema.inviteTokens)
+		.set(type === 'personal' ? { expiresAt: personalExpiry() } : { usedAt: new Date() })
+		.where(eq(schema.inviteTokens.id, hashToken(token)));
+}
+
+/** The link is no longer needed (e.g. the placeholder was merged into an existing account). */
 export async function markInviteUsed(token: string) {
 	await db.update(schema.inviteTokens).set({ usedAt: new Date() }).where(eq(schema.inviteTokens.id, hashToken(token)));
 }

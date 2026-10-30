@@ -39,6 +39,10 @@
 			{/if}
 		</div>
 	{:else}
+		<p class="small muted">
+			<strong>Kein Konto nötig</strong> – du wählst nur aus, wer du bist. Auf diesem Gerät bleibst du angemeldet. Für
+			später oder ein anderes Gerät speicherst du danach einen Passkey (Face ID, Fingerabdruck oder Geräte-PIN).
+		</p>
 		{#if data.people.length && !newcomer}
 			<h2>Wer bist du?</h2>
 			<div class="list">

@@ -37,6 +37,12 @@
 			<button class="primary full">Ja, das bin ich</button>
 		</form>
 		<p class="small muted center">Falls du nicht {data.person.name} bist, schließe diese Seite einfach.</p>
+		<div class="card small">
+			<strong>Kein Konto nötig.</strong> Du musst dich nirgends registrieren und brauchst kein Passwort. Dieser Link
+			ist dein persönlicher Zugang: Um später – auch auf einem anderen Gerät – wieder reinzukommen, öffnest du einfach
+			wieder diesen Link. Oder du speicherst gleich im Anschluss einen <strong>Passkey</strong> (Face ID, Fingerabdruck
+			oder Geräte-PIN), dann geht es auch ohne Link.
+		</div>
 	{/if}
 </div>
 

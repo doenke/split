@@ -10,11 +10,19 @@
 	<h1>Willkommen, {data.user?.name}! 🎉</h1>
 	<div class="card stack">
 		{#if !data.hasPasskey}
-			<p>
-				Damit du auch später – oder auf einem anderen Gerät – wieder reinkommst, lege jetzt einen
-				<strong>Passkey</strong> an. Das geht mit Face ID, Fingerabdruck oder der Geräte-PIN. Ein Passwort
-				brauchst du nicht.
-			</p>
+			{#if data.viaLink}
+				<p>
+					Ein Konto brauchst du nicht: Mit deinem Link kommst du jederzeit wieder rein – auch auf einem anderen Gerät.
+					Hebe ihn also gut auf. Bequemer geht es mit einem <strong>Passkey</strong> (Face ID, Fingerabdruck oder
+					Geräte-PIN) – dann brauchst du den Link nicht mehr.
+				</p>
+			{:else}
+				<p>
+					Damit du auch später – oder auf einem anderen Gerät – wieder reinkommst, lege jetzt einen
+					<strong>Passkey</strong> an. Das geht mit Face ID, Fingerabdruck oder der Geräte-PIN. Ein Passwort
+					brauchst du nicht.
+				</p>
+			{/if}
 			<PasskeySetup />
 		{/if}
 		<a class="button full" href={data.next}>Weiter</a>

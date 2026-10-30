@@ -87,7 +87,7 @@ Organisator                         Gast
 Zwei Arten von Links:
 
 - **Persönlicher Link** (`/j/<einmaltoken>`): gehört zu genau einer Person.
-  Einmal verwendbar (oder bis ein Passkey angelegt ist), läuft nach z.B. 14 Tagen ab.
+  Mehrfach verwendbar – der Link ist der persönliche Schlüssel; jede Nutzung verlängert ihn auf 90 Tage, ein neuer Link ersetzt ihn.
   Am sichersten.
 - **Gruppen-Einladungslink** (`/g/<token>`): „Wer bist du?“ – der Gast wählt
   sich aus der Liste der noch nicht beanspruchten Personen oder legt sich selbst

@@ -66,8 +66,8 @@
 	<div class="card invite">
 		<h2>Zugangslink für {m?.name}</h2>
 		<p class="small muted">
-			Gültig bis {formatDate(invite.expiresAt.slice(0, 10))}, einmal verwendbar. Schicke ihn z.B. per Messenger
-			oder lass den QR-Code scannen.
+			Schicke ihn z.B. per Messenger oder lass den QR-Code scannen. Der Link ist der persönliche Schlüssel von
+			{m?.name}: Er funktioniert immer wieder und gilt 90 Tage ab der letzten Nutzung. Ein neuer Link ersetzt ihn.
 		</p>
 		<div class="qr">{@html invite.qr}</div>
 		<input readonly value={invite.url} onfocus={(e) => e.currentTarget.select()} />

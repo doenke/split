@@ -10,5 +10,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.select({ id: schema.credentials.id })
 		.from(schema.credentials)
 		.where(and(eq(schema.credentials.personId, locals.user.id), eq(schema.credentials.type, 'passkey')));
-	return { next: next.startsWith('/') ? next : '/', hasPasskey: passkeys.length > 0 };
+	// came with a personal link: that link keeps working, a passkey is optional
+	return { next: next.startsWith('/') ? next : '/', hasPasskey: passkeys.length > 0, viaLink: url.searchParams.has('link') };
 };

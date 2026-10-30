@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { findInvite, markInviteUsed } from '$lib/server/auth/invites';
+import { findInvite, inviteUsed, markInviteUsed } from '$lib/server/auth/invites';
 import { createSession, destroySession } from '$lib/server/auth/session';
 import { db, schema } from '$lib/server/db';
 import { mergePersons } from '$lib/server/persons';
@@ -8,7 +8,9 @@ import type { Actions, PageServerLoad } from './$types';
 
 async function loadInvite(token: string) {
 	const invite = await findInvite(token);
-	if (!invite || !invite.person) error(404, 'Dieser Link ist ungültig, abgelaufen oder wurde schon benutzt. Bitte lass dir einen neuen Link schicken.');
+	if (!invite || !invite.person || invite.person.mergedInto) {
+		error(404, 'Dieser Link ist ungültig oder abgelaufen. Bitte lass dir einen neuen Link schicken.');
+	}
 	let group = null;
 	if (invite.invite.groupId) {
 		[group] = await db
@@ -31,11 +33,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 export const actions: Actions = {
 	/** "Yes, that's me": log in as the invited person. */
 	claim: async ({ params, cookies, locals }) => {
-		const { person, group } = await loadInvite(params.token);
+		const { person, group, invite } = await loadInvite(params.token);
 		if (locals.user && locals.user.id !== person.id) await destroySession(cookies, locals.sessionId);
 		await createSession(cookies, person.id, false);
-		await markInviteUsed(params.token);
-		redirect(303, `/willkommen?next=${encodeURIComponent(group ? `/gruppen/${group.id}` : '/')}`);
+		await inviteUsed(params.token, invite.type);
+		const next = encodeURIComponent(group ? `/gruppen/${group.id}` : '/');
+		redirect(303, `/willkommen?next=${next}${invite.type === 'personal' ? '&link=1' : ''}`);
 	},
 	/** Already logged in as someone else: the invited placeholder is me – merge it into my person. */
 	merge: async ({ params, locals }) => {

@@ -3,7 +3,7 @@ import { and, eq, gt } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
 import QRCode from 'qrcode';
-import { createPersonalInvite } from '$lib/server/auth/invites';
+import { createPairingInvite } from '$lib/server/auth/invites';
 import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -71,7 +71,7 @@ export const actions: Actions = {
 	/** Short-lived login link for another device of the same person. */
 	pairDevice: async ({ locals }) => {
 		if (!locals.user) redirect(303, '/login');
-		const { url } = await createPersonalInvite(locals.user.id, null, locals.user.id, 10);
+		const { url } = await createPairingInvite(locals.user.id);
 		return { pairing: { url, qr: await QRCode.toString(url, { type: 'svg', margin: 1 }) } };
 	},
 	logoutOthers: async ({ locals }) => {

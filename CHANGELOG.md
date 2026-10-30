@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.26.0
+- Persönliche Zugangslinks sind jetzt mehrfach nutzbar: Der Link ist der Schlüssel, jede Nutzung verlängert ihn auf
+  90 Tage. Ein neu erstellter Link ersetzt den alten. Der Link zum Koppeln eines weiteren Geräts bleibt einmalig
+- Einladungsseiten erklären: kein Konto nötig – einfach den Link wieder öffnen oder einen Passkey speichern
+
 ## 0.25.1
 - `ADMIN_EMAILS` wieder entfernt; Instanz-Admins kommen nur über `OIDC_ADMIN_GROUP`
 - Compose-Beispiel: `OIDC_SCOPES` enthält jetzt `groups`, damit der Login-Anbieter die Gruppen mitschickt
