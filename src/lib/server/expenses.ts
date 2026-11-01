@@ -9,6 +9,7 @@ import { newId } from './ids';
 import { lookupRate } from './rates';
 import { toCoreExpense, toCoreMember, type GroupMember } from './groups';
 import { groupRecipients, notify } from './push';
+import { mailNewExpense } from './mailings';
 
 export class InputError extends Error {}
 
@@ -224,4 +225,5 @@ export function announceExpense(
 			url: `/gruppen/${group.id}/ausgaben/${expenseId}`
 		})
 	);
+	void mailNewExpense(group, user, row, expenseId).catch((e) => console.warn('E-Mail zur Ausgabe fehlgeschlagen:', e));
 }

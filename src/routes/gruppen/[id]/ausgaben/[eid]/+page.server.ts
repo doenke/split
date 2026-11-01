@@ -2,11 +2,9 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { canEditExpense, loadMembers, loadProfiles, requireGroup, toCoreExpense, toCoreMember } from '$lib/server/groups';
-import { InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
+import { announceExpense, InputError, prepareExpense, saveExpense } from '$lib/server/expenses';
 import { currencyOptions } from '$lib/server/currencies';
 import { isClosed } from '$lib/server/closing';
-import { groupRecipients, notify } from '$lib/server/push';
-import { formatAmount } from '$lib/core/currency';
 import { audit } from '$lib/server/audit';
 import { computeShares, effectiveFactor } from '$lib/core/split';
 import type { ExpenseInput } from '$lib/expense-input';
@@ -131,13 +129,7 @@ export const actions: Actions = {
 		}
 		await saveExpense(params.id, g.user.id, prepared, params.eid);
 		if (existing.status === 'draft') {
-			void groupRecipients(params.id, g.user.id).then((ids) =>
-				notify(ids, {
-					title: `${g.group.emoji} ${g.group.name}`,
-					body: `${g.user.name}: ${prepared.row.title} – ${formatAmount(prepared.row.amount, prepared.row.currency)}`,
-					url: `/gruppen/${params.id}/ausgaben/${params.eid}`
-				})
-			);
+			announceExpense(g.group, g.user, prepared.row, params.eid);
 			redirect(303, `/gruppen/${params.id}`);
 		}
 		redirect(303, `/gruppen/${params.id}/ausgaben/${params.eid}`);

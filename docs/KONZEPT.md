@@ -693,9 +693,14 @@ VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:admin@example.de
 
-# --- Optional: E-Mail (Magic Links) ---
-# SMTP_URL=smtp://user:pass@mail.example.de:587
-# SMTP_FROM="Split <split@example.de>"
+# --- Optional: E-Mail-Benachrichtigungen ---
+# aktiv, sobald SMTP_HOST gesetzt ist
+SMTP_HOST=mail.example.de
+SMTP_PORT=587
+SMTP_SECURE=false                         # true = TLS ab Verbindungsbeginn (Port 465), false = STARTTLS
+SMTP_USER=split@example.de
+SMTP_PASS=
+SMTP_FROM="Split <split@example.de>"
 
 # --- Optional: Reverse Proxy ---
 TRUST_PROXY=true                          # X-Forwarded-* auswerten (Protokoll, Client-IP)

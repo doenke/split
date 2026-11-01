@@ -3,6 +3,18 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.28.0
+- E-Mails per SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`):
+  - Zugangslink beim Erstellen per E-Mail verschicken
+  - Zahlungsaufforderung nach der Endabrechnung (mit IBAN/PayPal/Wero des Empfängers) und Zahlungserinnerung,
+    wenn dich jemand erinnert – als einzige standardmäßig an
+  - auf Wunsch: zu einer Gruppe hinzugefügt, neue Ausgabe, Zahlung zum Bestätigen, Erinnerung zum Abschluss (wenn das
+    Enddatum vorbei ist, höchstens wöchentlich und dreimal), Endabrechnung, wöchentliche Erinnerung an offene Zahlungen
+- Profil → E-Mails: eigene Adresse (wenn sie nicht vom Login-Anbieter kommt) mit Bestätigungslink, Auswahl der
+  E-Mails, „Gar keine E-Mails“; jede E-Mail hat einen Abbestellen-Link
+- Gruppen-Einstellungen: „Hintergrundgruppe“ – keine E-Mails zu dieser Gruppe
+- Eine selbst eingetragene Adresse bleibt erhalten, wenn der Login-Anbieter keine mitschickt
+
 ## 0.27.0
 - MCP-Server für KI-Assistenten (z.B. Claude) unter `/mcp`: Gruppen, Salden und Ausgaben lesen, Ausgaben eintragen
   (auch in Fremdwährung, mit Zahler, Beteiligten, Kategorie, Profil) und Zahlungen erfassen – mit den Rechten des

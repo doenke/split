@@ -11,6 +11,7 @@
 		['salden', 'Salden & Ausgleichen'],
 		['abschluss', 'Abschließen & Endabrechnung'],
 		['app', 'Als App & offline'],
+		['mail', 'E-Mails'],
 		['mcp', 'KI-Assistenten (MCP)']
 	] as const;
 
@@ -151,6 +152,28 @@
 			Auf der Startseite oder im Profil „📲 Als App installieren“ – auf dem iPhone über Teilen → „Zum Home-Bildschirm“.
 			Ausgaben lassen sich auch ohne Netz erfassen; sie werden übertragen, sobald du wieder online bist. Neue Versionen
 			lädt die App selbst.
+		</p>
+	</section>
+
+	<section id="mail">
+		<h2>E-Mails</h2>
+		{#if !data.mailEnabled}
+			<p class="notice small">Auf diesem Server ist der E-Mail-Versand nicht eingerichtet.</p>
+		{/if}
+		<p>
+			Split schickt nur wenige E-Mails – und nur, wenn du das möchtest. Wer sich über den Login-Anbieter anmeldet, hat
+			seine Adresse schon hinterlegt; alle anderen tragen sie unter <a href="/profil#mail">Profil → E-Mails</a> ein und
+			bestätigen sie über einen Link. Dort stellst du auch ein, welche E-Mails du bekommst:
+		</p>
+		<ul>
+			{#each data.mailKinds as k (k.label)}
+				<li>{k.label} – <span class="muted">{k.default ? 'standardmäßig an' : 'standardmäßig aus'}</span></li>
+			{/each}
+		</ul>
+		<p>
+			Jede E-Mail hat einen Link zum Abbestellen. Persönliche Zugangslinks kannst du beim Erstellen auch per E-Mail
+			verschicken. Admins können eine Gruppe in den Einstellungen zur <strong>Hintergrundgruppe</strong> machen – dann gibt
+			es zu ihr gar keine E-Mails, z.B. für eine laufende Haushaltskasse.
 		</p>
 	</section>
 

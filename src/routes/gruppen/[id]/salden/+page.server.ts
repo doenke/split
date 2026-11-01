@@ -9,6 +9,7 @@ import { epcPayload, formatIban, paypalLink } from '$lib/core/payment';
 import { formatAmount } from '$lib/core/currency';
 import { kasseRecipients, notify } from '$lib/server/push';
 import { paymentMethods, recordSettlement, SettlementError } from '$lib/server/settlements';
+import { mailPaymentReminder } from '$lib/server/mailings';
 import { gt } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -126,6 +127,7 @@ export const actions: Actions = {
 			url: `/gruppen/${params.id}/salden`,
 			tag: `remind-${key}`
 		});
+		void mailPaymentReminder(g.group, from, t.to, t.amount, g.user).catch((e) => console.warn('Erinnerungs-E-Mail fehlgeschlagen:', e));
 		return { reminded: from };
 	},
 	delete: async ({ params, locals, request }) => {

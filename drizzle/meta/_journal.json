@@ -120,6 +120,13 @@
       "when": 1793393140250,
       "tag": "0016_api_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793542910722,
+      "tag": "0017_mail",
+      "breakpoints": true
     }
   ]
 }

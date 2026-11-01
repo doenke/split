@@ -29,6 +29,11 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 - Push-Benachrichtigungen (neue Ausgaben, Zahlungen, Erinnerungen), pro Gruppe stummschaltbar –
   die VAPID-Schlüssel erzeugt die App beim ersten Start selbst
 
+**E-Mails**
+- Per SMTP (`SMTP_HOST` …): Einladungen, Zahlungsaufforderung nach der Endabrechnung, Zahlungserinnerungen und – wer
+  möchte – neue Ausgaben, neue Gruppen, Abschluss-Erinnerungen, Endabrechnung, wöchentliche Erinnerung an offene
+  Zahlungen. Jeder wählt selbst (standardmäßig fast nichts), Adressen werden bestätigt, Hintergrundgruppen bleiben stumm
+
 **KI-Assistenten (MCP)**
 - MCP-Server unter `/mcp` (Streamable HTTP): Gruppen, Salden und Ausgaben lesen, Ausgaben und Zahlungen eintragen –
   mit den Rechten des Nutzers. Schlüssel unter Profil → KI-Assistenten, Anleitung in der App unter `/hilfe#mcp`

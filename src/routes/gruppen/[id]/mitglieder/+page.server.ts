@@ -4,9 +4,11 @@ import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
 import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
-import { activeGroupInvite, createGroupInvite, createPersonalInvite, revokeGroupInvite } from '$lib/server/auth/invites';
+import { activeGroupInvite, createGroupInvite, createPersonalInvite, findInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
+import { mailAddedToGroup, sendInviteMail } from '$lib/server/mailings';
+import { smtpConfigured } from '$lib/server/mail';
 import { today } from '$lib/format';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -43,7 +45,8 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 		kassenByPerson,
 		myKassen,
 		managedKassen,
-		canAddPeople: canAddPeople(g)
+		canAddPeople: canAddPeople(g),
+		mailEnabled: smtpConfigured()
 	};
 };
 
@@ -111,6 +114,7 @@ export const actions: Actions = {
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.add', entityId: personId, data: { from } });
 		// someone of the same Kasse is already here: they settle together from now on
 		const switched = await syncPersonKassen(personId, params.id);
+		void mailAddedToGroup(params.id, [personId], g.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
 		return { added: personId, switched };
 	},
 
@@ -131,6 +135,7 @@ export const actions: Actions = {
 		}
 		// members already in the group (settling alone so far) switch to the Kasse as well
 		const switched = await syncKasseToGroups(kasseId, params.id);
+		void mailAddedToGroup(params.id, members.map((m) => m.personId), g.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
 		return { addedKasse: members.length, switched };
 	},
 
@@ -234,6 +239,23 @@ export const actions: Actions = {
 		await createGroupInvite(params.id, g.user.id);
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.link' });
 		return { groupLinkCreated: true };
+	},
+	/** Sends the personal link that was just created to an address the inviter enters. */
+	inviteMail: async ({ params, locals, request }) => {
+		const g = await requireGroup(params.id, locals.user);
+		if (!canAddPeople(g)) error(403);
+		const f = await request.formData();
+		const email = String(f.get('email') ?? '').trim();
+		const url = String(f.get('url') ?? '');
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(400, { message: 'Bitte eine gültige E-Mail-Adresse angeben.' });
+		// only a valid link of a member of this group may be sent
+		const found = await findInvite(url.split('/j/')[1] ?? '');
+		const members = await loadMembers(params.id);
+		const person = members.find((m) => m.personId === found?.invite.personId);
+		if (!found || !person || found.invite.type !== 'personal') return fail(400, { message: 'Der Link ist nicht mehr gültig. Bitte erstelle einen neuen.' });
+		const sent = await sendInviteMail(email, person.name, g.user.name, g.group, url);
+		if (!sent) return fail(500, { message: 'Die E-Mail konnte nicht verschickt werden. Bitte schick den Link auf anderem Weg.' });
+		return { inviteMailed: email };
 	},
 	revokeGroupLink: async ({ params, locals }) => {
 		const g = await requireGroup(params.id, locals.user);

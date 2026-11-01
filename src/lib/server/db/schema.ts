@@ -22,6 +22,12 @@ export const persons = pgTable('persons', {
 	id: id(),
 	name: text('name').notNull(),
 	email: text('email'),
+	/** e-mails only go to confirmed addresses (OIDC addresses count as confirmed) */
+	emailVerified: boolean('email_verified').notNull().default(false),
+	/** the address comes from the login provider (and is updated at each login) */
+	emailFromOidc: boolean('email_from_oidc').notNull().default(false),
+	/** which e-mails the person wants; missing keys use the (sparse) defaults */
+	mailPrefs: jsonb('mail_prefs').$type<Record<string, boolean>>().notNull().default({}),
 	avatarUrl: text('avatar_url'),
 	color: text('color').notNull(),
 	/** Instance admin (from the OIDC admin group). */
@@ -126,6 +132,8 @@ export interface GroupSettings {
 	editOthers: 'all' | 'admins';
 	/** whether non-admins may add people */
 	membersCanAddPeople: boolean;
+	/** background group: no e-mails about it at all */
+	quiet?: boolean;
 }
 
 export const groups = pgTable('groups', {
@@ -345,6 +353,22 @@ export const attachments = pgTable(
 );
 
 /** Instance-wide settings generated at runtime (e.g. VAPID keys). */
+/** Sent e-mails, so reminders are not repeated too often. */
+export const mailLog = pgTable(
+	'mail_log',
+	{
+		id: id(),
+		personId: text('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		kind: text('kind').notNull(),
+		/** what it was about, e.g. the group id */
+		ref: text('ref'),
+		sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('mail_log_person_kind').on(t.personId, t.kind, t.ref)]
+);
+
 export const appSettings = pgTable('app_settings', {
 	key: text('key').primaryKey(),
 	value: text('value').notNull()

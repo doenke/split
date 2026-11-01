@@ -26,7 +26,12 @@
 	let editing = $state<string | null>(null);
 	let copied = $state(false);
 
-	const invite = $derived(form && 'invite' in form ? form.invite : null);
+	// the link stays visible while it is sent by e-mail (that is another form submission)
+	type Invite = { personId: string; url: string; qr: string; expiresAt: string };
+	let invite = $state<Invite | null>(null);
+	$effect(() => {
+		if (form && 'invite' in form && form.invite) invite = form.invite as Invite;
+	});
 
 	async function share(url: string, name: string) {
 		const text = name
@@ -62,7 +67,8 @@
 {#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}
 
 {#if invite}
-	{@const m = data.members.find((x) => x.personId === invite.personId)}
+	{@const inv = invite}
+	{@const m = data.members.find((x) => x.personId === inv.personId)}
 	<div class="card invite">
 		<h2>Zugangslink für {m?.name}</h2>
 		<p class="small muted">
@@ -71,9 +77,20 @@
 		</p>
 		<div class="qr">{@html invite.qr}</div>
 		<input readonly value={invite.url} onfocus={(e) => e.currentTarget.select()} />
-		<button class="primary full" style="margin-top: 0.5rem" onclick={() => share(invite.url, m?.name ?? '')}>
+		<button class="primary full" style="margin-top: 0.5rem" onclick={() => share(invite!.url, m?.name ?? '')}>
 			{copied ? '✔ Kopiert' : 'Link teilen'}
 		</button>
+		{#if data.mailEnabled}
+			<form method="POST" action="?/inviteMail" use:enhance={() => async ({ update }) => update({ reset: false })} class="mailinvite">
+				<input type="hidden" name="url" value={invite.url} />
+				<label for="invite-email" class="small">Oder per E-Mail schicken:</label>
+				<div class="row">
+					<input id="invite-email" name="email" type="email" placeholder="E-Mail-Adresse" required class="grow" style="width: auto" />
+					<button>Senden</button>
+				</div>
+				{#if form && 'inviteMailed' in form}<p class="positive small">✔ An {form.inviteMailed} geschickt.</p>{/if}
+			</form>
+		{/if}
 	</div>
 {/if}
 
@@ -299,6 +316,9 @@
 </div>
 
 <style>
+	.mailinvite {
+		margin-top: 0.75rem;
+	}
 	.member {
 		display: block !important;
 	}

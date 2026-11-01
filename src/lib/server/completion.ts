@@ -7,6 +7,7 @@ import { closeUntil } from './closing';
 import { loadExpenses, loadGroupState, type GroupMember } from './groups';
 import { claimedPersonIds } from './persons';
 import { kasseRecipients, notify } from './push';
+import { mailFinalStatement } from './mailings';
 
 /**
  * Who has to report "done" before the final statement stands: everyone who can log in,
@@ -75,6 +76,7 @@ export async function finalizeIfComplete(groupId: string, actorId: string) {
 				: 'Bei euch ist alles ausgeglichen.';
 		void kasseRecipients(groupId, kasseId, null).then((ids) => notify(ids, { title, body, url, tag: `final-${groupId}` }));
 	}
+	void mailFinalStatement(groupId).catch((e) => console.warn('E-Mails zur Endabrechnung fehlgeschlagen:', e));
 	return true;
 }
 

@@ -82,6 +82,46 @@
 	<PushToggle />
 </div>
 
+{#if data.mail.enabled}
+	<div class="card" id="mail">
+		<h2>E-Mails</h2>
+		{#if form?.mailError}<p class="error">{form.mailError}</p>{/if}
+		{#if data.mail.fromOidc}
+			<p class="small">Adresse: <strong>{data.mail.email}</strong> <span class="muted">(von deinem Login-Anbieter)</span></p>
+		{:else}
+			<form method="POST" action="?/saveEmail" use:enhance={() => async ({ update }) => update({ reset: false })}>
+				<label for="email">Deine E-Mail-Adresse (optional)</label>
+				<div class="row">
+					<input id="email" name="email" type="email" value={data.mail.email ?? ''} autocomplete="email" class="grow" style="width: auto" />
+					<button>Speichern</button>
+				</div>
+			</form>
+			{#if data.mail.email && !data.mail.verified}
+				<p class="notice small">
+					{form?.confirmationSent ? 'Wir haben dir eine E-Mail geschickt.' : 'Noch nicht bestätigt.'} Bitte klicke auf den Link darin – vorher
+					schickt Split keine E-Mails an diese Adresse.
+				</p>
+				<form method="POST" action="?/resendConfirmation" use:enhance><button class="link small">Bestätigungs-E-Mail erneut senden</button></form>
+			{:else if data.mail.email}
+				<p class="hint">✔ Bestätigt</p>
+			{:else}
+				<p class="hint">Nur nötig, wenn du E-Mails von Split bekommen möchtest.</p>
+			{/if}
+		{/if}
+
+		{#if data.mail.email && data.mail.verified}
+			<form method="POST" action="?/saveMailPrefs" use:enhance={() => async ({ update }) => update({ reset: false })} class="prefs">
+				<p class="small muted">Welche E-Mails möchtest du bekommen? Push-Benachrichtigungen stellst du oben getrennt ein.</p>
+				{#each data.mail.kinds as k (k.key)}
+					<label class="check"><input type="checkbox" name={k.key} checked={data.mail.prefs[k.key as keyof typeof data.mail.prefs]} /> {k.label}</label>
+				{/each}
+				<label class="check none"><input type="checkbox" name="none" checked={data.mail.none} /> <span><strong>Gar keine E-Mails</strong> (außer Einladungen und Bestätigungen)</span></label>
+				<button class="primary full">{form?.prefsSaved ? '✔ Gespeichert' : 'Speichern'}</button>
+			</form>
+		{/if}
+	</div>
+{/if}
+
 <form method="POST" action="?/savePayment" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
 	<h2>So bekommst du Geld</h2>
 	<p class="small muted">Wer dir in einer Gruppe etwas schuldet, sieht diese Angaben beim Ausgleichen – mit fertigem Betrag.</p>
@@ -184,6 +224,17 @@
 </div>
 
 <style>
+	.prefs {
+		margin-top: 0.75rem;
+	}
+	.prefs .check {
+		margin-bottom: 0.4rem;
+	}
+	.prefs .none {
+		margin: 0.6rem 0 0.75rem;
+		padding-top: 0.6rem;
+		border-top: 1px solid var(--border);
+	}
 	.newkey {
 		background: var(--surface-2);
 		border-radius: 10px;

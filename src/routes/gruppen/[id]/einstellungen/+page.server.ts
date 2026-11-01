@@ -29,7 +29,8 @@ export const actions: Actions = {
 		const settings = {
 			simplifyDebts: f.get('simplifyDebts') === 'on',
 			editOthers: f.get('editOthers') === 'admins' ? ('admins' as const) : ('all' as const),
-			membersCanAddPeople: f.get('membersCanAddPeople') === 'on'
+			membersCanAddPeople: f.get('membersCanAddPeople') === 'on',
+			quiet: f.get('quiet') === 'on'
 		};
 		await db
 			.update(schema.groups)

@@ -90,7 +90,13 @@ export async function upsertOidcPerson(profile: OidcProfile, linkToPersonId?: st
 	}
 	await db
 		.update(schema.persons)
-		.set({ name: profile.name, email: profile.email, avatarUrl: profile.picture, isAdmin })
+		// the login provider vouches for its address; without one, an address entered in Split stays
+		.set({
+			name: profile.name,
+			...(profile.email ? { email: profile.email, emailVerified: true, emailFromOidc: true } : {}),
+			avatarUrl: profile.picture,
+			isAdmin
+		})
 		.where(eq(schema.persons.id, personId));
 	await db
 		.update(schema.credentials)

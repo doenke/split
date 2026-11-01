@@ -7,6 +7,7 @@ import { newId } from '$lib/server/ids';
 import { personalKasseId } from '$lib/server/persons';
 import { audit } from '$lib/server/audit';
 import { commonCurrencies, knownCurrencies } from '$lib/server/rates';
+import { mailAddedToGroup } from '$lib/server/mailings';
 import type { Actions, PageServerLoad } from './$types';
 
 async function myGroups(userId: string) {
@@ -98,6 +99,10 @@ export const actions: Actions = {
 			}
 			await audit(tx, { groupId: id, personId: userId, action: 'group.create', entityId: id, data: template ? { template: template.name } : undefined });
 		});
+		if (copyPeople) {
+			const others = (await loadMembers(id)).map((m) => m.personId);
+			void mailAddedToGroup(id, others, locals.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
+		}
 		redirect(303, copyPeople ? `/gruppen/${id}` : `/gruppen/${id}/mitglieder?neu=1`);
 	}
 };

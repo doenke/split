@@ -65,6 +65,8 @@
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<p class="hint" style="margin: -0.2rem 0 0.5rem 1.6rem">Aus: Jeder zahlt direkt an die, die für ihn ausgelegt haben.</p>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
+		<label class="check"><input type="checkbox" name="quiet" checked={s.quiet ?? false} /> Hintergrundgruppe: keine E-Mails zu dieser Gruppe</label>
+		<p class="hint" style="margin: -0.2rem 0 0.5rem 1.6rem">Z.B. für eine laufende Haushaltskasse. Push-Benachrichtigungen stellt jeder selbst ein.</p>
 		<div class="field" style="margin-top: 0.5rem">
 			<label for="editOthers">Ausgaben anderer bearbeiten dürfen</label>
 			<select id="editOthers" name="editOthers">
