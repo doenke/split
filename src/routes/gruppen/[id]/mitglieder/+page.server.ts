@@ -7,7 +7,8 @@ import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKas
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, findInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
-import { refreshDisplayNames } from '$lib/server/display';
+import { refreshDisplayNames, shownName } from '$lib/server/display';
+import { displayNameFree } from '$lib/core/display-names';
 import { mailAddedToGroup, sendInviteMail } from '$lib/server/mailings';
 import { smtpConfigured } from '$lib/server/mail';
 import { today } from '$lib/format';
@@ -170,11 +171,23 @@ export const actions: Actions = {
 			.where(and(eq(schema.memberships.groupId, params.id), eq(schema.memberships.personId, personId)));
 
 		// names of placeholders (people who never logged in) can be fixed by admins
-		const name = String(f.get('name') ?? '').trim();
-		if (name && g.isAdmin) {
+		// admins name placeholders (people who never logged in): full name and display name
+		const name = String(f.get('name') ?? '').trim().replace(/\s+/g, ' ');
+		if (g.isAdmin && f.has('name')) {
 			const claimed = await claimedPersonIds([personId]);
 			if (!claimed.has(personId) || self) {
-				await db.update(schema.persons).set({ name }).where(eq(schema.persons.id, personId));
+				const wanted = String(f.get('displayName') ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
+				if (wanted) {
+					const others = await db
+						.select({ id: schema.persons.id, name: schema.persons.name, display: shownName })
+						.from(schema.persons)
+						.where(isNull(schema.persons.mergedInto));
+					if (!displayNameFree(wanted, personId, others)) return fail(400, { message: `„${wanted}“ gibt es schon. Bitte wähle einen anderen Anzeigenamen.` });
+				}
+				await db
+					.update(schema.persons)
+					.set({ ...(name ? { name } : {}), displayName: wanted || null })
+					.where(eq(schema.persons.id, personId));
 				await refreshDisplayNames();
 			}
 		}

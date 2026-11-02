@@ -46,6 +46,7 @@ export async function loadMembers(groupId: string) {
 			personId: schema.persons.id,
 			name: shownName,
 			fullName: schema.persons.name,
+			displayName: schema.persons.displayName,
 			color: schema.persons.color,
 			avatarUrl: schema.persons.avatarUrl,
 			role: schema.memberships.role,

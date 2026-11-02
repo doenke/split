@@ -232,9 +232,15 @@
 				>
 					<input type="hidden" name="personId" value={m.personId} />
 					{#if data.isAdmin && !claimed.has(m.personId)}
-						<div class="field">
-							<label for="n-{m.personId}">Name</label>
-							<input id="n-{m.personId}" name="name" value={m.fullName} />
+						<div class="row">
+							<div class="field grow">
+								<label for="n-{m.personId}">Name</label>
+								<input id="n-{m.personId}" name="name" value={m.fullName} />
+							</div>
+							<div class="field grow">
+								<label for="dn-{m.personId}">Anzeigename</label>
+								<input id="dn-{m.personId}" name="displayName" value={m.displayName ?? ''} placeholder={m.name} maxlength="40" />
+							</div>
 						</div>
 					{/if}
 					<div class="row">
