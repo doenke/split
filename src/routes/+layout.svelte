@@ -7,6 +7,7 @@
 	import { flushPending } from '$lib/offline';
 	import { isBusy } from '$lib/busy';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import WelcomeCard from '$lib/components/WelcomeCard.svelte';
 
 	let { data, children } = $props();
 	let online = $state(true);
@@ -106,6 +107,9 @@
 {/if}
 
 <main class="container">
+	{#if data.user && data.hasPasskey !== null && page.url.searchParams.has('willkommen')}
+		<WelcomeCard name={data.user.name} hasPasskey={data.hasPasskey} />
+	{/if}
 	{@render children()}
 </main>
 

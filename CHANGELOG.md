@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.31.0
+- Einladungslinks (persönlich und für die Gruppe) haben einen „Kopieren“-Knopf
+- Einladung in einem Schritt: nach „Ja, das bin ich“ (bzw. „Wer bist du?“) geht es direkt in die Gruppe. Dort zeigt
+  eine Willkommen-Karte den Link zum Speichern und bietet einen Passkey an – die eigene Willkommensseite entfällt
+
 ## 0.30.1
 - Ausgabe: eine Auswahl „Gewichtung“ – Faktoren, Alle gleich oder Aufenthalt (Nächte/Tage, auf Wunsch zusätzlich mit
   Faktoren) – statt Kästchen und getrennter Aufenthalts-Option

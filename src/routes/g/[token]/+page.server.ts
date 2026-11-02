@@ -62,7 +62,7 @@ export const actions: Actions = {
 			redirect(303, `/gruppen/${group.id}`);
 		}
 		await createSession(cookies, personId, false);
-		redirect(303, `/willkommen?next=${encodeURIComponent(`/gruppen/${group.id}`)}`);
+		redirect(303, `/gruppen/${group.id}?willkommen`);
 	},
 	/** "I'm new here": creates a person (or adds the logged-in user) and joins. */
 	join: async ({ params, cookies, request, locals }) => {
@@ -80,6 +80,6 @@ export const actions: Actions = {
 		const personId = await createPerson(db, { name });
 		await joinAs(group.id, personId, personId);
 		await createSession(cookies, personId, false);
-		redirect(303, `/willkommen?next=${encodeURIComponent(`/gruppen/${group.id}`)}`);
+		redirect(303, `/gruppen/${group.id}?willkommen`);
 	}
 };

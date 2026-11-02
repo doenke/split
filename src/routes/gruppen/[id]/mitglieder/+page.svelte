@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CopyField from '$lib/components/CopyField.svelte';
 	import NameFields from '$lib/components/NameFields.svelte';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
@@ -76,7 +77,7 @@
 			{m?.name}: Er funktioniert immer wieder und gilt 90 Tage ab der letzten Nutzung. Ein neuer Link ersetzt ihn.
 		</p>
 		<div class="qr">{@html invite.qr}</div>
-		<input readonly value={invite.url} onfocus={(e) => e.currentTarget.select()} />
+		<CopyField value={invite.url} label="Zugangslink" />
 		<button class="primary full" style="margin-top: 0.5rem" onclick={() => share(invite!.url, m?.name ?? '')}>
 			{copied ? '✔ Kopiert' : 'Link teilen'}
 		</button>
@@ -103,7 +104,7 @@
 		</p>
 		{#if data.groupLink}
 			<div class="center"><div class="qr">{@html data.groupLink.qr}</div></div>
-			<input readonly value={data.groupLink.url} onfocus={(e) => e.currentTarget.select()} />
+			<CopyField value={data.groupLink.url} label="Einladungslink" />
 			<p class="hint">Gültig bis {formatDate(data.groupLink.expiresAt.slice(0, 10))}.</p>
 			<div class="row">
 				<button class="primary grow" onclick={() => share(data.groupLink!.url, '')}>{copied ? '✔ Kopiert' : 'Link teilen'}</button>

@@ -22,8 +22,10 @@ async function loadInvite(token: string) {
 }
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { person, group } = await loadInvite(params.token);
+	const { person, group, invite } = await loadInvite(params.token);
 	return {
+		// a personal link works again and again (a pairing link only once)
+		reusable: invite.type === 'personal',
 		person: { id: person.id, name: person.name, color: person.color, avatarUrl: person.avatarUrl },
 		group,
 		sameUser: locals.user?.id === person.id
@@ -37,9 +39,8 @@ export const actions: Actions = {
 		if (locals.user && locals.user.id !== person.id) await destroySession(cookies, locals.sessionId);
 		await createSession(cookies, person.id, false);
 		await inviteUsed(params.token, invite.type);
-		const next = encodeURIComponent(group ? `/gruppen/${group.id}` : '/');
-		// the welcome page shows the link again, to bookmark it
-		redirect(303, `/willkommen?next=${next}${invite.type === 'personal' ? `&link=${encodeURIComponent(params.token)}` : ''}`);
+		// straight into the group; a welcome card there offers the link to bookmark and a passkey
+		redirect(303, `${group ? `/gruppen/${group.id}` : '/'}?willkommen`);
 	},
 	/** Already logged in as someone else: the invited placeholder is me – merge it into my person. */
 	merge: async ({ params, locals }) => {

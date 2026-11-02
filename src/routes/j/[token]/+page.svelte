@@ -6,6 +6,15 @@
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data, form } = $props();
+	// the welcome card in the group shows this link again, to bookmark it (it is not put into any URL)
+	function rememberLink() {
+		if (!data.reusable) return;
+		try {
+			sessionStorage.setItem('split-link', location.origin + location.pathname);
+		} catch {
+			// storage blocked: the card just leaves the link out
+		}
+	}
 </script>
 
 <svelte:head><title>Einladung · Split</title></svelte:head>
@@ -31,12 +40,12 @@
 					zusammengeführt, du siehst dann alle deine Gruppen an einem Ort.
 				</p>
 			</form>
-			<form method="POST" action="?/claim" use:enhance>
+			<form method="POST" action="?/claim" use:enhance onsubmit={rememberLink}>
 				<button class="full">Abmelden und als {data.person.name} weitermachen</button>
 			</form>
 		</div>
 	{:else}
-		<form method="POST" action="?/claim" use:enhance>
+		<form method="POST" action="?/claim" use:enhance onsubmit={rememberLink}>
 			<button class="primary full">Ja, das bin ich</button>
 		</form>
 		<p class="small muted center">Falls du nicht {data.person.name} bist, schließe diese Seite einfach.</p>
