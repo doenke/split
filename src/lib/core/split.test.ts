@@ -7,7 +7,6 @@ import type { Expense, Member } from './types';
 const m = (personId: string, factor = 1, extra: Partial<Member> = {}): Member => ({
 	personId,
 	factor,
-	tags: [],
 	kasseId: personId,
 	...extra
 });
@@ -38,7 +37,7 @@ describe('allocate', () => {
 });
 
 describe('computeShares', () => {
-	const family = [m('anna'), m('ben'), m('lea', 0.5, { tags: ['Kind'] }), m('tim', 0.5, { tags: ['Kind'] })];
+	const family = [m('anna'), m('ben'), m('lea', 0.5), m('tim', 0.5)];
 
 	it('splits by default factors (concept example)', () => {
 		expect(obj(computeShares(expense({}), family))).toEqual({ anna: 3000, ben: 3000, lea: 1500, tim: 1500 });
@@ -65,20 +64,13 @@ describe('computeShares', () => {
 		});
 	});
 
-	it('applies tag filters and overrides (profile alcohol / accommodation)', () => {
-		const alcohol = expense({ rule: { type: 'all', tagFilter: { exclude: ['Kind'] } } });
-		expect(obj(computeShares(alcohol, family))).toEqual({ anna: 4500, ben: 4500 });
-		const accommodation = expense({ rule: { type: 'all', factorOverrides: { tags: { Kind: 1 } } } });
-		expect(obj(computeShares(accommodation, family))).toEqual({ anna: 2250, ben: 2250, lea: 2250, tim: 2250 });
-	});
-
-	it('prefers person overrides over tag overrides', () => {
-		const lea = m('lea', 0.5, { tags: ['Kind'] });
-		expect(effectiveFactor(lea, { tags: { Kind: 1 }, persons: { lea: 0 } })).toBe(0);
+	it('prefers the factor set in the profile over the default', () => {
+		expect(effectiveFactor(m('lea', 0.5), { persons: { lea: 0 } })).toBe(0);
+		expect(effectiveFactor(m('lea', 0.5), { persons: { tim: 2 } })).toBe(0.5);
 	});
 
 	it('ignores factors when all count equally', () => {
-		const e = expense({ rule: { type: 'all', equalWeights: true, factorOverrides: { tags: { Kind: 3 } } } });
+		const e = expense({ rule: { type: 'all', equalWeights: true, factorOverrides: { persons: { lea: 3 } } } });
 		expect(obj(computeShares(e, family))).toEqual({ anna: 2250, ben: 2250, lea: 2250, tim: 2250 });
 	});
 

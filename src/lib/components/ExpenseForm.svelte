@@ -18,7 +18,6 @@
 		color: string;
 		avatarUrl: string | null;
 		factor: number;
-		tags: string[];
 		participationFrom: string | null;
 		participationTo: string | null;
 		kasseId: string;
@@ -164,28 +163,26 @@
 	// weighting: the members' factors (default) or everybody the same
 	let equalWeights = $state(init?.equalWeights ?? initRule?.equalWeights ?? false);
 
-	// expenses from earlier versions may filter by tag; keep that filter until the user picks another split
-	const legacyFilter = !init?.profileId && initRule && initRule.type !== 'individual' ? (initRule.tagFilter ?? null) : null;
-	let keepFilter = $state(Boolean(legacyFilter?.require?.length || legacyFilter?.exclude?.length));
+	// an expense may carry own factors per person (e.g. converted from former tags): kept until the user picks another split
+	const initOverrides = !init?.profileId && initRule && initRule.type !== 'individual' ? initRule.factorOverrides : undefined;
+	let keepOverrides = $state(Boolean(initOverrides?.persons && Object.keys(initOverrides.persons).length));
 	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
 	const factorOf = (m: PersonOption) =>
 		equalWeights && mode !== 'individual'
 			? 1
-			: effectiveFactor({ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId }, rule.factorOverrides);
+			: effectiveFactor({ personId: m.personId, factor: m.factor, kasseId: m.kasseId }, rule.factorOverrides);
 	/** Where the factor of a person comes from – shown when tapping the factor. */
 	function factorSource(m: PersonOption): string {
 		if (equalWeights) return 'alle gleich gewichtet';
 		const o = rule.factorOverrides;
 		const where = profile ? `Profil „${profile.name}“` : 'diese Ausgabe';
 		if (o?.persons?.[m.personId] !== undefined) return `festgelegt in ${where}`;
-		const tag = m.tags.find((t) => o?.tags?.[t] !== undefined);
-		if (tag) return `Merkmal „${tag}“ in ${where}`;
 		return m.factor === 1 ? 'Standard' : `Standardfaktor von ${m.name} (Mitglieder)`;
 	}
 	let factorOpen = $state<string | null>(null);
 	function chooseProfile(id: string) {
 		profileId = id;
-		keepFilter = false;
+		keepOverrides = false;
 		mode = 'all';
 		const p = profiles.find((x) => x.id === id);
 		if (p?.defaultCategoryId && !categoryId) categoryId = p.defaultCategoryId;
@@ -232,12 +229,12 @@
 	});
 	const unitsOf = (m: PersonOption) =>
 		presentUnits(
-			{ personId: m.personId, factor: m.factor, tags: m.tags, kasseId: m.kasseId, from: m.participationFrom ?? undefined, to: m.participationTo ?? undefined },
+			{ personId: m.personId, factor: m.factor, kasseId: m.kasseId, from: m.participationFrom ?? undefined, to: m.participationTo ?? undefined },
 			{ from: periodFrom, to: periodTo, unit: periodUnit }
 		);
 	const unitLabel = (n: number) => (periodUnit === 'nights' ? (n === 1 ? '1 Nacht' : `${n} Nächte`) : n === 1 ? '1 Tag' : `${n} Tage`);
 	const periodTotal = $derived(
-		presentUnits({ personId: '', factor: 1, tags: [], kasseId: '' }, { from: periodFrom, to: periodTo, unit: periodUnit })
+		presentUnits({ personId: '', factor: 1, kasseId: '' }, { from: periodFrom, to: periodTo, unit: periodUnit })
 	);
 
 	// exchange rate
@@ -293,7 +290,10 @@
 	});
 	function baseRule(): SplitRule {
 		if (profile) return profile.rule;
-		if (keepFilter && legacyFilter && mode === initRule?.type && initRule.type !== 'individual') return initRule;
+		const own = keepOverrides && mode === initRule?.type ? { factorOverrides: initOverrides } : {};
+		return { ...plainRule(), ...own } as SplitRule;
+	}
+	function plainRule(): SplitRule {
 		const ids = Object.keys(selected).filter((id) => selected[id]);
 		switch (mode) {
 			case 'all':
@@ -318,7 +318,6 @@
 			(m): Member => ({
 				personId: m.personId,
 				factor: m.factor,
-				tags: m.tags,
 				from: m.participationFrom ?? undefined,
 				to: m.participationTo ?? undefined,
 				kasseId: m.kasseId
@@ -630,13 +629,13 @@
 		{/if}
 		<div class="segmented" style="margin-bottom: 0.6rem">
 			{#each Object.entries(modeLabels) as [k, label] (k)}
-				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (keepFilter = false))}>{label}</button>
+				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (keepOverrides = false))}>{label}</button>
 			{/each}
 		</div>
-		{#if keepFilter && legacyFilter}
+		{#if keepOverrides}
 			<p class="hint" style="margin-top: -0.3rem">
-				Diese Ausgabe ist nach Merkmalen aufgeteilt{legacyFilter.require?.length ? ` (nur „${legacyFilter.require.join('“, „')}“)` : ''}{legacyFilter.exclude?.length ? ` (ohne „${legacyFilter.exclude.join('“, „')}“)` : ''}.
-				<button type="button" class="link small" onclick={() => (keepFilter = false)}>Filter entfernen</button>
+				Diese Ausgabe hat eigene Faktoren für einzelne Personen.
+				<button type="button" class="link small" onclick={() => (keepOverrides = false)}>Standard-Faktoren verwenden</button>
 			</p>
 		{/if}
 		{#if profile || mode !== 'individual'}

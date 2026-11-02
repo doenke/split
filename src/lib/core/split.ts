@@ -57,25 +57,9 @@ export function presentUnits(member: Member, period: Period): number {
 	return Math.max(0, end - start + 1);
 }
 
-function matchesTagFilter(member: Member, rule: SplitRule): boolean {
-	const f = rule.tagFilter;
-	if (!f) return true;
-	if (f.require?.some((t) => !member.tags.includes(t))) return false;
-	if (f.exclude?.some((t) => member.tags.includes(t))) return false;
-	return true;
-}
-
-/**
- * Effective factor: person override > tag override (lowest matching value) > member default.
- */
+/** Effective factor: the profile's/expense's factor for the person, else the member's default. */
 export function effectiveFactor(member: Member, overrides?: FactorOverrides): number {
-	const p = overrides?.persons?.[member.personId];
-	if (p !== undefined) return p;
-	const tagValues = member.tags
-		.map((t) => overrides?.tags?.[t])
-		.filter((v): v is number => v !== undefined);
-	if (tagValues.length) return Math.min(...tagValues);
-	return member.factor;
+	return overrides?.persons?.[member.personId] ?? member.factor;
 }
 
 /** Members taking part in an expense according to its rule (before weighting). */
@@ -83,14 +67,12 @@ export function participants(members: Member[], rule: SplitRule, date: IsoDate, 
 	const active = (m: Member) => (period ? presentUnits(m, period) > 0 : isActiveOn(m, date));
 	switch (rule.type) {
 		case 'all':
-			return members.filter((m) => active(m) && matchesTagFilter(m, rule));
+			return members.filter((m) => active(m));
 		case 'all_except':
-			return members.filter(
-				(m) => active(m) && matchesTagFilter(m, rule) && !rule.excluded.includes(m.personId)
-			);
+			return members.filter((m) => active(m) && !rule.excluded.includes(m.personId));
 		case 'only':
 			// explicitly chosen people take part regardless of their participation dates
-			return members.filter((m) => rule.included.includes(m.personId) && matchesTagFilter(m, rule));
+			return members.filter((m) => rule.included.includes(m.personId));
 		case 'individual':
 			return members.filter((m) => (rule.values[m.personId] ?? 0) > 0);
 	}

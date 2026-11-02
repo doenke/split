@@ -6,35 +6,18 @@ export function ruleFromForm(f: FormData, memberIds: string[]): SplitRule {
 		const n = parseFloat(String(v ?? '').replace(',', '.'));
 		return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
 	};
-	// concrete people, each with an optional own factor
-	if (f.get('mode') === 'persons') {
-		const included = f.getAll('person').map(String).filter((id) => memberIds.includes(id));
-		const persons: Record<string, number> = {};
-		for (const id of included) {
-			const n = num(f.get(`factor_${id}`));
-			if (n !== null) persons[id] = n;
-		}
-		const rule: SplitRule = { type: 'only', included };
-		if (Object.keys(persons).length) rule.factorOverrides = { persons };
-		return rule;
+	// the people taking part, each with an optional own factor
+	const picked = f.getAll('person').map(String).filter((id) => memberIds.includes(id));
+	const persons: Record<string, number> = {};
+	for (const id of picked) {
+		const n = num(f.get(`factor_${id}`));
+		if (n !== null) persons[id] = n;
 	}
-	const list = (key: string) =>
-		[...new Set(String(f.get(key) ?? '').split(',').map((t) => t.trim()).filter(Boolean))];
-	const require = list('require');
-	const exclude = list('exclude');
-	const tags: Record<string, number> = {};
-	const names = f.getAll('overrideTag').map(String);
-	const values = f.getAll('overrideFactor').map(String);
-	names.forEach((t, i) => {
-		const n = parseFloat((values[i] ?? '').replace(',', '.'));
-		if (t.trim() && Number.isFinite(n) && n >= 0) tags[t.trim()] = n;
-	});
-	const rule: SplitRule = { type: 'all' };
-	if (require.length || exclude.length) {
-		rule.tagFilter = {};
-		if (require.length) rule.tagFilter.require = require;
-		if (exclude.length) rule.tagFilter.exclude = exclude;
+	const overrides = Object.keys(persons).length ? { factorOverrides: { persons } } : {};
+	// "everyone (except …)": people joining later take part automatically
+	if (f.get('mode') === 'all') {
+		const excluded = memberIds.filter((id) => !picked.includes(id));
+		return excluded.length ? { type: 'all_except', excluded, ...overrides } : { type: 'all', ...overrides };
 	}
-	if (Object.keys(tags).length) rule.factorOverrides = { tags };
-	return rule;
+	return { type: 'only', included: picked, ...overrides };
 }

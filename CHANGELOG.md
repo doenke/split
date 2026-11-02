@@ -3,6 +3,13 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.33.0
+- Merkmale (z.B. „Kind“) komplett entfernt – zu kompliziert. Profile nennen die Personen jetzt direkt:
+  „Bestimmte Personen“ oder „Alle (außer …)“, jeweils mit eigenen Faktoren
+- Bestehende Profile und Ausgaben, die nach Merkmalen aufgeteilt haben, werden beim Update einmalig auf dieselbe
+  Aufteilung nach Personen umgestellt (z.B. „ohne Kind“ → „Alle außer Lea, Tim“; „Kind zählt 1“ → Faktor 1 für Lea
+  und Tim) – an den Abrechnungen ändert sich nichts
+
 ## 0.32.1
 - Neue Kasse: „Ich gehöre selbst dazu“ ist nicht mehr vorausgewählt, wenn man schon in einer Kasse ist
 

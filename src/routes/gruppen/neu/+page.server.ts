@@ -74,7 +74,6 @@ export const actions: Actions = {
 				personId: userId,
 				role: 'admin',
 				factor: me?.factor ?? 1,
-				tags: me?.tags ?? [],
 				kasseId: me?.kasseId ?? (await personalKasseId(tx, userId))
 			});
 			for (const m of members) {
@@ -85,7 +84,6 @@ export const actions: Actions = {
 					personId: m.personId,
 					role: m.role,
 					factor: m.factor,
-					tags: m.tags,
 					kasseId: m.kasseId
 				});
 			}

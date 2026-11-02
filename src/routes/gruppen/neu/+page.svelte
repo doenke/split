@@ -39,7 +39,7 @@
 				{#each data.templates as t (t.id)}<option value={t.id}>{t.emoji} {t.name}</option>{/each}
 			</select>
 			{#if tpl}
-				<label class="check"><input type="checkbox" name="copyPeople" checked /> Personen übernehmen – mit Kassen, Faktoren und Merkmalen</label>
+				<label class="check"><input type="checkbox" name="copyPeople" checked /> Personen übernehmen – mit Kassen und Faktoren</label>
 				<label class="check"><input type="checkbox" name="copyProfiles" checked /> Profile und Einstellungen übernehmen</label>
 				<p class="hint">Ausgaben und Teilnahmezeiträume werden nicht übernommen. Alle sind sofort dabei, ohne neue Einladung.</p>
 			{/if}

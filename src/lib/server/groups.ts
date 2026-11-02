@@ -48,7 +48,6 @@ export async function loadMembers(groupId: string) {
 			avatarUrl: schema.persons.avatarUrl,
 			role: schema.memberships.role,
 			factor: schema.memberships.factor,
-			tags: schema.memberships.tags,
 			participationFrom: schema.memberships.participationFrom,
 			participationTo: schema.memberships.participationTo,
 			kasseId: schema.memberships.kasseId,
@@ -128,7 +127,6 @@ export function toCoreMember(m: GroupMember): Member {
 	return {
 		personId: m.personId,
 		factor: m.factor,
-		tags: m.tags,
 		from: m.participationFrom ?? undefined,
 		to: m.participationTo ?? undefined,
 		kasseId: m.kasseId

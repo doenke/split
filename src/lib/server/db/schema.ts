@@ -165,7 +165,6 @@ export const memberships = pgTable(
 			.references(() => persons.id, { onDelete: 'cascade' }),
 		role: text('role', { enum: ['admin', 'member'] }).notNull().default('member'),
 		factor: doublePrecision('factor').notNull().default(1),
-		tags: text('tags').array().notNull().default([]),
 		participationFrom: date('participation_from'),
 		participationTo: date('participation_to'),
 		kasseId: text('kasse_id')

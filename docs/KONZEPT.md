@@ -37,8 +37,7 @@ Kern-Alleinstellungsmerkmale:
 | **Person** | Ein Mensch im System. Global, also gruppenübergreifend. Kann ein Login haben – muss aber nicht. |
 | **Konto (Login)** | Eine Anmeldemöglichkeit, die zu genau einer Person gehört: OIDC-Identität, Passkey oder Geräte-Token. |
 | **Gruppe** | Ein Kontext, in dem Ausgaben anfallen (z.B. „Toskana 2027“). |
-| **Mitgliedschaft** | Eine Person in einer Gruppe, mit Faktor, Merkmalen und Teilnahmezeitraum. |
-| **Merkmal (Tag)** | Eigenschaft einer Person in der Gruppe, z.B. `Kind`, `Erwachsen`, `Vegetarier`, `Fahrer`. |
+| **Mitgliedschaft** | Eine Person in einer Gruppe, mit Faktor und Teilnahmezeitraum. |
 | **Profil** | Eine wiederverwendbare Aufteilungsvorlage einer Gruppe, z.B. „Alkohol: nur `Erwachsen`“. |
 | **Ausgabe** | Ein Betrag, den jemand bezahlt hat, plus eine Aufteilungsregel. |
 | **Kasse** | Eine Abrechnungseinheit aus einer oder mehreren Personen (z.B. „Familie Jacobs“). Gilt gruppenübergreifend. |
@@ -145,18 +144,17 @@ Eine Gruppe hat:
 - Name, Bild/Emoji, Beschreibung
 - **Basiswährung** (z.B. EUR) – siehe Fremdwährungen
 - optional Zeitraum (Reise vom … bis …)
-- Kategorien, Profile, Merkmale (gruppenspezifisch, mit Vorlagen)
+- Kategorien und Profile (gruppenspezifisch, mit Vorlagen)
 - Status: *aktiv* → *abgerechnet* → *archiviert*
 
 **Gruppe als Vorlage:** Eine bestehende Gruppe kann kopiert werden
 („Sommerurlaub 2028 wie 2027“). Übernommen werden wahlweise Personen samt
-Kassenzuordnung, Faktoren, Merkmale, Profile und Kategorien – keine Ausgaben.
+Kassenzuordnung, Faktoren, Profile und Kategorien – keine Ausgaben.
 Weil Personen gruppenübergreifend existieren, sind alle sofort wieder dabei und
 müssen nicht neu eingeladen werden.
 
 Eine **Mitgliedschaft** hat:
 - **Standard-Faktor** (Default `1.0`, z.B. Kind `0.5`, Kleinkind `0`)
-- **Merkmale** (`Kind`, `Erwachsen`, `Vegetarier`, …)
 - **Teilnahmezeitraum** (optional `von` / `bis`) – z.B. „kommt erst Dienstag nach“
 - **Kasse** in dieser Gruppe – genau eine, gewählt aus den Kassen der Person (siehe Kapitel 7)
 
@@ -202,7 +200,6 @@ abgeleitet.
 | **Alle** | alle Mitglieder, die am Ausgabedatum teilnehmen | werden automatisch einbezogen |
 | **Alle außer …** | alle Teilnehmenden ohne die ausgeschlossenen | werden automatisch einbezogen |
 | **Nur …** | nur explizit gewählte Personen | werden **nicht** einbezogen |
-| **Merkmal** (über Profil) | alle Teilnehmenden mit/ohne Merkmal X | werden einbezogen, wenn Merkmal passt |
 | **Individuell** | explizite Anteile, Prozente oder feste Beträge | statisch |
 
 **Gewichtung:** Bei allen Regeln außer „Individuell (Beträge)“ wird nach Faktoren
@@ -210,7 +207,7 @@ gewichtet. Priorität:
 
 ```
 Faktor = Override in der Ausgabe
-      ?? Faktor im Profil (für Person oder Merkmal)
+      ?? Faktor im Profil (für die Person)
       ?? Standard-Faktor der Mitgliedschaft
       ?? 1.0
 ```
@@ -220,14 +217,16 @@ Faktor = Override in der Ausgabe
 
 ### 5.3 Profile
 
-Profile sind benannte Regelvorlagen einer Gruppe – sie machen das Erfassen schnell:
+Profile sind benannte Regelvorlagen einer Gruppe – sie machen das Erfassen schnell. Merkmale an Personen
+(`Kind`, `Erwachsen` …) gab es anfangs auch; sie wurden als zu kompliziert wieder entfernt – Profile nennen
+die beteiligten Personen direkt (`Nur …` oder `Alle außer …`), jeweils mit eigenen Faktoren:
 
 | Profil | Regel | Faktor-Overrides |
 |---|---|---|
 | **Standard** | Alle | – (Standard-Faktoren) |
-| **Alkohol** 🍺 | Alle ohne Merkmal `Kind` | Nichttrinker → 0 |
-| **Unterkunft** 🏠 | Alle | `Kind` → 1.0 (Kinder zahlen hier voll) |
-| **Eintritt Erwachsene** | Merkmal `Erwachsen` | – |
+| **Alkohol** 🍺 | Alle außer den Kindern | Nichttrinker → 0 |
+| **Unterkunft** 🏠 | Alle | Kinder → 1.0 (zahlen hier voll) |
+| **Eintritt Erwachsene** | Nur die Erwachsenen | – |
 | **Sprit** ⛽ | Nur Mitfahrer | – |
 
 Ein Profil kann eine **Standard-Kategorie** vorschlagen. Beim Kassenbon-Scan
@@ -571,8 +570,7 @@ Beispiel `regel_json`:
 {
   "typ": "alle_ausser",
   "ausgeschlossen": ["person:ben"],
-  "merkmal_filter": { "ohne": ["Kind"] },
-  "faktor_overrides": { "tag:Kind": 1.0, "person:anna": 2.0 },
+  "faktor_overrides": { "person:lea": 1.0, "person:anna": 2.0 },
   "fixbetraege": { "person:ben": 1200 }
 }
 ```
@@ -756,7 +754,7 @@ docker compose exec db pg_dump -U split split > split-$(date +%F).sql
 
 **Phase 2 – Alleinstellungsmerkmale** ✅
 - Kassen (inkl. gruppenübergreifender Salden)
-- Merkmale & Profile
+- Profile (Merkmale später wieder entfernt)
 - Nachzügler-Dialog, Teilnahmezeitraum, zeitanteilige Aufteilung
 - PayPal-Link, GiroCode, Wero-Kontakt
 - Beleg-Fotos, Share-Target

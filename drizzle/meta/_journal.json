@@ -127,6 +127,13 @@
       "when": 1793542910722,
       "tag": "0017_mail",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793624282412,
+      "tag": "0018_remove_tags",
+      "breakpoints": true
     }
   ]
 }

@@ -64,7 +64,6 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		const where = profile ? `Profil „${profile.name}“` : 'dieser Ausgabe';
 		for (const m of data.members) {
 			const o = core.rule.factorOverrides;
-			const tag = m.tags.find((t) => o?.tags?.[t] !== undefined);
 			factors[m.personId] = core.rule.equalWeights
 				? { value: 1, source: 'alle gleich gewichtet' }
 				: {
@@ -72,11 +71,9 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 						source:
 							o?.persons?.[m.personId] !== undefined
 								? `festgelegt in ${where}`
-								: tag
-									? `Merkmal „${tag}“ in ${where}`
-									: m.factor === 1
-										? 'Standard'
-										: `Standardfaktor von ${m.name}`
+								: m.factor === 1
+									? 'Standard'
+									: `Standardfaktor von ${m.name}`
 					};
 		}
 	}

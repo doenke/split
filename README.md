@@ -17,14 +17,14 @@ Das Konzept steht in [`docs/KONZEPT.md`](docs/KONZEPT.md).
 **Phase 2**
 - Gemeinsame Kassen (Familien, Paare) über alle Gruppen, ganze Kasse zu einer Gruppe hinzufügen,
   Verrechnung über mehrere Gruppen mit einer einzigen Zahlung
-- Merkmale an Mitgliedern (z.B. „Kind“) und Ausgaben-Profile („Alkohol“, „Unterkunft“), die sich automatisch anpassen
+- Ausgaben-Profile („Alkohol“, „Mietwagen“): bestimmte Personen oder alle außer …, mit eigenen Faktoren
 - Zahlungsdaten im Profil: Wero (E-Mail oder Handynummer), IBAN mit GiroCode, PayPal.me – mit fertigem Betrag
 - Belegfotos und PDFs, „An Split teilen“ aus der Galerie (PWA Share Target)
 - Kostenübersicht nach Kategorien pro Person, Kasse und Gruppe – für Kassen auch über alle Gruppen und Jahre
 
 **Phase 3** (ohne Bon-Erkennung)
 - Gruppen-Einladungslink „Wer bist du?“ für den Gruppenchat, weitere Geräte per QR-Code koppeln
-- Gruppe als Vorlage (Personen, Kassen, Faktoren, Merkmale, Profile), Papierkorb (30 Tage)
+- Gruppe als Vorlage (Personen, Kassen, Faktoren, Profile), Papierkorb (30 Tage)
 - Abrechnung abschließen (Anteile festschreiben), CSV-Export, druckbare Abrechnung als PDF
 - Push-Benachrichtigungen (neue Ausgaben, Zahlungen, Erinnerungen), pro Gruppe stummschaltbar –
   die VAPID-Schlüssel erzeugt die App beim ersten Start selbst

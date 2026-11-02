@@ -1,51 +1,44 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import TagInput from '$lib/components/TagInput.svelte';
 	import type { SplitRule } from '$lib/core/types';
 
 	let { data, form } = $props();
 	let editing = $state<string | null>(null);
 	const cats = $derived(new Map(data.categories.map((c) => [c.id, c])));
-	const tagSuggestions = $derived([...new Set(['Kind', 'Erwachsen', ...data.members.flatMap((m) => m.tags)])]);
 
 	const names = $derived(new Map(data.members.map((m) => [m.personId, m.name])));
 	const fmt = (n: number) => String(n).replace('.', ',');
 
 	function describe(rule: SplitRule) {
-		if (rule.type === 'only') {
-			const f = rule.factorOverrides?.persons ?? {};
-			return rule.included.map((id) => `${names.get(id) ?? '?'}${f[id] !== undefined ? ` ×${fmt(f[id])}` : ''}`).join(', ') || 'niemand';
-		}
-		const parts: string[] = [];
-		if (rule.tagFilter?.require?.length) parts.push(`nur mit ${rule.tagFilter.require.join(', ')}`);
-		if (rule.tagFilter?.exclude?.length) parts.push(`ohne ${rule.tagFilter.exclude.join(', ')}`);
-		for (const [t, v] of Object.entries(rule.factorOverrides?.tags ?? {})) {
-			parts.push(`${t} zählt ${String(v).replace('.', ',')}`);
-		}
-		return parts.length ? `Alle, ${parts.join(' · ')}` : 'Alle (Standard-Faktoren)';
+		const f = rule.factorOverrides?.persons ?? {};
+		const withFactor = (id: string) => `${names.get(id) ?? '?'}${f[id] !== undefined ? ` ×${fmt(f[id])}` : ''}`;
+		if (rule.type === 'only') return rule.included.map(withFactor).join(', ') || 'niemand';
+		const factors = Object.keys(f).map(withFactor);
+		const base = rule.type === 'all_except' ? `Alle außer ${rule.excluded.map((id) => names.get(id) ?? '?').join(', ')}` : 'Alle';
+		return factors.length ? `${base} · ${factors.join(', ')}` : `${base} (Standard-Faktoren)`;
 	}
 
 	function membersFor(rule: SplitRule) {
 		if (rule.type === 'only') return data.members.filter((m) => rule.included.includes(m.personId));
-		return data.members.filter((m) => {
-			if (rule.tagFilter?.require?.some((t) => !m.tags.includes(t))) return false;
-			if (rule.tagFilter?.exclude?.some((t) => m.tags.includes(t))) return false;
-			return true;
-		});
+		if (rule.type === 'all_except') return data.members.filter((m) => !rule.excluded.includes(m.personId));
+		return data.members;
 	}
 
-	let overrides = $state<{ tag: string; factor: string }[]>([]);
-	let mode = $state<'tags' | 'persons'>('tags');
+	let mode = $state<'all' | 'persons'>('persons');
 	let picked = $state<Record<string, boolean>>({});
 	let personFactors = $state<Record<string, string>>({});
 	function startEdit(id: string | null, rule?: SplitRule) {
 		editing = id ?? 'new';
-		// new profiles start with concrete people; tag-based ones stay available
-		mode = !rule || rule.type === 'only' ? 'persons' : 'tags';
-		picked = Object.fromEntries(data.members.map((m) => [m.personId, rule?.type === 'only' ? rule.included.includes(m.personId) : true]));
+		// new profiles start with concrete people
+		mode = !rule || rule.type === 'only' ? 'persons' : 'all';
+		picked = Object.fromEntries(
+			data.members.map((m) => [
+				m.personId,
+				rule?.type === 'only' ? rule.included.includes(m.personId) : rule?.type === 'all_except' ? !rule.excluded.includes(m.personId) : true
+			])
+		);
 		const pf = rule?.factorOverrides?.persons ?? {};
 		personFactors = Object.fromEntries(data.members.map((m) => [m.personId, pf[m.personId] !== undefined ? fmt(pf[m.personId]) : '']));
-		overrides = Object.entries(rule?.factorOverrides?.tags ?? {}).map(([tag, f]) => ({ tag, factor: String(f).replace('.', ',') }));
 	}
 	const keep = () => async ({ result, update }: { result: { type: string }; update: (o?: { reset?: boolean }) => Promise<void> }) => {
 		await update({ reset: false });
@@ -80,10 +73,9 @@
 		<input type="hidden" name="mode" value={mode} />
 		<div class="segmented" style="margin-bottom: 0.75rem">
 			<button type="button" class:active={mode === 'persons'} onclick={() => (mode = 'persons')}>Bestimmte Personen</button>
-			<button type="button" class:active={mode === 'tags'} onclick={() => (mode = 'tags')}>Nach Merkmalen</button>
+			<button type="button" class:active={mode === 'all'} onclick={() => (mode = 'all')}>Alle (außer …)</button>
 		</div>
-		{#if mode === 'persons'}
-			<div class="field">
+		<div class="field">
 				<span class="label">Wer ist beteiligt – mit welchem Faktor?</span>
 				{#each data.members as m (m.personId)}
 					<div class="row person">
@@ -102,30 +94,13 @@
 						/>
 					</div>
 				{/each}
-				<p class="hint">Leer = Standard-Faktor der Person. Personen, die später dazukommen, sind hier nicht automatisch dabei.</p>
-			</div>
-		{:else}
-		<div class="field">
-			<span class="label">Nur Personen mit Merkmal</span>
-			<TagInput name="require" value={p?.rule.tagFilter?.require ?? []} suggestions={tagSuggestions} />
+				<p class="hint">
+					Leer = Standard-Faktor der Person.
+					{mode === 'all'
+						? 'Abgewählte Personen sind ausgenommen; wer später dazukommt, ist automatisch dabei.'
+						: 'Personen, die später dazukommen, sind hier nicht automatisch dabei.'}
+				</p>
 		</div>
-		<div class="field">
-			<span class="label">Personen mit diesem Merkmal ausnehmen</span>
-			<TagInput name="exclude" value={p?.rule.tagFilter?.exclude ?? []} suggestions={tagSuggestions} />
-		</div>
-		<div class="field">
-			<span class="label">Abweichende Faktoren</span>
-			{#each overrides as o, i (i)}
-				<div class="row" style="margin-bottom: 0.4rem">
-					<input name="overrideTag" bind:value={o.tag} placeholder="Merkmal, z.B. Kind" class="grow" style="width: auto" list="tags" />
-					<input name="overrideFactor" bind:value={o.factor} inputmode="decimal" style="width: 5rem" placeholder="1" />
-					<button type="button" class="link danger" onclick={() => overrides.splice(i, 1)}>✕</button>
-				</div>
-			{/each}
-			<button type="button" class="link" onclick={() => overrides.push({ tag: '', factor: '1' })}>+ Faktor für ein Merkmal</button>
-			<p class="hint">Z.B. „Kind = 1“ bei der Unterkunft: Kinder zahlen hier voll, obwohl ihr Standard-Faktor 0,5 ist.</p>
-		</div>
-		{/if}
 		<div class="field">
 			<label for="cat-{p?.id}">Kategorie vorschlagen</label>
 			<select id="cat-{p?.id}" name="defaultCategoryId">
@@ -142,9 +117,7 @@
 	</form>
 {/snippet}
 
-<datalist id="tags">
-	{#each tagSuggestions as t (t)}<option value={t}></option>{/each}
-</datalist>
+
 
 <div class="list">
 	{#each data.profiles as p (p.id)}

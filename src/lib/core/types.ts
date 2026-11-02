@@ -8,7 +8,6 @@ export interface Member {
 	personId: string;
 	/** Default weight of the person in this group, e.g. 0.5 for a child. */
 	factor: number;
-	tags: string[];
 	/** First day of participation (inclusive). Undefined = since the group started. */
 	from?: IsoDate;
 	/** Last day of participation (inclusive). Undefined = open end. */
@@ -19,18 +18,9 @@ export interface Member {
 
 export interface FactorOverrides {
 	persons?: Record<string, number>;
-	tags?: Record<string, number>;
-}
-
-export interface TagFilter {
-	/** Person must have all of these tags. */
-	require?: string[];
-	/** Person must have none of these tags. */
-	exclude?: string[];
 }
 
 interface RuleBase {
-	tagFilter?: TagFilter;
 	factorOverrides?: FactorOverrides;
 	/** Ignore all factors: everybody taking part counts 1 (times days/nights for stay-based splits). */
 	equalWeights?: boolean;
