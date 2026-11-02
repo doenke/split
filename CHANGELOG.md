@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.28.1
+- „verbraucht“ heißt jetzt überall „Anteil“ (Salden, Kassen, Abrechnung, Kostenübersicht)
+
 ## 0.28.0
 - E-Mails per SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`):
   - Zugangslink beim Erstellen per E-Mail verschicken

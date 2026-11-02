@@ -324,7 +324,7 @@ Carla = 1.400 × 10/38 = 368,42 €
 - Pro Gruppe anpassbar (umbenennen, ausblenden, eigene hinzufügen)
 - Auswertungen: Ausgaben pro Kategorie, pro Person, pro Kasse, pro Tag (Diagramme)
 - **„Was hat uns die Reise gekostet?“** – eigene Ansicht pro Person und pro Kasse:
-  der tatsächlich verbrauchte Anteil (nicht was bezahlt wurde und nicht nur der
+  der Anteil an den Kosten (nicht was bezahlt wurde und nicht nur der
   Saldo), aufgeschlüsselt nach Kategorien, z.B. „Familie Jacobs: 2.340 € gesamt,
   davon Unterkunft 980 €, Essen 720 €, …“. Auch über alle Gruppen einer Kasse
   hinweg, z.B. pro Jahr.

@@ -23,7 +23,7 @@
 
 <a href="/gruppen/{data.group.id}/salden" class="small">← Salden</a>
 <h2 style="margin-top: 0.75rem">Was hat es gekostet?</h2>
-<p class="small muted">Der tatsächlich verbrauchte Anteil – unabhängig davon, wer bezahlt hat.</p>
+<p class="small muted">Der Anteil an den Kosten – unabhängig davon, wer bezahlt hat.</p>
 
 <div class="card">
 	<div class="row" style="justify-content: space-between">

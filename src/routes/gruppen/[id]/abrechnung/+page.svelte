@@ -33,7 +33,7 @@
 
 	<h2>Übersicht</h2>
 	<table>
-		<thead><tr><th>Kasse</th><th>Personen</th><th class="r">bezahlt</th><th class="r">verbraucht</th><th class="r">Ausgleich</th><th class="r">Saldo</th></tr></thead>
+		<thead><tr><th>Kasse</th><th>Personen</th><th class="r">bezahlt</th><th class="r">Anteil</th><th class="r">Ausgleich</th><th class="r">Saldo</th></tr></thead>
 		<tbody>
 			{#each kassen as k (k.kasseId)}
 				<tr>

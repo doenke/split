@@ -102,7 +102,7 @@
 				<span class="emoji">{g.emoji}</span>
 				<div class="grow">
 					<strong>{g.name}</strong>
-					<div class="small muted">bezahlt {formatAmount(g.paid, g.currency)} · verbraucht {formatAmount(g.consumed, g.currency)}</div>
+					<div class="small muted">bezahlt {formatAmount(g.paid, g.currency)} · Anteil {formatAmount(g.consumed, g.currency)}</div>
 				</div>
 				<span class="amount {g.balance > 0 ? 'positive' : g.balance < 0 ? 'negative' : 'muted'}">
 					{g.balance > 0 ? '+' : ''}{formatAmount(g.balance, g.currency)}

@@ -66,7 +66,7 @@
 				</div>
 				<div class="grow">
 					<div class="ellipsis"><strong>{kasseName(k.kasseId)}</strong>{#if k.kasseId === data.myKasseId} <span class="badge">du</span>{/if}</div>
-					<div class="small muted">bezahlt {formatAmount(k.paid, currency)} · verbraucht {formatAmount(k.consumed, currency)}</div>
+					<div class="small muted">bezahlt {formatAmount(k.paid, currency)} · Anteil {formatAmount(k.consumed, currency)}</div>
 					<div class="bar"><span class={k.balance >= 0 ? 'pos' : 'neg'} style:width="{(Math.abs(k.balance) / maxAbs) * 100}%"></span></div>
 				</div>
 				<div class="amount right {k.balance > 0 ? 'positive' : k.balance < 0 ? 'negative' : 'muted'}">
