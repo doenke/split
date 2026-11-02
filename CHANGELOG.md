@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.33.2
+- Kategorie „Essen & Trinken“ heißt jetzt „Restaurant & Kneipe“ (auch in bestehenden Installationen)
+
 ## 0.33.1
 - Erstattungen: „gezahlt an …“ statt „erhalten von …“ (Ausgabenliste, Detailansicht, Formular)
 

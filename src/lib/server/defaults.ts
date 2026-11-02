@@ -1,7 +1,7 @@
 import { db, schema } from './db';
 
 export const defaultCategories = [
-	{ id: 'food', name: 'Essen & Trinken', icon: '🍽️', color: '#e76f51' },
+	{ id: 'food', name: 'Restaurant & Kneipe', icon: '🍽️', color: '#e76f51' },
 	{ id: 'groceries', name: 'Lebensmittel', icon: '🛒', color: '#2a9d8f' },
 	{ id: 'accommodation', name: 'Unterkunft', icon: '🏠', color: '#264653' },
 	{ id: 'transport', name: 'Transport', icon: '🚆', color: '#00798c' },

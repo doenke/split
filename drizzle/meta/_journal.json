@@ -134,6 +134,13 @@
       "when": 1793624282412,
       "tag": "0018_remove_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793625249375,
+      "tag": "0019_rename_food_category",
+      "breakpoints": true
     }
   ]
 }
