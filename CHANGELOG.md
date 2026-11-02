@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.34.2
+- Ausgabe bearbeiten: nach dem Speichern geht es zurück zur Detailansicht der Ausgabe (bei Fehlern bleibt das Formular offen)
+
 ## 0.34.1
 - Mitglieder: nach „Zugangslink erstellen“ scrollt die Seite zum Link hoch
 

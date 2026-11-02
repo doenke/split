@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
+	import { afterNavigate } from '$app/navigation';
 	import { formatAmount, formatDate } from '$lib/format';
 
 	let { data, form } = $props();
@@ -10,6 +11,13 @@
 	let editing = $state(data.draft);
 	$effect(() => {
 		if (form?.message) editing = true;
+	});
+	// saved: the server sends us back to this page – show the details again (on errors the form stays open)
+	afterNavigate(({ type }) => {
+		if (type === 'goto' && !data.draft) {
+			editing = false;
+			window.scrollTo({ top: 0 });
+		}
 	});
 
 	const e = $derived(data.expense);
