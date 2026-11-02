@@ -8,7 +8,18 @@
 
 	let { data, form } = $props();
 	let adding = $state(false);
-	let addMode = $state<'new' | 'known'>('new');
+	// people from my groups are the usual case when setting up Kassen
+	// svelte-ignore state_referenced_locally
+	let addMode = $state<'new' | 'known'>(data.known.length ? 'known' : 'new');
+	let picked = $state<string[]>([]);
+	let onlyFree = $state(true);
+	let search = $state('');
+	const candidates = $derived(
+		data.known.filter(
+			(p) => (!onlyFree || !p.kassen.length || picked.includes(p.id)) && (!search.trim() || p.name.toLowerCase().includes(search.trim().toLowerCase()))
+		)
+	);
+	const freeCount = $derived(data.known.filter((p) => !p.kassen.length).length);
 	let netting = $state<string | null>(null);
 	const me = $derived(data.members.find((m) => m.personId === data.user?.id));
 	const keep = () => async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) => update({ reset: false });
@@ -137,24 +148,48 @@
 </div>
 
 {#if adding}
-	<form method="POST" action="?/addMember" class="card" use:enhance>
+	<form
+		method="POST"
+		action="?/addMember"
+		class="card"
+		use:enhance={() =>
+			async ({ result, update }) => {
+				await update();
+				if (result.type === 'success') picked = [];
+			}}
+	>
 		{#if data.known.length}
 			<div class="segmented" style="margin-bottom: 0.75rem">
+				<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Bekannte Personen</button>
 				<button type="button" class:active={addMode === 'new'} onclick={() => (addMode = 'new')}>Neue Person</button>
-				<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Bekannte Person</button>
 			</div>
 		{/if}
 		{#if addMode === 'new'}
 			<NameFields id="kasse-name" />
 			<p class="hint">Z.B. ein Kind ohne eigenes Handy. Die Person kann später einen Zugangslink bekommen.</p>
 		{:else}
-			<select name="personId">
-				{#each data.known as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
-			</select>
+			<div class="row" style="margin-bottom: 0.5rem">
+				<input type="search" bind:value={search} placeholder="Suchen …" class="grow" style="width: auto" aria-label="Personen suchen" />
+				<label class="check small"><input type="checkbox" bind:checked={onlyFree} /> nur ohne Kasse ({freeCount})</label>
+			</div>
+			<div class="pick">
+				{#each candidates as p (p.id)}
+					<label class="check pick-row" class:on={picked.includes(p.id)}>
+						<input type="checkbox" name="personId" value={p.id} bind:group={picked} />
+						<Avatar name={p.name} color={p.color} url={p.avatarUrl} size={26} />
+						<span class="grow">{p.name}</span>
+						{#each p.kassen as k (k)}<span class="badge">{k}</span>{/each}
+					</label>
+				{:else}
+					<p class="small muted">{onlyFree ? 'Alle bekannten Personen sind schon in einer Kasse.' : 'Niemand gefunden.'}</p>
+				{/each}
+			</div>
 		{/if}
 		<p class="hint">Ist die Person in einer offenen Gruppe zusammen mit jemandem aus dieser Kasse, rechnet sie dort ab jetzt über die Kasse ab.</p>
 		<div class="row" style="margin-top: 0.5rem">
-			<button class="primary grow">Hinzufügen</button>
+			<button class="primary grow" disabled={addMode === 'known' && !picked.length}>
+				{addMode === 'known' ? (picked.length > 1 ? `${picked.length} Personen hinzufügen` : picked.length ? '1 Person hinzufügen' : 'Personen auswählen') : 'Hinzufügen'}
+			</button>
 			<button type="button" onclick={() => (adding = false)}>Fertig</button>
 		</div>
 	</form>
@@ -222,6 +257,27 @@
 {/if}
 
 <style>
+	.pick {
+		max-height: 22rem;
+		overflow-y: auto;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 0.25rem 0.5rem;
+	}
+	.pick-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0;
+		margin: 0;
+		border-bottom: 1px solid var(--border);
+	}
+	.pick-row:last-child {
+		border-bottom: 0;
+	}
+	.pick-row.on {
+		font-weight: 600;
+	}
 	.title {
 		margin: 0.75rem 0 1rem;
 	}

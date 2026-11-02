@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
@@ -28,10 +28,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		kasse: k.kasse,
 		members: k.members,
 		isManager: k.isManager,
-		known: known.filter((p) => !ids.has(p.id)),
+		known: await withKassen(known.filter((p) => !ids.has(p.id))),
 		...overview
 	};
 };
+
+/** Known people with the shared Kassen they already belong to (to find those without one). */
+async function withKassen<T extends { id: string }>(people: T[]) {
+	const rows = people.length
+		? await db
+				.select({ personId: schema.kasseMembers.personId, name: schema.kassen.name })
+				.from(schema.kasseMembers)
+				.innerJoin(schema.kassen, eq(schema.kassen.id, schema.kasseMembers.kasseId))
+				.where(and(inArray(schema.kasseMembers.personId, people.map((p) => p.id)), isNull(schema.kassen.personalOf)))
+		: [];
+	return people.map((p) => ({ ...p, kassen: rows.filter((r) => r.personId === p.id).map((r) => r.name) }));
+}
 
 async function requireManager(id: string, user: App.Locals['user']) {
 	const k = await requireKasse(id, user);
@@ -51,28 +63,29 @@ export const actions: Actions = {
 	addMember: async ({ params, locals, request }) => {
 		const k = await requireManager(params.id, locals.user);
 		const f = await request.formData();
-		const existingId = String(f.get('personId') ?? '');
+		// several known people at once, or one new person
+		const picked = [...new Set(f.getAll('personId').map(String).filter(Boolean))];
 		const name = nameFromForm(f);
-		let personId: string;
-		if (existingId) {
-			const known = await knownPersons(k.user.id);
-			if (!known.some((p) => p.id === existingId)) return fail(400, { message: 'Unbekannte Person.' });
-			personId = existingId;
+		let personIds: string[];
+		if (picked.length) {
+			const known = new Set((await knownPersons(k.user.id)).map((p) => p.id));
+			if (picked.some((id) => !known.has(id))) return fail(400, { message: 'Unbekannte Person.' });
+			personIds = picked.filter((id) => !k.members.some((m) => m.personId === id));
+			if (!personIds.length) return fail(400, { message: 'Schon Mitglied.' });
 		} else {
-			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben.' });
+			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben oder bekannte Personen auswählen.' });
 			const twin = sameName(name, [...k.members, ...(await knownPersons(k.user.id))]);
-			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Person“ oder ergänze den Nachnamen.` });
-			personId = await createPerson(db, { name, createdBy: k.user.id });
+			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Personen“ oder ergänze den Nachnamen.` });
+			personIds = [await createPerson(db, { name, createdBy: k.user.id })];
 		}
-		if (k.members.some((m) => m.personId === personId)) return fail(400, { message: 'Schon Mitglied.' });
 		// the first person of a Kasse set up for others manages it and receives its payments
 		const first = k.members.length === 0;
-		await db.insert(schema.kasseMembers).values({ kasseId: params.id, personId, isManager: first });
-		if (!k.kasse.receiverPersonId) await db.update(schema.kassen).set({ receiverPersonId: personId }).where(eq(schema.kassen.id, params.id));
+		await db.insert(schema.kasseMembers).values(personIds.map((personId, i) => ({ kasseId: params.id, personId, isManager: first && i === 0 })));
+		if (!k.kasse.receiverPersonId) await db.update(schema.kassen).set({ receiverPersonId: personIds[0] }).where(eq(schema.kassen.id, params.id));
 
 		// open groups with at least two people of this Kasse now settle with it
 		const switched = await syncKasseToGroups(params.id);
-		return { added: true, switched };
+		return { added: personIds.length, switched };
 	},
 
 	removeMember: async ({ params, locals, request }) => {
