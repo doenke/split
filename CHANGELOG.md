@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.33.4
+- Detailansicht einer Ausgabe: das Profil steht immer bei der Aufteilung (auch bei „Alle gleich“)
+- Profil-Symbol: Auswahl aus einer Symbol-Tabelle statt Textfeld, eigene Emojis weiterhin möglich
+
 ## 0.33.3
 - Profile: nur noch eine Zeile pro Profil – wer derzeit beteiligt ist (mit eigenem Faktor) und ob neue Mitglieder
   automatisch dabei sind

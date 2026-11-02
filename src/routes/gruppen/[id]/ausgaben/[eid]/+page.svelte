@@ -24,7 +24,8 @@
 	const ruleText = $derived.by(() => {
 		const r = e.rule;
 		const prof = data.profiles.find((p) => p.id === e.profileId);
-		if (!r && prof) return `${prof.icon} ${prof.name}`;
+		// with a profile, its name says it all (also when the expense counts everybody equally)
+		if (prof) return `${prof.icon} Profil „${prof.name}“`;
 		if (!r || r.type === 'all') return 'Alle';
 		const names = (ids: string[]) => ids.map((id) => people.get(id)?.name ?? '?').join(', ');
 		if (r.type === 'all_except') return `Alle außer ${names(r.excluded)}`;

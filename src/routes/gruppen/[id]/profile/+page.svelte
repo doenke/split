@@ -1,4 +1,5 @@
 <script lang="ts">
+	import IconPicker from '$lib/components/IconPicker.svelte';
 	import { enhance } from '$app/forms';
 	import type { SplitRule } from '$lib/core/types';
 
@@ -60,9 +61,9 @@
 	<form method="POST" action="?/save" class="edit" use:enhance={keep}>
 		<input type="hidden" name="id" value={p?.id ?? ''} />
 		<div class="row">
-			<div class="field" style="width: 4.5rem">
+			<div class="field">
 				<label for="icon-{p?.id}">Symbol</label>
-				<input id="icon-{p?.id}" name="icon" value={p?.icon ?? '🏷️'} maxlength="4" />
+				<IconPicker id="icon-{p?.id}" value={p?.icon ?? '🏷️'} />
 			</div>
 			<div class="field grow">
 				<label for="name-{p?.id}">Name</label>
