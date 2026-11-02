@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.34.1
+- Mitglieder: nach „Zugangslink erstellen“ scrollt die Seite zum Link hoch
+
 ## 0.34.0
 - Anzeigenamen: Überall steht der Vorname – gibt es ihn mehrfach, mit so vielen Buchstaben des Nachnamens, bis er
   eindeutig ist („Anna Ja.“, „Anna Je.“). Unter Profil → Name lässt sich ein eigener Anzeigename eintragen; einer, den

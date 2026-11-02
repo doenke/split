@@ -31,6 +31,11 @@
 	$effect(() => {
 		if (form && 'invite' in form && form.invite) invite = form.invite as Invite;
 	});
+	// the link card appears at the top: bring it into view (the button may be far down the list)
+	let inviteCard = $state<HTMLDivElement>();
+	$effect(() => {
+		if (invite && inviteCard) inviteCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	});
 
 	async function share(url: string, name: string) {
 		const text = name
@@ -67,7 +72,7 @@
 {#if invite}
 	{@const inv = invite}
 	{@const m = data.members.find((x) => x.personId === inv.personId)}
-	<div class="card invite">
+	<div class="card invite" bind:this={inviteCard}>
 		<h2>Zugangslink für {m?.name}</h2>
 		<p class="small muted">
 			Schicke ihn z.B. per Messenger oder lass den QR-Code scannen. Der Link ist der persönliche Schlüssel von
@@ -300,6 +305,9 @@
 </div>
 
 <style>
+	.invite {
+		scroll-margin-top: 4.5rem;
+	}
 	.mailinvite {
 		margin-top: 0.75rem;
 	}
