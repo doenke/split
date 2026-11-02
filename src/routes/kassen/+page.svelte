@@ -5,6 +5,8 @@
 
 	let { data, form } = $props();
 	let creating = $state(false);
+	// already in a Kasse: a new one is most likely for others (one Kasse per person and group)
+	const inAKasse = $derived(data.kassen.some((k) => k.isMember));
 </script>
 
 <svelte:head><title>Kassen · Split</title></svelte:head>
@@ -27,7 +29,7 @@
 			<input id="name" name="name" placeholder="z.B. Familie Jacobs" required class="grow" style="width: auto" />
 			<button class="primary">Anlegen</button>
 		</div>
-		<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked /> Ich gehöre selbst dazu</label>
+		<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked={!inAKasse} /> Ich gehöre selbst dazu</label>
 		<p class="hint">Ohne Haken legst du die Kasse für andere an, z.B. für befreundete Familien. Du verwaltest sie dann, ohne selbst mitzurechnen.</p>
 	</form>
 {/if}

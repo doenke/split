@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.32.1
+- Neue Kasse: „Ich gehöre selbst dazu“ ist nicht mehr vorausgewählt, wenn man schon in einer Kasse ist
+
 ## 0.32.0
 - Kasse: „+ Person“ zeigt bekannte Personen als Liste mit Häkchen (Standard), filterbar nach „nur ohne Kasse“ und
   mit Suche; mehrere lassen sich auf einmal hinzufügen. Bei jeder Person steht, in welcher Kasse sie schon ist
