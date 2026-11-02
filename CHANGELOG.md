@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.30.1
+- Ausgabe: eine Auswahl „Gewichtung“ – Faktoren, Alle gleich oder Aufenthalt (Nächte/Tage, auf Wunsch zusätzlich mit
+  Faktoren) – statt Kästchen und getrennter Aufenthalts-Option
+
 ## 0.30.0
 - Ausgabe erfassen aufgeräumt: „↩ Erstattung“ ist ein kleiner Schalter neben der Währung; „Bezahlt von“,
   „Aufgeteilt auf“ und „Weiteres“ (privater Anteil, Notiz) sind eingeklappt und zeigen eine Zusammenfassung

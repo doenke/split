@@ -399,6 +399,10 @@
 		only: 'Nur …',
 		individual: 'Individuell'
 	};
+	// individual shares have no weighting: the length of stay would apply unseen
+	$effect(() => {
+		if (mode === 'individual' && !profile && showPeriod) showPeriod = false;
+	});
 	// the less common parts are folded away; a one-line summary says what is set
 	let payersOpen = $state(false);
 	let splitOpen = $state(false);
@@ -423,8 +427,16 @@
 					: mode === 'only'
 						? picked.length ? `Nur ${names(picked)}` : 'Nur … (niemand gewählt)'
 						: { shares: 'Individuell nach Anteilen', percent: 'Individuell in Prozent', amounts: 'Individuell nach Beträgen' }[indivMode];
-		const how = mode === 'individual' && !profile ? '' : equalWeights ? ' · alle gleich' : ' · nach Faktoren';
-		return base + how + (showPeriod ? ` · nach ${periodUnit === 'nights' ? 'Nächten' : 'Tagen'}` : '');
+		const unit = periodUnit === 'nights' ? 'Nächten' : 'Tagen';
+		const how =
+			mode === 'individual' && !profile
+				? ''
+				: showPeriod
+					? ` · nach ${unit}${equalWeights ? '' : ' × Faktor'}`
+					: equalWeights
+						? ' · alle gleich'
+						: ' · nach Faktoren';
+		return base + how;
 	});
 	const moreSummary = $derived(
 		[privateAmount > 0 ? `privat ${formatAmount(privateAmount, currency)}` : '', notes.trim() ? 'Notiz' : ''].filter(Boolean).join(' · ') ||
@@ -628,10 +640,36 @@
 			</p>
 		{/if}
 		{#if profile || mode !== 'individual'}
-			<label class="check small weighting">
-				<input type="checkbox" bind:checked={equalWeights} />
-				Alle gleich gewichten (Faktoren ignorieren)
-			</label>
+			<!-- how much each person counts: factors, everyone the same, or the length of stay -->
+			<div class="weighting">
+				<span class="small muted">Gewichtung</span>
+				<div class="segmented small-seg">
+					<button type="button" class:active={!showPeriod && !equalWeights} onclick={() => ((showPeriod = false), (equalWeights = false))}>Faktoren</button>
+					<button type="button" class:active={!showPeriod && equalWeights} onclick={() => ((showPeriod = false), (equalWeights = true))}>Alle gleich</button>
+					<button type="button" class:active={showPeriod} onclick={() => ((showPeriod = true), (equalWeights = false))}>Aufenthalt</button>
+				</div>
+			</div>
+			{#if showPeriod}
+				<div class="period">
+					<div class="row">
+						<div class="field grow"><label for="pf">Von</label><input id="pf" type="date" bind:value={periodFrom} /></div>
+						<div class="field grow"><label for="pt">Bis</label><input id="pt" type="date" bind:value={periodTo} /></div>
+					</div>
+					<div class="segmented small-seg">
+						<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
+						<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
+					</div>
+					<p class="hint">
+						{#if periodUnit === 'nights'}
+							<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
+						{:else}
+							<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
+						{/if}
+						Jeder zahlt {equalWeights ? '' : 'Faktor × '}eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
+					</p>
+					<label class="check small"><input type="checkbox" checked={!equalWeights} onchange={(e) => (equalWeights = !e.currentTarget.checked)} /> Faktoren zusätzlich berücksichtigen</label>
+				</div>
+			{/if}
 		{/if}
 
 
@@ -680,7 +718,7 @@
 			{#if factorOpen === m.personId && share}
 				<p class="hint factor-info">
 					Faktor {String(factorOf(m)).replace('.', ',')} – {factorSource(m)}{#if showPeriod}{` × ${unitLabel(unitsOf(m))}`}{/if}.
-					{#if !equalWeights}Mit „Alle gleich“ zählt jede Person 1.{/if}
+					{#if !equalWeights && !showPeriod}Mit „Alle gleich“ zählt jede Person 1.{/if}
 				</p>
 			{/if}
 		{/each}
@@ -692,27 +730,6 @@
 			<p class="hint">Personen, die später dazukommen, werden automatisch beteiligt (je nach Teilnahmezeitraum).</p>
 		{/if}
 
-		<div class="period">
-		<label class="check"><input type="checkbox" bind:checked={showPeriod} /> Nach Aufenthaltsdauer aufteilen (z.B. Unterkunft)</label>
-			{#if showPeriod}
-				<div class="row">
-					<div class="field grow"><label for="pf">Von</label><input id="pf" type="date" bind:value={periodFrom} /></div>
-					<div class="field grow"><label for="pt">Bis</label><input id="pt" type="date" bind:value={periodTo} /></div>
-				</div>
-				<div class="segmented small-seg">
-					<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
-					<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
-				</div>
-				<p class="hint">
-					{#if periodUnit === 'nights'}
-						<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
-					{:else}
-						<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
-					{/if}
-					Jeder zahlt Faktor × eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
-				</p>
-			{/if}
-		</div>
 	</details>
 	{#if preview && 'error' in preview && !splitOpen}
 		<p class="hint error fold-error">{preview.error}</p>
@@ -809,9 +826,10 @@
 		margin: -0.5rem 0.25rem 0.75rem;
 	}
 	.period {
-		margin-top: 0.75rem;
-		padding-top: 0.6rem;
-		border-top: 1px solid var(--border);
+		margin: 0 0 0.75rem;
+		padding: 0.6rem 0.75rem;
+		background: var(--surface-2);
+		border-radius: 10px;
 	}
 	.chips {
 		display: flex;
@@ -854,8 +872,14 @@
 		margin: -0.1rem 0 0.3rem 2.4rem;
 	}
 	.weighting {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
 		margin: -0.2rem 0 0.5rem;
-		color: var(--muted);
+	}
+	.weighting .segmented {
+		flex: 1;
+		margin: 0;
 	}
 	.label {
 		display: block;
