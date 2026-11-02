@@ -7,6 +7,7 @@ import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKas
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, findInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
+import { refreshDisplayNames } from '$lib/server/display';
 import { mailAddedToGroup, sendInviteMail } from '$lib/server/mailings';
 import { smtpConfigured } from '$lib/server/mail';
 import { today } from '$lib/format';
@@ -174,7 +175,7 @@ export const actions: Actions = {
 			const claimed = await claimedPersonIds([personId]);
 			if (!claimed.has(personId) || self) {
 				await db.update(schema.persons).set({ name }).where(eq(schema.persons.id, personId));
-				await db.update(schema.kassen).set({ name }).where(eq(schema.kassen.personalOf, personId));
+				await refreshDisplayNames();
 			}
 		}
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.update', entityId: personId, data: values });

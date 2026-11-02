@@ -1,5 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
+import { displayNameFree } from '$lib/core/display-names';
+import { refreshDisplayNames, shownName } from '$lib/server/display';
 import { db, schema } from '$lib/server/db';
 import { config } from '$lib/server/config';
 import QRCode from 'qrcode';
@@ -38,7 +40,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(schema.sessions)
 		.where(and(eq(schema.sessions.personId, locals.user.id), gt(schema.sessions.expiresAt, new Date())));
 	const [payment] = await db.select().from(schema.paymentDetails).where(eq(schema.paymentDetails.personId, locals.user.id));
+	const [me] = await db.select({ displayName: schema.persons.displayName }).from(schema.persons).where(eq(schema.persons.id, locals.user.id));
 	return {
+		displayName: me?.displayName ?? '',
 		payment: payment ? { ...payment, iban: payment.iban ? formatIban(payment.iban) : null } : null,
 		passkeys: creds.filter((c) => c.type === 'passkey'),
 		hasOidc: creds.some((c) => c.type === 'oidc'),
@@ -52,13 +56,27 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
+	/** Full name (not for login-provider accounts) and the optional display name. */
 	rename: async ({ locals, request }) => {
 		if (!locals.user) redirect(303, '/login');
-		if (locals.user.isOidc) return fail(400, { message: 'Dein Name kommt von deinem Login-Anbieter.' });
-		const name = String((await request.formData()).get('name') ?? '').trim();
-		if (!name) return fail(400, { message: 'Name fehlt.' });
-		await db.update(schema.persons).set({ name }).where(eq(schema.persons.id, locals.user.id));
-		await db.update(schema.kassen).set({ name }).where(eq(schema.kassen.personalOf, locals.user.id));
+		const f = await request.formData();
+		const values: { name?: string; displayName: string | null } = { displayName: null };
+		if (!locals.user.isOidc && f.has('name')) {
+			const name = String(f.get('name') ?? '').trim().replace(/\s+/g, ' ');
+			if (!name) return fail(400, { message: 'Name fehlt.' });
+			values.name = name;
+		}
+		const wanted = String(f.get('displayName') ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
+		if (wanted) {
+			const others = await db
+				.select({ id: schema.persons.id, name: schema.persons.name, display: shownName })
+				.from(schema.persons)
+				.where(isNull(schema.persons.mergedInto));
+			if (!displayNameFree(wanted, locals.user.id, others)) return fail(400, { message: `„${wanted}“ gibt es schon. Bitte wähle einen anderen Anzeigenamen.` });
+			values.displayName = wanted;
+		}
+		await db.update(schema.persons).set(values).where(eq(schema.persons.id, locals.user.id));
+		await refreshDisplayNames();
 		return { saved: true };
 	},
 	savePayment: async ({ locals, request }) => {
@@ -73,7 +91,7 @@ export const actions: Actions = {
 		const values = {
 			weroContact: str('weroContact') || null,
 			iban: iban ? normalizeIban(iban) : null,
-			accountHolder: str('accountHolder') || (iban ? locals.user.name : null),
+			accountHolder: str('accountHolder') || (iban ? locals.user.fullName : null),
 			paypalMe,
 			updatedAt: new Date()
 		};

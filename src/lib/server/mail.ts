@@ -5,6 +5,7 @@ import { env } from '$env/dynamic/private';
 import { config } from './config';
 import { db, schema } from './db';
 import { newId } from './ids';
+import { shownName } from './display';
 
 /**
  * E-mails via SMTP (configured with SMTP_* variables). They only go to confirmed addresses, only for the
@@ -139,7 +140,7 @@ export async function mailPeople(
 		if (!g || g.settings.quiet) return 0;
 	}
 	const people = await db
-		.select({ id: schema.persons.id, name: schema.persons.name, email: schema.persons.email, prefs: schema.persons.mailPrefs })
+		.select({ id: schema.persons.id, name: shownName, email: schema.persons.email, prefs: schema.persons.mailPrefs })
 		.from(schema.persons)
 		.where(
 			and(

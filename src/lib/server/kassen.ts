@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from './db';
 import { loadGroupState } from './groups';
 import type { SessionUser } from './auth/session';
+import { shownName } from './display';
 
 /** Shared Kassen (families, couples …) the person belongs to. */
 export async function sharedKassenOf(personId: string) {
@@ -38,7 +39,8 @@ export async function kasseMembersOf(kasseId: string) {
 	return db
 		.select({
 			personId: schema.persons.id,
-			name: schema.persons.name,
+			name: shownName,
+			fullName: schema.persons.name,
 			color: schema.persons.color,
 			avatarUrl: schema.persons.avatarUrl,
 			isManager: schema.kasseMembers.isManager,
@@ -47,7 +49,7 @@ export async function kasseMembersOf(kasseId: string) {
 		.from(schema.kasseMembers)
 		.innerJoin(schema.persons, eq(schema.persons.id, schema.kasseMembers.personId))
 		.where(eq(schema.kasseMembers.kasseId, kasseId))
-		.orderBy(schema.persons.name);
+		.orderBy(shownName);
 }
 
 export async function requireKasse(kasseId: string, user: SessionUser | null) {

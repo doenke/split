@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db, schema, type Tx } from './db';
 import { newId } from './ids';
+import { refreshDisplayNames, shownName } from './display';
 
 const colors = ['#e76f51', '#2a9d8f', '#e9c46a', '#264653', '#f4a261', '#8e7dbe', '#5b8e7d', '#d1495b', '#00798c', '#edae49'];
 
@@ -29,6 +30,8 @@ export async function createPerson(
 		receiverPersonId: id,
 		createdBy: data.createdBy ?? id
 	});
+	// outside a transaction the new person can get its display name right away
+	if (tx === db) await refreshDisplayNames();
 	return id;
 }
 
@@ -39,7 +42,7 @@ export async function personalKasseId(tx: Tx | typeof db, personId: string): Pro
 		.where(eq(schema.kassen.personalOf, personId))
 		.limit(1);
 	if (k) return k.id;
-	const [p] = await tx.select({ name: schema.persons.name }).from(schema.persons).where(eq(schema.persons.id, personId));
+	const [p] = await tx.select({ name: shownName }).from(schema.persons).where(eq(schema.persons.id, personId));
 	const id = newId();
 	await tx.insert(schema.kassen).values({ id, name: p?.name ?? '?', personalOf: personId, receiverPersonId: personId });
 	return id;
@@ -61,7 +64,7 @@ export async function claimedPersonIds(personIds: string[]): Promise<Set<string>
 
 /** People the user knows from groups and Kassen (to add them without a new invite). */
 export async function knownPersons(userId: string) {
-	const cols = { id: schema.persons.id, name: schema.persons.name, color: schema.persons.color, avatarUrl: schema.persons.avatarUrl };
+	const cols = { id: schema.persons.id, name: shownName, fullName: schema.persons.name, color: schema.persons.color, avatarUrl: schema.persons.avatarUrl };
 	const myGroups = db
 		.select({ id: schema.memberships.groupId })
 		.from(schema.memberships)
@@ -134,6 +137,8 @@ export async function mergePersons(fromId: string, intoId: string) {
 		await tx.execute(sql`update expenses set rule = replace(rule::text, ${'"' + fromId + '"'}, ${'"' + intoId + '"'})::jsonb where rule::text like ${'%' + fromId + '%'}`);
 		await tx.execute(sql`update profiles set rule = replace(rule::text, ${'"' + fromId + '"'}, ${'"' + intoId + '"'})::jsonb where rule::text like ${'%' + fromId + '%'}`);
 	});
+	// one name less: others may get shorter display names
+	await refreshDisplayNames();
 }
 
 /** Full name from the "first name" and optional "last name" fields of a form. */
@@ -145,6 +150,6 @@ export function nameFromForm(f: FormData) {
 const normName = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');
 
 /** Someone with exactly this name (ignoring case) among the given people. */
-export function sameName<T extends { name: string }>(name: string, people: T[]) {
-	return people.find((p) => normName(p.name) === normName(name));
+export function sameName<T extends { name: string; fullName?: string }>(name: string, people: T[]) {
+	return people.find((p) => normName(p.fullName ?? p.name) === normName(name) || normName(p.name) === normName(name));
 }

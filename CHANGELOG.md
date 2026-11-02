@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.34.0
+- Anzeigenamen: Überall steht der Vorname – gibt es ihn mehrfach, mit so vielen Buchstaben des Nachnamens, bis er
+  eindeutig ist („Anna Ja.“, „Anna Je.“). Unter Profil → Name lässt sich ein eigener Anzeigename eintragen; einer, den
+  es schon gibt (als Anzeige- oder voller Name), wird abgelehnt. Für Überweisung/GiroCode bleibt der volle Name
+
 ## 0.33.4
 - Detailansicht einer Ausgabe: das Profil steht immer bei der Aufteilung (auch bei „Alle gleich“)
 - Profil-Symbol: Auswahl aus einer Symbol-Tabelle statt Textfeld, eigene Emojis weiterhin möglich

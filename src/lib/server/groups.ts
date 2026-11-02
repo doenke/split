@@ -5,6 +5,7 @@ import type { Expense as CoreExpense, Member, SplitRule } from '$lib/core/types'
 import { db, schema } from './db';
 import type { SessionUser } from './auth/session';
 import type { GroupSettings } from './db/schema';
+import { shownName } from './display';
 
 export const defaultSettings: GroupSettings = {
 	simplifyDebts: true,
@@ -43,7 +44,8 @@ export async function loadMembers(groupId: string) {
 	return db
 		.select({
 			personId: schema.persons.id,
-			name: schema.persons.name,
+			name: shownName,
+			fullName: schema.persons.name,
 			color: schema.persons.color,
 			avatarUrl: schema.persons.avatarUrl,
 			role: schema.memberships.role,
@@ -61,7 +63,7 @@ export async function loadMembers(groupId: string) {
 		.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))
 		.innerJoin(schema.kassen, eq(schema.kassen.id, schema.memberships.kasseId))
 		.where(eq(schema.memberships.groupId, groupId))
-		.orderBy(asc(schema.persons.name));
+		.orderBy(asc(shownName));
 }
 
 export type GroupMember = Awaited<ReturnType<typeof loadMembers>>[number];

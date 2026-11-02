@@ -1,5 +1,6 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { runMigrations } from '$lib/server/db';
+import { refreshDisplayNames } from '$lib/server/display';
 import { convertTagRules } from '$lib/server/migrate-tags';
 import { seedDefaults } from '$lib/server/defaults';
 import { refreshRatesIfStale } from '$lib/server/rates';
@@ -11,6 +12,7 @@ import { SESSION_COOKIE, validateSession } from '$lib/server/auth/session';
 export const init: ServerInit = async () => {
 	await convertTagRules();
 	await runMigrations();
+	await refreshDisplayNames();
 	await seedDefaults();
 	void refreshRatesIfStale();
 	// reminders also shortly after a restart (each one is sent at most weekly anyway)

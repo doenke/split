@@ -229,7 +229,7 @@
 					{#if data.isAdmin && !claimed.has(m.personId)}
 						<div class="field">
 							<label for="n-{m.personId}">Name</label>
-							<input id="n-{m.personId}" name="name" value={m.name} />
+							<input id="n-{m.personId}" name="name" value={m.fullName} />
 						</div>
 					{/if}
 					<div class="row">

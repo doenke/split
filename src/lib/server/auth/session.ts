@@ -9,7 +9,10 @@ const SESSION_DAYS = 365;
 
 export interface SessionUser {
 	id: string;
+	/** the display name */
 	name: string;
+	/** full name, "First Last" */
+	fullName: string;
 	email: string | null;
 	avatarUrl: string | null;
 	color: string;
@@ -60,7 +63,8 @@ export async function toSessionUser(person: typeof schema.persons.$inferSelect, 
 		.limit(1);
 	return {
 		id: person.id,
-		name: person.name,
+		name: person.display ?? person.name,
+		fullName: person.name,
 		email: person.email,
 		avatarUrl: person.avatarUrl,
 		color: person.color,

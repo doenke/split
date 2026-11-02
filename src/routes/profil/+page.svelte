@@ -19,6 +19,7 @@
 	<Avatar name={user.name} color={user.color} url={user.avatarUrl} size={56} />
 	<div>
 		<h1 style="margin: 0">{user.name}</h1>
+		{#if user.fullName !== user.name}<div class="small muted">{user.fullName}</div>{/if}
 		<div class="small muted">{user.isOidc ? 'Angemeldet über Login-Anbieter' : 'Gast-Zugang'}{#if user.isInstanceAdmin} · Instanz-Admin{/if}</div>
 	</div>
 </div>
@@ -31,15 +32,24 @@
 	<a href="/admin/personen" class="button full" style="margin-bottom: 1rem">👥 Personen verwalten (Admin)</a>
 {/if}
 
-{#if !user.isOidc}
-	<form method="POST" action="?/rename" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
-		<label for="name">Dein Name</label>
-		<div class="row">
-			<input id="name" name="name" value={user.name} class="grow" style="width: auto" />
-			<button>Speichern</button>
+<form method="POST" action="?/rename" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
+	<h2>Name</h2>
+	{#if !user.isOidc}
+		<div class="field">
+			<label for="name">Vor- und Nachname</label>
+			<input id="name" name="name" value={user.fullName} autocomplete="name" />
 		</div>
-	</form>
-{/if}
+	{/if}
+	<div class="field">
+		<label for="displayName">Anzeigename (optional)</label>
+		<input id="displayName" name="displayName" value={data.displayName} placeholder={user.name} maxlength="40" />
+		<p class="hint">
+			So sehen dich die anderen{data.displayName ? '' : `, jetzt: „${user.name}“`}. Leer = automatisch: dein Vorname, und nur wenn es
+			den schon gibt, so viel vom Nachnamen, bis er eindeutig ist.
+		</p>
+	</div>
+	<button class="full">{form?.saved ? '✔ Gespeichert' : 'Speichern'}</button>
+</form>
 
 <div class="card">
 	<h2>Passkeys</h2>
@@ -138,7 +148,7 @@
 	</div>
 	<div class="field">
 		<label for="accountHolder">Kontoinhaber</label>
-		<input id="accountHolder" name="accountHolder" value={data.payment?.accountHolder ?? ''} placeholder={user.name} />
+		<input id="accountHolder" name="accountHolder" value={data.payment?.accountHolder ?? ''} placeholder={user.fullName} />
 	</div>
 	<div class="field">
 		<label for="paypalMe">PayPal.me-Name</label>

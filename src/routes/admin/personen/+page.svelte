@@ -10,7 +10,7 @@
 		data.persons.filter(
 			(p) =>
 				(showInactive || !p.deactivatedAt) &&
-				(!query.trim() || `${p.name} ${p.email ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()))
+				(!query.trim() || `${p.name} ${p.display} ${p.email ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()))
 		)
 	);
 	const inactive = $derived(data.persons.filter((p) => p.deactivatedAt).length);
@@ -35,10 +35,10 @@
 <div class="list">
 	{#each filtered as p (p.id)}
 		<div class:inactive={p.deactivatedAt}>
-			<Avatar name={p.name} color={p.color} url={p.avatarUrl} size={34} />
+			<Avatar name={p.display} color={p.color} url={p.avatarUrl} size={34} />
 			<div class="grow">
 				<div class="ellipsis">
-					<strong>{p.name}</strong>{#if p.id === data.user?.id} <span class="badge">du</span>{/if}{#if p.isAdmin} <span class="badge">Admin</span>{/if}
+					<strong>{p.display}</strong>{#if p.display !== p.name} <span class="small muted">{p.name}</span>{/if}{#if p.id === data.user?.id} <span class="badge">du</span>{/if}{#if p.isAdmin} <span class="badge">Admin</span>{/if}
 				</div>
 				<div class="small muted ellipsis">
 					{p.access} · {p.groups} {p.groups === 1 ? 'Gruppe' : 'Gruppen'}{#if p.email} · {p.email}{/if}

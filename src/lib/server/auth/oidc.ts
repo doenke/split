@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { config } from '../config';
 import { db, schema } from '../db';
 import { createPerson } from '../persons';
+import { refreshDisplayNames } from '../display';
 
 let configPromise: Promise<client.Configuration> | null = null;
 
@@ -98,6 +99,7 @@ export async function upsertOidcPerson(profile: OidcProfile, linkToPersonId?: st
 			isAdmin
 		})
 		.where(eq(schema.persons.id, personId));
+	await refreshDisplayNames();
 	await db
 		.update(schema.credentials)
 		.set({ lastUsedAt: new Date() })

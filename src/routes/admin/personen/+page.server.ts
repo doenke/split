@@ -3,6 +3,7 @@ import { and, count, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { audit } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
+import { shownName } from '$lib/server/display';
 
 function requireInstanceAdmin(user: App.Locals['user']) {
 	if (!user) redirect(303, '/login');
@@ -17,6 +18,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.select({
 				id: schema.persons.id,
 				name: schema.persons.name,
+				display: shownName,
 				email: schema.persons.email,
 				color: schema.persons.color,
 				avatarUrl: schema.persons.avatarUrl,

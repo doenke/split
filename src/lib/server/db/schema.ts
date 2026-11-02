@@ -20,7 +20,12 @@ const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull(
 /** A human. Global across groups; may or may not be able to log in. */
 export const persons = pgTable('persons', {
 	id: id(),
+	/** full name, "First Last" */
 	name: text('name').notNull(),
+	/** display name chosen by the person (unique) */
+	displayName: text('display_name'),
+	/** the name shown everywhere: displayName, or first name + as much of the last name as needed (kept up to date) */
+	display: text('display'),
 	email: text('email'),
 	/** e-mails only go to confirmed addresses (OIDC addresses count as confirmed) */
 	emailVerified: boolean('email_verified').notNull().default(false),

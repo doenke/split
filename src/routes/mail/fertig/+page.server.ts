@@ -6,13 +6,14 @@ import { loadExpenses } from '$lib/server/groups';
 import { finalizeIfComplete, markDone } from '$lib/server/completion';
 import { verifyToken } from '$lib/server/mail';
 import type { Actions, PageServerLoad } from './$types';
+import { shownName } from '$lib/server/display';
 
 /** "I'm done" from the reminder e-mail: works without logging in, the signed token says who and which group. */
 async function parse(token: string) {
 	const parts = await verifyToken(token);
 	if (!parts || parts[0] !== 'done') return null;
 	const [row] = await db
-		.select({ group: schema.groups, membership: schema.memberships, name: schema.persons.name })
+		.select({ group: schema.groups, membership: schema.memberships, name: shownName })
 		.from(schema.memberships)
 		.innerJoin(schema.groups, eq(schema.groups.id, schema.memberships.groupId))
 		.innerJoin(schema.persons, eq(schema.persons.id, schema.memberships.personId))

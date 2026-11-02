@@ -12,6 +12,7 @@ import { paymentMethods, recordSettlement, SettlementError } from '$lib/server/s
 import { mailPaymentReminder } from '$lib/server/mailings';
 import { gt } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
+import { shownName } from '$lib/server/display';
 
 const REMINDER_HOURS = 24;
 
@@ -26,7 +27,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		? await db.select().from(schema.paymentDetails).where(inArray(schema.paymentDetails.personId, receivers))
 		: [];
 	const names = new Map(
-		(receivers.length ? await db.select({ id: schema.persons.id, name: schema.persons.name }).from(schema.persons).where(inArray(schema.persons.id, receivers)) : []).map((p) => [p.id, p.name])
+		(receivers.length ? await db.select({ id: schema.persons.id, name: shownName, fullName: schema.persons.name }).from(schema.persons).where(inArray(schema.persons.id, receivers)) : []).map((p) => [p.id, p])
 	);
 	const currency = g.group.baseCurrency;
 	const text = `Split: ${g.group.name}`;
@@ -36,9 +37,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		const receiverId = k?.receiverPersonId ?? k?.personalOf;
 		const d = details.find((x) => x.personId === receiverId);
 		if (!d || !receiverId) continue;
-		const holder = d.accountHolder ?? names.get(receiverId) ?? '';
+		// the bank needs the real name, not the display name
+		const holder = d.accountHolder ?? names.get(receiverId)?.fullName ?? '';
 		options[t.from + '|' + t.to] = {
-			receiverName: names.get(receiverId),
+			receiverName: names.get(receiverId)?.name,
 			paypal: d.paypalMe ? paypalLink(d.paypalMe, t.amount, currency) : null,
 			iban: d.iban ? formatIban(d.iban) : null,
 			holder,
