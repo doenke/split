@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { formatAmount } from '$lib/core/currency';
 import { today } from '$lib/format';
 import { db, schema } from './db';
@@ -14,13 +14,26 @@ import { mailFinalStatement } from './mailings';
  * plus everyone in a shared Kasse (they are reported by their Kasse). People without login
  * in their own Kasse (e.g. a grandma without phone) cannot report and do not block.
  */
-export async function completionState(members: GroupMember[], group: { status: string }) {
+export async function completionState(members: GroupMember[], group: { id: string; status: string; endDate: string | null }) {
 	const claimed = await claimedPersonIds(members.map((m) => m.personId));
 	const required = members.filter((m) => claimed.has(m.personId) || !m.kassePersonal);
+	const final = group.status === 'settled';
+	// when the final statement was reached (the last "done")
+	const [reached] = final
+		? await db
+				.select({ at: schema.auditLog.createdAt })
+				.from(schema.auditLog)
+				.where(and(eq(schema.auditLog.groupId, group.id), eq(schema.auditLog.action, 'group.final')))
+				.orderBy(desc(schema.auditLog.createdAt))
+				.limit(1)
+		: [];
 	return {
 		required: required.map((m) => m.personId),
 		done: required.filter((m) => m.doneAt).map((m) => m.personId),
-		final: group.status === 'settled'
+		final,
+		finalAt: reached?.at.toISOString() ?? null,
+		// the trip is over: now it is time to report "done" (before that, the hint stays small)
+		due: Boolean(group.endDate && group.endDate < today())
 	};
 }
 

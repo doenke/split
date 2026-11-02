@@ -3,6 +3,15 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.29.0
+- Abschließen nach Enddatum: Vor dem Enddatum (oder ohne Enddatum) steht der Abschluss-Hinweis nur als kleine Zeile
+  („0 von 3 haben alles eingetragen · Abschließen …“), ab dem Tag nach dem Enddatum als große Karte
+- Erinnerungs-E-Mail schon am Tag nach dem Enddatum, mit Knopf „Ich bin fertig – abschließen“, der ohne Anmeldung
+  funktioniert (z.B. wenn man keine Ausgaben hatte)
+- Solange nicht alle abgeschlossen haben, heißt es „Vorläufige Abrechnung, Stand heute“ (Salden, PDF); danach
+  „Endabrechnung – steht seit …“ statt des unverständlichen „abgeschlossen bis“-Datums
+- E-Mails können einen zweiten Knopf haben
+
 ## 0.28.1
 - „verbraucht“ heißt jetzt überall „Anteil“ (Salden, Kassen, Abrechnung, Kostenübersicht)
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { formatDate } from '$lib/format';
 
 	let { data, form } = $props();
 	const s = $derived(data.group.settings);
@@ -100,8 +101,18 @@
 		<a class="button grow" href="/gruppen/{data.group.id}/abrechnung">📄 Abrechnung (PDF)</a>
 		<a class="button grow" href="/gruppen/{data.group.id}/export.csv" download>📊 CSV</a>
 	</div>
-	{#if data.group.closedUntil}
-		<p class="small">🔒 Abgeschlossen bis <strong>{data.group.closedUntil}</strong>. Ausgaben bis dahin ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.</p>
+	{#if data.completion.final}
+		<p class="small">
+			✅ Die Endabrechnung steht{data.completion.finalAt ? ` seit ${formatDate(data.completion.finalAt.slice(0, 10))}` : ''}. Die Anteile
+			sind festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.
+		</p>
+		{#if data.isAdmin}
+			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Endabrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) cancel(); }}>
+				<button class="full">Wieder öffnen</button>
+			</form>
+		{/if}
+	{:else if data.group.closedUntil}
+		<p class="small">🔒 Ausgaben bis einschließlich <strong>{formatDate(data.group.closedUntil)}</strong> sind festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.</p>
 		{#if data.isAdmin}
 			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Abrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) cancel(); }}>
 				<button class="full">Wieder öffnen</button>

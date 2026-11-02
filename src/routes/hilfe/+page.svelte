@@ -140,9 +140,15 @@
 	<section id="abschluss">
 		<h2>Abschließen & Endabrechnung</h2>
 		<p>
-			Wer alles eingetragen hat, tippt „Ich habe alles eingetragen“ – für sich oder die ganze Kasse. Sind alle fertig (und
-			keine vorbereiteten Ausgaben mehr offen), steht die Endabrechnung. Unter Einstellungen gibt es die Abrechnung als PDF
-			mit allen Ausgaben und den Anteilen jeder Person sowie einen CSV-Export.
+			Wer alles eingetragen hat, tippt „Ich habe alles eingetragen“ – für sich oder die ganze Kasse. Solange das Enddatum
+			der Gruppe noch nicht erreicht ist (oder es keines gibt), steht dieser Hinweis nur klein unter der Übersicht; ab dem
+			Tag nach dem Enddatum wird er groß angezeigt, und wer möchte, bekommt eine Erinnerung per E-Mail – mit einem Knopf,
+			um direkt abzuschließen.
+		</p>
+		<p>
+			Bis alle fertig sind, ist die Abrechnung <strong>vorläufig</strong> und zeigt immer den Stand von heute. Sind alle
+			fertig (und keine vorbereiteten Ausgaben mehr offen), steht die <strong>Endabrechnung</strong>. Unter Einstellungen
+			gibt es die Abrechnung als PDF mit allen Ausgaben und den Anteilen jeder Person sowie einen CSV-Export.
 		</p>
 	</section>
 

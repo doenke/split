@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Avatar from './Avatar.svelte';
+	import { formatDate } from '$lib/format';
 
 	interface M {
 		personId: string;
@@ -21,7 +22,7 @@
 		isAdmin = false,
 		draftCount = 0
 	}: {
-		completion: { required: string[]; done: string[]; final: boolean };
+		completion: { required: string[]; done: string[]; final: boolean; finalAt?: string | null; due?: boolean };
 		members: M[];
 		meId: string;
 		myKasseId: string;
@@ -38,13 +39,20 @@
 	const kasseDone = $derived(myKasse.every((m) => done.has(m.personId) || !completion.required.includes(m.personId)));
 	const missing = $derived(members.filter((m) => completion.required.includes(m.personId) && !done.has(m.personId)));
 	let open = $state(false);
+	// before the end date (or without one) the hint stays small; it unfolds on request
+	let expanded = $state(false);
 </script>
 
 {#if completion.final}
 	<a class="card final" href="/gruppen/{groupId}/salden">
-		<strong>✅ Die Endabrechnung steht.</strong>
+		<strong>✅ Die Endabrechnung steht{completion.finalAt ? ` seit ${formatDate(completion.finalAt.slice(0, 10))}` : ''}.</strong>
 		<span class="small">Alle haben ihre Ausgaben eingetragen. Zum Ausgleichen →</span>
 	</a>
+{:else if completion.required.length && !completion.due && !expanded}
+	<div class="compact small muted">
+		<span class="grow">{meDone ? '✔ Du bist fertig · ' : ''}{completion.done.length} von {completion.required.length} haben alles eingetragen</span>
+		<button class="link small" onclick={() => (expanded = true)}>{meDone ? 'Details' : 'Abschließen …'}</button>
+	</div>
 {:else if completion.required.length}
 	<div class="card done-card">
 		<div class="row" style="justify-content: space-between">
@@ -126,6 +134,13 @@
 {/if}
 
 <style>
+	.compact {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0 0.25rem;
+		margin: -0.25rem 0 0.75rem;
+	}
 	.final {
 		display: flex;
 		flex-direction: column;

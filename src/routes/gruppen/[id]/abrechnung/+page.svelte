@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Abrechnung {data.group.name}</title>
+	<title>{data.completion.final ? 'Endabrechnung' : 'Vorläufige Abrechnung'} {data.group.name}</title>
 	<!-- many person columns: print in landscape -->
 	{@html '<style>@page { size: A4 landscape; margin: 12mm; }</style>'}
 </svelte:head>
@@ -24,11 +24,15 @@
 </div>
 
 <article class="doc">
-	<h1>{data.group.emoji} Abrechnung {data.group.name}</h1>
+	<h1>{data.group.emoji} {data.completion.final ? 'Endabrechnung' : 'Vorläufige Abrechnung'} {data.group.name}</h1>
 	<p class="muted small">
 		{#if data.group.startDate}{formatDate(data.group.startDate)}{#if data.group.endDate} – {formatDate(data.group.endDate)}{/if} · {/if}
-		{data.members.length} Personen · Stand {new Date(data.generatedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
-		{#if data.group.closedUntil} · abgeschlossen bis {formatDate(data.group.closedUntil)}{/if}
+		{data.members.length} Personen ·
+		{#if data.completion.final && data.completion.finalAt}
+			steht seit {formatDate(data.completion.finalAt.slice(0, 10))}
+		{:else}
+			Stand {new Date(data.generatedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })} – noch nicht alle haben abgeschlossen
+		{/if}
 	</p>
 
 	<h2>Übersicht</h2>

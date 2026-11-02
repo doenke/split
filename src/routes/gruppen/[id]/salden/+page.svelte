@@ -95,7 +95,7 @@
 
 <a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
 
-<h2>{data.completion.final ? 'Endabrechnung: so wird ausgeglichen' : 'So wird ausgeglichen (vorläufig)'}</h2>
+<h2>{data.completion.final ? 'Endabrechnung: so wird ausgeglichen' : 'Vorläufige Abrechnung, Stand heute'}</h2>
 {#if data.transfers.length === 0}
 	<div class="card">🎉 Alles ausgeglichen.</div>
 {:else}

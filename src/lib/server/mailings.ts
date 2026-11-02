@@ -1,12 +1,12 @@
 import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { formatAmount } from '$lib/core/currency';
 import { formatIban, paypalLink } from '$lib/core/payment';
-import { formatDate } from '$lib/format';
+import { formatDate, today } from '$lib/format';
 import { db, schema } from './db';
 import { loadGroupState } from './groups';
 import { completionState } from './completion';
 import { kasseRecipients, groupRecipients } from './push';
-import { mailPeople, sendMail, smtpConfigured } from './mail';
+import { mailPeople, sendMail, signToken, smtpConfigured } from './mail';
 
 /** The e-mails Split sends, one function per occasion. All of them respect preferences and quiet groups. */
 
@@ -174,11 +174,11 @@ export async function sendInviteMail(to: string, invited: string, inviter: strin
  */
 export async function runMailJobs() {
 	if (!smtpConfigured()) return;
-	const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+
 	const ended = await db
 		.select()
 		.from(schema.groups)
-		.where(and(eq(schema.groups.status, 'active'), isNull(schema.groups.deletedAt), lt(schema.groups.endDate, yesterday)));
+		.where(and(eq(schema.groups.status, 'active'), isNull(schema.groups.deletedAt), lt(schema.groups.endDate, today())));
 	for (const group of ended) {
 		const state = await loadGroupState(group.id);
 		const c = await completionState(state.members, group);
@@ -186,13 +186,15 @@ export async function runMailJobs() {
 		await mailPeople(
 			open,
 			'completion_reminder',
-			(p) => ({
+			async (p) => ({
 				subject: `${group.emoji} ${group.name}: Hast du alles eingetragen?`,
 				lines: [
 					`Hallo ${p.name},`,
-					`„${group.name}“ ist seit ${formatDate(group.endDate!)} vorbei. Wenn du alle deine Ausgaben eingetragen hast, tippe in der Gruppe auf „Ich habe alles eingetragen“ – sobald alle fertig sind, steht die Endabrechnung.`
+					`„${group.name}“ ist am ${formatDate(group.endDate!)} zu Ende gegangen. Fehlen noch Ausgaben von dir? Dann trag sie bitte ein.`,
+					'Hast du schon alles eingetragen oder hattest keine Ausgaben, schließe einfach direkt hier ab. Sobald alle fertig sind, steht die Endabrechnung.'
 				],
-				action: { label: 'Zur Gruppe', url: groupUrl(group.id) }
+				action: { label: 'Ich bin fertig – abschließen', url: `/mail/fertig?t=${encodeURIComponent(await signToken(['done', p.id, group.id]))}` },
+				secondary: { label: 'Ausgaben eintragen', url: groupUrl(group.id) }
 			}),
 			{ groupId: group.id, everyDays: 7, maxTimes: 3 }
 		);

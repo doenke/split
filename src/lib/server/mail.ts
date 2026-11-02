@@ -74,18 +74,21 @@ export interface Mail {
 	/** paragraphs of plain text */
 	lines: string[];
 	action?: { label: string; url: string };
+	/** a second, less prominent button */
+	secondary?: { label: string; url: string };
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (url: string) => (url.startsWith('http') ? url : config.publicUrl + url);
 
 function render(mail: Mail, footer: string[]) {
-	const text = [...mail.lines, ...(mail.action ? [`${mail.action.label}: ${abs(mail.action.url)}`] : []), '', '–', ...footer].join('\n\n');
+	const links = [mail.action, mail.secondary].filter((a) => a !== undefined).map((a) => `${a.label}: ${abs(a.url)}`);
+	const text = [...mail.lines, ...links, '', '–', ...footer].join('\n\n');
 	const html = `<!doctype html><html lang="de"><body style="margin:0;padding:24px;background:#f4f6f5;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1d2b27">
 <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:14px;padding:24px;border:1px solid #dfe5e2">
 <div style="font-weight:700;font-size:18px;color:#2a6f5f;margin-bottom:16px">Split</div>
 ${mail.lines.map((l) => `<p style="margin:0 0 12px;line-height:1.5">${esc(l).replace(/\n/g, '<br>')}</p>`).join('\n')}
-${mail.action ? `<p style="margin:20px 0"><a href="${esc(abs(mail.action.url))}" style="display:inline-block;background:#2a6f5f;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:600">${esc(mail.action.label)}</a></p>` : ''}
+${mail.action || mail.secondary ? `<p style="margin:20px 0">${mail.action ? `<a href="${esc(abs(mail.action.url))}" style="display:inline-block;background:#2a6f5f;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:600;margin:0 8px 8px 0">${esc(mail.action.label)}</a>` : ''}${mail.secondary ? `<a href="${esc(abs(mail.secondary.url))}" style="display:inline-block;border:1px solid #2a6f5f;color:#2a6f5f;text-decoration:none;padding:9px 17px;border-radius:10px;font-weight:600">${esc(mail.secondary.label)}</a>` : ''}</p>` : ''}
 </div>
 <div style="max-width:520px;margin:12px auto 0;font-size:12px;color:#6b7a75;line-height:1.5">${footer.map((f) => esc(f).replace(/(https?:\/\/\S+)/g, '<a href="$1" style="color:#6b7a75">$1</a>')).join('<br>')}</div>
 </body></html>`;
