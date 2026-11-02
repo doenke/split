@@ -580,7 +580,7 @@
 
 	<details class="card fold" bind:open={payersOpen}>
 		<summary>
-			<h2>{type === 'income' ? 'Erhalten von' : 'Bezahlt von'}</h2>
+			<h2>{type === 'income' ? 'Gezahlt an' : 'Bezahlt von'}</h2>
 			<span class="sum">{payerSummary}</span>
 		</summary>
 		<label class="check small" style="margin: 0.25rem 0 0.5rem"><input type="checkbox" bind:checked={multiPayer} /> mehrere Personen haben bezahlt</label>

@@ -206,7 +206,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{e.title}</strong></div>
 					<div class="small muted ellipsis">
-						{e.type === 'income' ? 'erhalten von' : 'bezahlt von'}
+						{e.type === 'income' ? 'gezahlt an' : 'bezahlt von'}
 						{payerText(e)}
 						{#if e.privateAmount > 0}· {formatAmount(e.privateAmount, currency)} privat{/if}
 						{#if e.attachments.length}· 📎{/if}

@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.33.1
+- Erstattungen: „gezahlt an …“ statt „erhalten von …“ (Ausgabenliste, Detailansicht, Formular)
+
 ## 0.33.0
 - Merkmale (z.B. „Kind“) komplett entfernt – zu kompliziert. Profile nennen die Personen jetzt direkt:
   „Bestimmte Personen“ oder „Alle (außer …)“, jeweils mit eigenen Faktoren

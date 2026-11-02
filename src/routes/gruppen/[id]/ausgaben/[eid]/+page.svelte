@@ -98,7 +98,7 @@
 		</div>
 		{#if e.type === 'income'}<p class="badge">Einnahme / Erstattung</p>{/if}
 
-		<h3 style="margin-top: 1rem">{e.type === 'income' ? 'Erhalten von' : 'Bezahlt von'}</h3>
+		<h3 style="margin-top: 1rem">{e.type === 'income' ? 'Gezahlt an' : 'Bezahlt von'}</h3>
 		{#each e.payers as p (p.personId)}
 			{@const m = people.get(p.personId)}
 			<div class="row person">
