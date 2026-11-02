@@ -201,6 +201,7 @@
 	<div class="list">
 		{#each list as e (e.id)}
 			{@const cat = e.categoryId ? cats.get(e.categoryId) : undefined}
+			{@const prof = e.profileId ? data.profiles.find((p) => p.id === e.profileId) : undefined}
 			<a href="{base}/ausgaben/{e.id}">
 				<span class="cat" style:background={cat?.color ?? '#999'}>{cat?.icon ?? '💶'}</span>
 				<div class="grow">
@@ -208,6 +209,7 @@
 					<div class="small muted ellipsis">
 						{e.type === 'income' ? 'gezahlt an' : 'bezahlt von'}
 						{payerText(e)}
+						{#if prof}· {prof.icon} {prof.name}{/if}
 						{#if e.privateAmount > 0}· {formatAmount(e.privateAmount, currency)} privat{/if}
 						{#if e.attachments.length}· 📎{/if}
 						{#if e.awaitingCharge}· <span title="Abgebuchter Betrag fehlt noch">💳 Kurs vorläufig</span>{/if}

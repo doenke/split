@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.33.3
+- Profile: nur noch eine Zeile pro Profil – wer derzeit beteiligt ist (mit eigenem Faktor) und ob neue Mitglieder
+  automatisch dabei sind
+- Ausgabenübersicht: das Profil einer Ausgabe steht in der Zeile (z.B. „· 🍺 Alkohol“)
+
 ## 0.33.2
 - Kategorie „Essen & Trinken“ heißt jetzt „Restaurant & Kneipe“ (auch in bestehenden Installationen)
 

@@ -6,16 +6,15 @@
 	let editing = $state<string | null>(null);
 	const cats = $derived(new Map(data.categories.map((c) => [c.id, c])));
 
-	const names = $derived(new Map(data.members.map((m) => [m.personId, m.name])));
 	const fmt = (n: number) => String(n).replace('.', ',');
 
+	/** One line: who currently takes part (with an own factor where set). */
 	function describe(rule: SplitRule) {
 		const f = rule.factorOverrides?.persons ?? {};
-		const withFactor = (id: string) => `${names.get(id) ?? '?'}${f[id] !== undefined ? ` ×${fmt(f[id])}` : ''}`;
-		if (rule.type === 'only') return rule.included.map(withFactor).join(', ') || 'niemand';
-		const factors = Object.keys(f).map(withFactor);
-		const base = rule.type === 'all_except' ? `Alle außer ${rule.excluded.map((id) => names.get(id) ?? '?').join(', ')}` : 'Alle';
-		return factors.length ? `${base} · ${factors.join(', ')}` : `${base} (Standard-Faktoren)`;
+		const people = membersFor(rule)
+			.map((m) => `${m.name}${f[m.personId] !== undefined ? ` ×${fmt(f[m.personId])}` : ''}`)
+			.join(', ');
+		return (people || 'niemand') + (rule.type === 'only' ? '' : ' · neue Mitglieder automatisch dabei');
 	}
 
 	function membersFor(rule: SplitRule) {
@@ -127,7 +126,6 @@
 				<div class="grow">
 					<strong>{p.name}</strong>
 					<div class="small muted">{describe(p.rule)}{#if p.defaultCategoryId && cats.get(p.defaultCategoryId)}{` · ${cats.get(p.defaultCategoryId)?.name}`}{/if}</div>
-					<div class="small muted">Derzeit: {membersFor(p.rule).map((m) => m.name).join(', ') || 'niemand'}</div>
 				</div>
 				{#if data.isAdmin && editing !== p.id}
 					<button class="link" onclick={() => startEdit(p.id, p.rule)}>Bearbeiten</button>
