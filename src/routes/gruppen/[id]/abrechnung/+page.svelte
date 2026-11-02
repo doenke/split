@@ -10,6 +10,9 @@
 	const total = $derived(data.expenses.reduce((s, e) => s + (e.type === 'income' ? -1 : 1) * (e.baseAmount - e.privateAmount), 0));
 	const sorted = $derived(data.expenses.slice().sort((a, b) => a.date.localeCompare(b.date)));
 	const sum = (t: Record<string, number>) => Object.values(t).reduce((s, v) => s + v, 0);
+	const pending = $derived(
+		data.members.filter((m) => data.completion.required.includes(m.personId) && !data.completion.done.includes(m.personId)).map((m) => m.name)
+	);
 </script>
 
 <svelte:head>
@@ -31,9 +34,12 @@
 		{#if data.completion.final && data.completion.finalAt}
 			steht seit {formatDate(data.completion.finalAt.slice(0, 10))}
 		{:else}
-			Stand {new Date(data.generatedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })} – noch nicht alle haben abgeschlossen
+			Stand {new Date(data.generatedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
 		{/if}
 	</p>
+	{#if !data.completion.final && pending.length}
+		<p class="pending"><strong>Noch nicht abgeschlossen:</strong> {pending.join(', ')}. Bis alle fertig sind, kann sich die Abrechnung noch ändern.</p>
+	{/if}
 
 	<h2>Übersicht</h2>
 	<table>
@@ -146,6 +152,11 @@
 </article>
 
 <style>
+	.pending {
+		border-left: 3px solid #c58a1d;
+		padding: 0.3rem 0.6rem;
+		background: #fdf5e4;
+	}
 	.doc {
 		background: var(--surface);
 		border: 1px solid var(--border);

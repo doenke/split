@@ -14,6 +14,10 @@
 	const kassen = $derived(Object.values(data.balances.kassen).sort((a, b) => b.balance - a.balance));
 	const maxAbs = $derived(Math.max(1, ...kassen.map((k) => Math.abs(k.balance))));
 
+	// who still has to report "done" – shown with the preliminary statement
+	const pending = $derived(
+		data.members.filter((m) => data.completion.required.includes(m.personId) && !data.completion.done.includes(m.personId)).map((m) => m.name)
+	);
 	let recording = $state<{ from: string; to: string; amount: string } | null>(null);
 	// a payment of your own choice: cash handed over, a partial payment, …
 	let free = $state<{ from: string; to: string; amount: string; date: string } | null>(null);
@@ -96,6 +100,9 @@
 <a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
 
 <h2>{data.completion.final ? 'Endabrechnung: so wird ausgeglichen' : 'Vorläufige Abrechnung, Stand heute'}</h2>
+{#if !data.completion.final && pending.length}
+	<p class="pending small">⏳ Noch nicht abgeschlossen: <strong>{pending.join(', ')}</strong></p>
+{/if}
 {#if data.transfers.length === 0}
 	<div class="card">🎉 Alles ausgeglichen.</div>
 {:else}
@@ -258,6 +265,10 @@
 {/if}
 
 <style>
+	.pending {
+		margin: -0.4rem 0.25rem 0.75rem;
+		color: var(--muted);
+	}
 	.kasse {
 		display: block !important;
 	}

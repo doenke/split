@@ -399,6 +399,37 @@
 		only: 'Nur …',
 		individual: 'Individuell'
 	};
+	// the less common parts are folded away; a one-line summary says what is set
+	let payersOpen = $state(false);
+	let splitOpen = $state(false);
+	let moreOpen = $state(false);
+	const nameOf = (id: string) => members.find((m) => m.personId === id)?.name ?? '?';
+	const names = (ids: string[]) => (ids.length > 3 ? `${ids.slice(0, 3).map(nameOf).join(', ')} +${ids.length - 3}` : ids.map(nameOf).join(', '));
+	const payerSummary = $derived(
+		multiPayer
+			? `${members.filter((m) => (parseAmount(payerAmounts[m.personId] ?? '', currency) ?? 0) > 0).length} Personen`
+			: payer === meId
+				? `${nameOf(payer)} (du)`
+				: nameOf(payer)
+	);
+	const splitSummary = $derived.by(() => {
+		const picked = members.filter((m) => selected[m.personId]).map((m) => m.personId);
+		const base = profile
+			? `Profil „${profile.name}“`
+			: mode === 'all'
+				? `Alle (${members.length})`
+				: mode === 'all_except'
+					? picked.length ? `Alle außer ${names(picked)}` : `Alle (${members.length})`
+					: mode === 'only'
+						? picked.length ? `Nur ${names(picked)}` : 'Nur … (niemand gewählt)'
+						: { shares: 'Individuell nach Anteilen', percent: 'Individuell in Prozent', amounts: 'Individuell nach Beträgen' }[indivMode];
+		const how = mode === 'individual' && !profile ? '' : equalWeights ? ' · alle gleich' : ' · nach Faktoren';
+		return base + how + (showPeriod ? ` · nach ${periodUnit === 'nights' ? 'Nächten' : 'Tagen'}` : '');
+	});
+	const moreSummary = $derived(
+		[privateAmount > 0 ? `privat ${formatAmount(privateAmount, currency)}` : '', notes.trim() ? 'Notiz' : ''].filter(Boolean).join(' · ') ||
+			'Privater Anteil, Notiz'
+	);
 	let submitting = $state(false);
 </script>
 
@@ -423,28 +454,33 @@
 	{#if error}<p class="error">{error}</p>{/if}
 
 	<div class="card">
-		<div class="segmented" style="margin-bottom: 0.9rem">
-			<button type="button" class:active={type === 'expense'} onclick={() => (type = 'expense')}>Ausgabe</button>
-			<button type="button" class:active={type === 'income'} onclick={() => (type = 'income')}>Einnahme / Erstattung</button>
-		</div>
-
 		<div class="field">
 			<label for="title">Wofür?</label>
 			<input id="title" bind:value={title} placeholder={type === 'income' ? 'z.B. Pfand zurück' : 'z.B. Abendessen'} required autocomplete="off" />
 		</div>
 
-		<div class="row">
+		<div class="row amount-row">
 			<div class="field grow">
-				<label for="amount">Betrag</label>
+				<label for="amount">{type === 'income' ? 'Betrag (Erstattung)' : 'Betrag'}</label>
 				<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
 			</div>
-			<div class="field" style="width: 7rem">
+			<div class="field" style="width: 6rem">
 				<label for="currency">Währung</label>
 				<select id="currency" bind:value={currency}>
 					{#each currencies as c (c)}<option value={c}>{c}</option>{/each}
 				</select>
 			</div>
+			<button
+				type="button"
+				class="refund"
+				class:active={type === 'income'}
+				aria-pressed={type === 'income'}
+				title="Einnahme oder Erstattung, z.B. Pfand zurück – wird den Beteiligten gutgeschrieben"
+				onclick={() => (type = type === 'income' ? 'expense' : 'income')}>↩ Erstattung</button>
 		</div>
+		{#if type === 'income'}
+			<p class="hint" style="margin-top: -0.4rem">Erstattung/Einnahme: wird den Beteiligten gutgeschrieben statt geteilt bezahlt.</p>
+		{/if}
 
 		{#if currency !== baseCurrency}
 			<div class="field fx">
@@ -531,11 +567,12 @@
 		</div>
 	</div>
 
-	<div class="card">
-		<div class="row" style="justify-content: space-between">
+	<details class="card fold" bind:open={payersOpen}>
+		<summary>
 			<h2>{type === 'income' ? 'Erhalten von' : 'Bezahlt von'}</h2>
-			<label class="check small"><input type="checkbox" bind:checked={multiPayer} /> mehrere</label>
-		</div>
+			<span class="sum">{payerSummary}</span>
+		</summary>
+		<label class="check small" style="margin: 0.25rem 0 0.5rem"><input type="checkbox" bind:checked={multiPayer} /> mehrere Personen haben bezahlt</label>
 		{#if !multiPayer}
 			<div class="chips">
 				{#each members as m (m.personId)}
@@ -557,10 +594,16 @@
 				Summe {formatAmount(payerSum, currency)} von {formatAmount(amount, currency)}
 			</p>
 		{/if}
-	</div>
+	</details>
+	{#if multiPayer && payerSum !== amount && !payersOpen}
+		<p class="hint error fold-error">Die Beträge der Zahler ergeben nicht den Gesamtbetrag.</p>
+	{/if}
 
-	<div class="card">
-		<h2>{type === 'income' ? 'Gutgeschrieben für' : 'Aufgeteilt auf'}</h2>
+	<details class="card fold" bind:open={splitOpen}>
+		<summary>
+			<h2>{type === 'income' ? 'Gutgeschrieben für' : 'Aufgeteilt auf'}</h2>
+			<span class="sum">{splitSummary}</span>
+		</summary>
 		{#if showPrivate && privateAmount > 0 && amount > privateAmount}
 			<p class="hint" style="margin-top: -0.3rem">Geteilt werden {formatAmount(amount - privateAmount, currency)} (ohne die {formatAmount(privateAmount, currency)} privaten Anteil).</p>
 		{/if}
@@ -648,9 +691,38 @@
 		{#if mode === 'all' || mode === 'all_except'}
 			<p class="hint">Personen, die später dazukommen, werden automatisch beteiligt (je nach Teilnahmezeitraum).</p>
 		{/if}
-	</div>
 
-	<div class="card">
+		<div class="period">
+		<label class="check"><input type="checkbox" bind:checked={showPeriod} /> Nach Aufenthaltsdauer aufteilen (z.B. Unterkunft)</label>
+			{#if showPeriod}
+				<div class="row">
+					<div class="field grow"><label for="pf">Von</label><input id="pf" type="date" bind:value={periodFrom} /></div>
+					<div class="field grow"><label for="pt">Bis</label><input id="pt" type="date" bind:value={periodTo} /></div>
+				</div>
+				<div class="segmented small-seg">
+					<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
+					<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
+				</div>
+				<p class="hint">
+					{#if periodUnit === 'nights'}
+						<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
+					{:else}
+						<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
+					{/if}
+					Jeder zahlt Faktor × eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
+				</p>
+			{/if}
+		</div>
+	</details>
+	{#if preview && 'error' in preview && !splitOpen}
+		<p class="hint error fold-error">{preview.error}</p>
+	{/if}
+
+	<details class="card fold" bind:open={moreOpen}>
+		<summary>
+			<h2>Weiteres</h2>
+			<span class="sum">{moreSummary}</span>
+		</summary>
 		<label class="check"><input type="checkbox" bind:checked={showPrivate} /> Privater Anteil (z.B. eigener Einkauf auf dem Bon)</label>
 		{#if showPrivate}
 			<input bind:value={privateText} inputmode="decimal" placeholder="0,00" aria-label="Privater Anteil" />
@@ -671,31 +743,11 @@
 			{/if}
 		{/if}
 
-		<label class="check"><input type="checkbox" bind:checked={showPeriod} /> Nach Aufenthaltsdauer aufteilen (z.B. Unterkunft)</label>
-		{#if showPeriod}
-			<div class="row">
-				<div class="field grow"><label for="pf">Von</label><input id="pf" type="date" bind:value={periodFrom} /></div>
-				<div class="field grow"><label for="pt">Bis</label><input id="pt" type="date" bind:value={periodTo} /></div>
-			</div>
-			<div class="segmented small-seg">
-				<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
-				<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
-			</div>
-			<p class="hint">
-				{#if periodUnit === 'nights'}
-					<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
-				{:else}
-					<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
-				{/if}
-				Jeder zahlt Faktor × eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
-			</p>
-		{/if}
-
 		<div class="field" style="margin-top: 0.75rem">
 			<label for="notes">Notiz</label>
 			<textarea id="notes" rows="2" bind:value={notes}></textarea>
 		</div>
-	</div>
+	</details>
 
 	<button class="primary full" disabled={submitting || !title || !amount || (preview !== null && 'error' in preview)}>
 		Speichern
@@ -703,6 +755,64 @@
 </form>
 
 <style>
+	.amount-row {
+		align-items: flex-end;
+	}
+	.refund {
+		min-height: 0;
+		height: 2.75rem;
+		padding: 0 0.6rem;
+		font-size: 0.8rem;
+		white-space: nowrap;
+		margin-bottom: 0.75rem;
+	}
+	.refund.active {
+		background: var(--primary, #2a6f5f);
+		color: #fff;
+		border-color: transparent;
+	}
+	.fold > summary {
+		display: flex;
+		align-items: baseline;
+		gap: 0.6rem;
+		cursor: pointer;
+		list-style: none;
+	}
+	.fold > summary::-webkit-details-marker {
+		display: none;
+	}
+	.fold > summary h2 {
+		margin: 0;
+		white-space: nowrap;
+	}
+	.fold > summary .sum {
+		flex: 1;
+		min-width: 0;
+		text-align: right;
+		color: var(--muted);
+		font-size: 0.9rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.fold > summary::after {
+		content: '▸';
+		color: var(--muted);
+	}
+	.fold[open] > summary::after {
+		content: '▾';
+	}
+	.fold[open] > summary {
+		margin-bottom: 0.6rem;
+	}
+	.fold-error {
+		margin: -0.5rem 0.25rem 0.75rem;
+	}
+	.period {
+		margin-top: 0.75rem;
+		padding-top: 0.6rem;
+		border-top: 1px solid var(--border);
+	}
 	.chips {
 		display: flex;
 		flex-wrap: wrap;

@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.30.0
+- Ausgabe erfassen aufgeräumt: „↩ Erstattung“ ist ein kleiner Schalter neben der Währung; „Bezahlt von“,
+  „Aufgeteilt auf“ und „Weiteres“ (privater Anteil, Notiz) sind eingeklappt und zeigen eine Zusammenfassung
+  (z.B. „Nur Anna, Ben · alle gleich · nach Nächten“). „Nach Aufenthaltsdauer“ steht jetzt unter „Aufgeteilt auf“
+- Vorläufige Abrechnung (Salden und PDF) nennt, wer noch nicht abgeschlossen hat
+
 ## 0.29.0
 - Abschließen nach Enddatum: Vor dem Enddatum (oder ohne Enddatum) steht der Abschluss-Hinweis nur als kleine Zeile
   („0 von 3 haben alles eingetragen · Abschließen …“), ab dem Tag nach dem Enddatum als große Karte
