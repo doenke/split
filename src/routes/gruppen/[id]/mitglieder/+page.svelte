@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CopyField from '$lib/components/CopyField.svelte';
-	import NameFields from '$lib/components/NameFields.svelte';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
@@ -11,7 +10,7 @@
 	const claimed = $derived(new Set(data.claimed));
 	const hasExpenses = $derived(data.expenses.length > 0);
 
-	let adding = $state(page.url.searchParams.has('neu'));
+	let optsOpen = $state(false);
 	let addMode = $state<'new' | 'known' | 'kasse'>('new');
 	// fall back when the chosen source has nobody left to add
 	$effect(() => {
@@ -22,6 +21,7 @@
 		personId === data.user?.id ||
 		(data.kassenByPerson[personId] ?? []).some((k) => data.managedKassen.includes(k.id));
 	let join = $state<'all' | 'today' | 'date'>('all');
+	let factorText = $state('1');
 	let editing = $state<string | null>(null);
 	let copied = $state(false);
 
@@ -115,12 +115,9 @@
 
 <div class="row" style="justify-content: space-between">
 	<h2>{data.members.length} Mitglieder</h2>
-	{#if data.canAddPeople && !adding}
-		<button class="primary" onclick={() => (adding = true)}>+ Person</button>
-	{/if}
 </div>
 
-{#if adding}
+{#if data.canAddPeople}
 	<form
 		method="POST"
 		action={addMode === 'kasse' ? '?/addKasse' : '?/add'}
@@ -128,20 +125,14 @@
 		use:enhance={() =>
 			async ({ result, update }) => {
 				await update();
-				if (result.type === 'success') join = 'all';
+				if (result.type === 'success') {
+					join = 'all';
+					factorText = '1';
+					// next person right away
+					document.getElementById('new-name')?.focus();
+				}
 			}}
 	>
-		{#if data.known.length || data.myKassen.length}
-			<div class="segmented" style="margin-bottom: 0.75rem">
-				<button type="button" class:active={addMode === 'new'} onclick={() => (addMode = 'new')}>Neue Person</button>
-				{#if data.known.length}
-					<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Bekannte Person</button>
-				{/if}
-				{#if data.myKassen.length}
-					<button type="button" class:active={addMode === 'kasse'} onclick={() => (addMode = 'kasse')}>Ganze Kasse</button>
-				{/if}
-			</div>
-		{/if}
 		{#if addMode === 'kasse'}
 			<div class="field">
 				<label for="kasseId">Kasse</label>
@@ -150,7 +141,11 @@
 				</select>
 			</div>
 		{:else if addMode === 'new'}
-			<NameFields />
+			<!-- one line, like a simple app: name and Enter -->
+			<div class="row">
+				<input id="new-name" name="name" placeholder="Name, z.B. Lea Müller" required autocomplete="off" class="grow" style="width: auto" aria-label="Name" />
+				<button class="primary">Hinzufügen</button>
+			</div>
 		{:else}
 			<div class="field">
 				<label for="personId">Person</label>
@@ -159,26 +154,40 @@
 				</select>
 			</div>
 		{/if}
-		{#if addMode !== 'kasse'}
-			<div class="field">
-				<label for="factor">Faktor</label>
-				<input id="factor" name="factor" value="1" inputmode="decimal" style="width: 6rem" />
-				<p class="hint">z.B. 0,5 für ein Kind</p>
+		{#if addMode !== 'kasse' || hasExpenses}
+			<details class="opts" bind:open={optsOpen}>
+				<summary class="small muted">
+					Optionen{addMode !== 'kasse' ? ` · Faktor ${factorText || '1'}` : ''}{hasExpenses ? ` · ${{ all: 'an allen Ausgaben beteiligt', today: 'ab heute', date: 'ab Datum' }[join]}` : ''}
+				</summary>
+				{#if addMode !== 'kasse'}
+					<div class="field">
+						<label for="factor">Faktor</label>
+						<input id="factor" name="factor" bind:value={factorText} inputmode="decimal" style="width: 6rem" />
+						<p class="hint">z.B. 0,5 für ein Kind</p>
+					</div>
+				{/if}
+				{#if hasExpenses}
+					<fieldset class="field">
+						<legend>An bisherigen Ausgaben beteiligen?</legend>
+						<label class="check"><input type="radio" name="join" value="all" bind:group={join} /> Ja, an allen „Alle“-Ausgaben</label>
+						<label class="check"><input type="radio" name="join" value="today" bind:group={join} /> Erst ab heute</label>
+						<label class="check"><input type="radio" name="join" value="date" bind:group={join} /> Ab Datum</label>
+						{#if join === 'date'}<input type="date" name="from" value={today()} />{/if}
+					</fieldset>
+				{/if}
+			</details>
+		{/if}
+		{#if addMode !== 'new'}
+			<div class="row">
+				<button class="primary grow">Hinzufügen</button>
+				<button type="button" onclick={() => (addMode = 'new')}>Abbrechen</button>
+			</div>
+		{:else if data.known.length || data.myKassen.length}
+			<div class="small modes">
+				{#if data.known.length}<button type="button" class="link" onclick={() => (addMode = 'known')}>Bekannte Person wählen</button>{/if}
+				{#if data.myKassen.length}<button type="button" class="link" onclick={() => (addMode = 'kasse')}>Ganze Kasse hinzufügen</button>{/if}
 			</div>
 		{/if}
-		{#if hasExpenses}
-			<fieldset class="field">
-				<legend>An bisherigen Ausgaben beteiligen?</legend>
-				<label class="check"><input type="radio" name="join" value="all" bind:group={join} /> Ja, an allen „Alle“-Ausgaben</label>
-				<label class="check"><input type="radio" name="join" value="today" bind:group={join} /> Erst ab heute</label>
-				<label class="check"><input type="radio" name="join" value="date" bind:group={join} /> Ab Datum</label>
-				{#if join === 'date'}<input type="date" name="from" value={today()} />{/if}
-			</fieldset>
-		{/if}
-		<div class="row">
-			<button class="primary grow">Hinzufügen</button>
-			<button type="button" onclick={() => (adding = false)}>Fertig</button>
-		</div>
 	</form>
 {/if}
 
@@ -304,6 +313,17 @@
 <a href="/kassen" class="small kassen-link">👪 Familien oder Paare als Kasse zusammenfassen →</a>
 
 <style>
+	.opts {
+		margin-top: 0.5rem;
+	}
+	.opts summary {
+		cursor: pointer;
+	}
+	.modes {
+		display: flex;
+		gap: 1rem;
+		margin-top: 0.5rem;
+	}
 	.kassen-link {
 		display: inline-block;
 		margin: -0.5rem 0.25rem 1rem;

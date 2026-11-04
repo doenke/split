@@ -18,6 +18,7 @@
 	const pending = $derived(
 		data.members.filter((m) => data.completion.required.includes(m.personId) && !data.completion.done.includes(m.personId)).map((m) => m.name)
 	);
+	let openKasse = $state<string | null>(null);
 	let recording = $state<{ from: string; to: string; amount: string } | null>(null);
 	// a payment of your own choice: cash handed over, a partial payment, …
 	let free = $state<{ from: string; to: string; amount: string; date: string } | null>(null);
@@ -57,46 +58,7 @@
 	draftCount={data.drafts.length}
 />
 
-<h2>Salden</h2>
-<div class="list">
-	{#each kassen as k (k.kasseId)}
-		{@const ms = kasseMembers(k.kasseId)}
-		<div class="kasse">
-			<div class="head">
-				<div class="avatars">
-					{#each ms.slice(0, 3) as m (m.personId)}
-						<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={30} />
-					{/each}
-				</div>
-				<div class="grow">
-					<div class="ellipsis"><strong>{kasseName(k.kasseId)}</strong>{#if k.kasseId === data.myKasseId} <span class="badge">du</span>{/if}</div>
-					<div class="small muted">bezahlt {formatAmount(k.paid, currency)} · Anteil {formatAmount(k.consumed, currency)}</div>
-					<div class="bar"><span class={k.balance >= 0 ? 'pos' : 'neg'} style:width="{(Math.abs(k.balance) / maxAbs) * 100}%"></span></div>
-				</div>
-				<div class="amount right {k.balance > 0 ? 'positive' : k.balance < 0 ? 'negative' : 'muted'}">
-					{k.balance > 0 ? '+' : ''}{formatAmount(k.balance, currency)}
-				</div>
-			</div>
-			<!-- a shared Kasse (family): who is in it and what each one paid and used -->
-			{#if ms.length > 1}
-				<div class="members">
-					{#each ms as m (m.personId)}
-						{@const p = data.balances.persons[m.personId]}
-						<div class="member">
-							<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={22} />
-							<span class="grow ellipsis">{m.name}</span>
-							<span class="small muted">bezahlt {formatAmount(p?.paid ?? 0, currency)} · Anteil {formatAmount(p?.consumed ?? 0, currency)}</span>
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-	{/each}
-</div>
-
-<a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
-
-<h2>{data.completion.final ? 'Endabrechnung: so wird ausgeglichen' : 'Vorläufige Abrechnung, Stand heute'}</h2>
+<h2>Wer zahlt wem <span class="small muted">{data.completion.final ? '· Endabrechnung' : '· vorläufig, Stand heute'}</span></h2>
 {#if !data.completion.final && pending.length}
 	<p class="pending small">⏳ Noch nicht abgeschlossen: <strong>{pending.join(', ')}</strong></p>
 {/if}
@@ -217,6 +179,47 @@
 	{/if}
 {/if}
 
+<h2>Salden</h2>
+<div class="list">
+	{#each kassen as k (k.kasseId)}
+		{@const ms = kasseMembers(k.kasseId)}
+		<div class="kasse">
+			<button type="button" class="head" aria-expanded={openKasse === k.kasseId} onclick={() => (openKasse = openKasse === k.kasseId ? null : k.kasseId)}>
+				<div class="avatars">
+					{#each ms.slice(0, 3) as m (m.personId)}
+						<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={30} />
+					{/each}
+				</div>
+				<div class="grow">
+					<div class="ellipsis"><strong>{kasseName(k.kasseId)}</strong>{#if k.kasseId === data.myKasseId} <span class="badge">du</span>{/if}</div>
+					<div class="bar"><span class={k.balance >= 0 ? 'pos' : 'neg'} style:width="{(Math.abs(k.balance) / maxAbs) * 100}%"></span></div>
+				</div>
+				<div class="amount right {k.balance > 0 ? 'positive' : k.balance < 0 ? 'negative' : 'muted'}">
+					{k.balance > 0 ? '+' : ''}{formatAmount(k.balance, currency)}
+				</div>
+			</button>
+			<!-- details on tap: what was paid and used, and for a shared Kasse (family) by whom -->
+			{#if openKasse === k.kasseId}
+				<div class="small muted details">bezahlt {formatAmount(k.paid, currency)} · Anteil {formatAmount(k.consumed, currency)}</div>
+			{/if}
+			{#if openKasse === k.kasseId && ms.length > 1}
+				<div class="members">
+					{#each ms as m (m.personId)}
+						{@const p = data.balances.persons[m.personId]}
+						<div class="member">
+							<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={22} />
+							<span class="grow ellipsis">{m.name}</span>
+							<span class="small muted">bezahlt {formatAmount(p?.paid ?? 0, currency)} · Anteil {formatAmount(p?.consumed ?? 0, currency)}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/each}
+</div>
+
+<a href="/gruppen/{data.group.id}/kosten" class="small" style="display: inline-block; margin: -0.5rem 0.25rem 1rem">📊 Was hat es gekostet? Nach Kategorien →</a>
+
 {#if data.settlements.length}
 	<h2>Zahlungen</h2>
 	<div class="list">
@@ -266,6 +269,18 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+		width: 100%;
+		background: none;
+		border: 0;
+		padding: 0;
+		min-height: 0;
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.details {
+		margin: 0.4rem 0 0 calc(30px + 0.75rem);
 	}
 	.members {
 		margin: 0.5rem 0 0 calc(30px + 0.75rem);

@@ -144,7 +144,8 @@ export async function mergePersons(fromId: string, intoId: string) {
 /** Full name from the "first name" and optional "last name" fields of a form. */
 export function nameFromForm(f: FormData) {
 	const part = (k: string) => String(f.get(k) ?? '').trim().replace(/\s+/g, ' ');
-	return [part('firstName'), part('lastName')].filter(Boolean).join(' ').slice(0, 80);
+	// one field "name" (first and last name together) or the two separate fields
+	return ([part('firstName'), part('lastName')].filter(Boolean).join(' ') || part('name')).slice(0, 80);
 }
 
 const normName = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('de');

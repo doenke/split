@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.36.0
+- Salden: oben „Wer zahlt wem“ mit Bezahlen/Bezahlt, darunter die Salden kompakt (Name, Balken, Betrag) –
+  „bezahlt / Anteil“ und die Personen einer Kasse erscheinen nach einem Tipp
+- Mitglieder: hinzufügen in einer Zeile (Name, Enter – der Cursor bleibt für die nächste Person im Feld); Faktor und
+  „ab wann dabei“ unter „Optionen“; bekannte Personen und ganze Kassen über kleine Links darunter
+
 ## 0.35.0
 Einfacher, nach dem Vorbild von Splid:
 - Ausgabe erfassen: der Betrag steht oben und hat sofort den Fokus; „Wofür?“ ist optional (ohne Eingabe heißt die
