@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.37.0
+- Erstattungen: der Knopf „↩ Erstattung“ entfällt – ein negativer Betrag (z.B. „-3,50“) ist eine Erstattung
+
 ## 0.36.0
 - Salden: oben „Wer zahlt wem“ mit Bezahlen/Bezahlt, darunter die Salden kompakt (Name, Balken, Betrag) –
   „bezahlt / Anteil“ und die Personen einer Kasse erscheinen nach einem Tipp

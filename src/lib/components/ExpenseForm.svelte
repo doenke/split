@@ -61,13 +61,14 @@
 
 	// svelte-ignore state_referenced_locally
 	const init = initial;
-	let type = $state<'expense' | 'income'>(init?.type ?? 'expense');
 	// svelte-ignore state_referenced_locally
 	let title = $state(draft ? '' : (init?.title ?? ''));
 	// svelte-ignore state_referenced_locally
 	let currency = $state(init?.currency ?? baseCurrency);
 	// svelte-ignore state_referenced_locally
-	let amountText = $state(init && !draft ? amountToInput(init.amount, init.currency) : '');
+	// a refund/income is simply a negative amount
+	let amountText = $state(init && !draft ? (init.type === 'income' ? '-' : '') + amountToInput(init.amount, init.currency) : '');
+	const type = $derived<'expense' | 'income'>(/^\s*[-−]/.test(amountText) ? 'income' : 'expense');
 	let date = $state(init?.date ?? today());
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
@@ -264,7 +265,7 @@
 			});
 	});
 
-	const amount = $derived(parseAmount(amountText, currency) ?? 0);
+	const amount = $derived(Math.abs(parseAmount(amountText.replace('−', '-'), currency) ?? 0));
 	const privateAmount = $derived(showPrivate ? (parseAmount(privateText, currency) ?? 0) : 0);
 	const parseNum = (s: string) => {
 		const n = parseFloat(s.replace(',', '.'));
@@ -479,7 +480,7 @@
 	<div class="card">
 		<div class="row amount-row">
 			<div class="field grow">
-				<label for="amount">{type === 'income' ? 'Betrag (Erstattung)' : 'Betrag'}</label>
+				<label for="amount">{type === 'income' ? 'Erstattung' : 'Betrag'} <span class="muted small">{type === 'income' ? '' : '(minus = Erstattung)'}</span></label>
 				<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
 			</div>
 			<div class="field" style="width: 6rem">
@@ -488,13 +489,6 @@
 					{#each currencies as c (c)}<option value={c}>{c}</option>{/each}
 				</select>
 			</div>
-			<button
-				type="button"
-				class="refund"
-				class:active={type === 'income'}
-				aria-pressed={type === 'income'}
-				title="Einnahme oder Erstattung, z.B. Pfand zurück – wird den Beteiligten gutgeschrieben"
-				onclick={() => (type = type === 'income' ? 'expense' : 'income')}>↩ Erstattung</button>
 		</div>
 
 		<div class="field">
@@ -773,19 +767,6 @@
 	}
 	.amount-row {
 		align-items: flex-end;
-	}
-	.refund {
-		min-height: 0;
-		height: 2.75rem;
-		padding: 0 0.6rem;
-		font-size: 0.8rem;
-		white-space: nowrap;
-		margin-bottom: 0.75rem;
-	}
-	.refund.active {
-		background: var(--primary, #2a6f5f);
-		color: #fff;
-		border-color: transparent;
 	}
 	.fold > summary {
 		display: flex;
