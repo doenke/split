@@ -3,15 +3,19 @@
 
 	let { data, children } = $props();
 	const base = $derived(`/gruppen/${data.group.id}`);
-	const tabs = $derived([
-		{ href: base, label: 'Ausgaben' },
-		{ href: `${base}/salden`, label: 'Salden' },
+	// three tabs like a simple app: everything about the group itself lives under "Gruppe"
+	const groupPages = $derived([
 		{ href: `${base}/mitglieder`, label: 'Mitglieder' },
 		{ href: `${base}/profile`, label: 'Profile' },
 		{ href: `${base}/einstellungen`, label: 'Einstellungen' }
 	]);
-	const active = (href: string) =>
-		href === base ? page.url.pathname === base : page.url.pathname.startsWith(href);
+	const at = (...paths: string[]) => paths.some((p) => page.url.pathname.startsWith(`${base}/${p}`));
+	const inGroup = $derived(at('mitglieder', 'profile', 'einstellungen', 'papierkorb'));
+	const tabs = $derived([
+		{ href: base, label: 'Ausgaben', active: !at('salden', 'kosten') && !inGroup },
+		{ href: `${base}/salden`, label: 'Salden', active: at('salden', 'kosten') },
+		{ href: `${base}/mitglieder`, label: 'Gruppe', active: inGroup }
+	]);
 </script>
 
 <div class="head noprint">
@@ -21,9 +25,16 @@
 
 <nav class="segmented tabs noprint">
 	{#each tabs as t (t.href)}
-		<a href={t.href} class:active={active(t.href)}>{t.label}</a>
+		<a href={t.href} class:active={t.active}>{t.label}</a>
 	{/each}
 </nav>
+{#if inGroup}
+	<nav class="subnav noprint">
+		{#each groupPages as t (t.href)}
+			<a href={t.href} class:active={page.url.pathname.startsWith(t.href)}>{t.label}</a>
+		{/each}
+	</nav>
+{/if}
 
 {#if data.balances.errors.length}
 	<div class="notice small noprint">
@@ -71,6 +82,23 @@
 			font-size: 0.82rem;
 			padding: 0.5rem 0.2rem;
 		}
+	}
+	.subnav {
+		display: flex;
+		gap: 1.2rem;
+		margin: -0.4rem 0.25rem 1rem;
+		font-size: 0.9rem;
+	}
+	.subnav a {
+		color: var(--muted);
+		text-decoration: none;
+		padding-bottom: 0.15rem;
+		border-bottom: 2px solid transparent;
+	}
+	.subnav a.active {
+		color: var(--text);
+		font-weight: 600;
+		border-bottom-color: var(--primary);
 	}
 	.tabs a.active {
 		background: var(--surface);

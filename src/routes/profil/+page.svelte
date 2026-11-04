@@ -26,7 +26,10 @@
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
-<a href="/hilfe" class="button full" style="margin-bottom: 1rem">❓ Hilfe & Anleitung</a>
+<div class="row" style="margin-bottom: 1rem">
+	<a href="/kassen" class="button grow">👪 Kassen</a>
+	<a href="/hilfe" class="button grow">❓ Hilfe</a>
+</div>
 
 {#if user.isInstanceAdmin}
 	<a href="/admin/personen" class="button full" style="margin-bottom: 1rem">👥 Personen verwalten (Admin)</a>
@@ -43,20 +46,14 @@
 	<div class="field">
 		<label for="displayName">Anzeigename (optional)</label>
 		<input id="displayName" name="displayName" value={data.displayName} placeholder={user.name} maxlength="40" />
-		<p class="hint">
-			So sehen dich die anderen{data.displayName ? '' : `, jetzt: „${user.name}“`}. Leer = automatisch: dein Vorname, und nur wenn es
-			den schon gibt, so viel vom Nachnamen, bis er eindeutig ist.
-		</p>
+		<p class="hint">Leer = automatisch{data.displayName ? '' : ` („${user.name}“)`}.</p>
 	</div>
 	<button class="full">{form?.saved ? '✔ Gespeichert' : 'Speichern'}</button>
 </form>
 
 <div class="card">
 	<h2>Passkeys</h2>
-	<p class="small muted">
-		Damit kommst du ohne Passwort wieder rein – auch auf anderen Geräten oder nach dem Löschen der Browserdaten:
-		einfach <AppAddress /> öffnen und „Mit Passkey anmelden“ wählen.
-	</p>
+	<p class="small muted">Ohne Passwort wieder rein, auch auf anderen Geräten: <AppAddress /> öffnen → „Mit Passkey anmelden“.</p>
 	{#if data.passkeys.length}
 		<div class="list">
 			{#each data.passkeys as p (p.id)}
@@ -88,7 +85,6 @@
 
 <div class="card">
 	<h2>Benachrichtigungen</h2>
-	<p class="small muted">Z.B. wenn jemand eine Ausgabe einträgt, dir Geld überweist oder dich an eine Zahlung erinnert. Einzelne Gruppen kannst du in deren Einstellungen stummschalten.</p>
 	<PushToggle />
 </div>
 
@@ -115,13 +111,12 @@
 			{:else if data.mail.email}
 				<p class="hint">✔ Bestätigt</p>
 			{:else}
-				<p class="hint">Nur nötig, wenn du E-Mails von Split bekommen möchtest.</p>
+				<p class="hint">Nur für E-Mails von Split.</p>
 			{/if}
 		{/if}
 
 		{#if data.mail.email && data.mail.verified}
 			<form method="POST" action="?/saveMailPrefs" use:enhance={() => async ({ update }) => update({ reset: false })} class="prefs">
-				<p class="small muted">Welche E-Mails möchtest du bekommen? Push-Benachrichtigungen stellst du oben getrennt ein.</p>
 				{#each data.mail.kinds as k (k.key)}
 					<label class="check"><input type="checkbox" name={k.key} checked={data.mail.prefs[k.key as keyof typeof data.mail.prefs]} /> {k.label}</label>
 				{/each}
@@ -134,13 +129,11 @@
 
 <form method="POST" action="?/savePayment" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>
 	<h2>So bekommst du Geld</h2>
-	<p class="small muted">Wer dir in einer Gruppe etwas schuldet, sieht diese Angaben beim Ausgleichen – mit fertigem Betrag.</p>
 	{#if form?.paymentError}<p class="error">{form.paymentError}</p>{/if}
 	{#if form?.paymentSaved}<p class="positive">✔ Gespeichert</p>{/if}
 	<div class="field">
 		<label for="weroContact">Wero: E-Mail oder Handynummer</label>
 		<input id="weroContact" name="weroContact" value={data.payment?.weroContact ?? ''} autocomplete="off" />
-		<p class="hint">Die Adresse oder Nummer, mit der du bei Wero angemeldet bist. Läuft nie ab – damit kann dir jeder Geld schicken.</p>
 	</div>
 	<div class="field">
 		<label for="iban">IBAN (für GiroCode / Überweisung)</label>
@@ -168,10 +161,7 @@
 
 <div class="card" id="ki">
 	<h2>KI-Assistenten (MCP)</h2>
-	<p class="small muted">
-		Mit einem Schlüssel kann ein KI-Assistent wie Claude deine Gruppen, Salden und Ausgaben lesen und für dich Ausgaben
-		oder Zahlungen eintragen – mit denselben Rechten wie du. <a href="/hilfe#mcp">So bindest du ihn ein</a>
-	</p>
+	<p class="small muted">Für Claude & Co. – mit deinen Rechten. <a href="/hilfe#mcp">Anleitung</a></p>
 	{#if form?.apiKey}
 		<div class="newkey">
 			<p class="small"><strong>Dein neuer Schlüssel</strong> – er wird nur jetzt angezeigt, kopiere ihn gleich:</p>
@@ -217,7 +207,7 @@
 		<div class="center"><div class="qr">{@html form.pairing.qr}</div></div>
 		<input readonly value={form.pairing.url} onfocus={(e) => e.currentTarget.select()} />
 	{:else}
-		<p class="small muted">Melde dich auf einem Tablet oder Laptop an, ohne Passwort: Code anzeigen, mit dem anderen Gerät scannen.</p>
+		<p class="small muted">Code anzeigen und mit dem anderen Gerät scannen.</p>
 		<form method="POST" action="?/pairDevice" use:enhance><button class="full">📱 Gerät hinzufügen</button></form>
 	{/if}
 </div>

@@ -15,10 +15,7 @@
 	<h1 style="margin: 0">Meine Kassen</h1>
 	{#if !creating}<button class="primary" onclick={() => (creating = true)}>+ Neue Kasse</button>{/if}
 </div>
-<p class="muted small">
-	Eine Kasse fasst Personen zusammen, die gemeinsam abrechnen – z.B. eine Familie oder ein Paar. Sie gilt in
-	allen Gruppen: Wer innerhalb der Kasse was bezahlt hat, ist egal, nach außen zählt nur die Kasse.
-</p>
+<p class="muted small">Familien oder Paare, die in allen Gruppen gemeinsam abrechnen.</p>
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
@@ -30,7 +27,7 @@
 			<button class="primary">Anlegen</button>
 		</div>
 		<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked={!inAKasse} /> Ich gehöre selbst dazu</label>
-		<p class="hint">Ohne Haken legst du die Kasse für andere an, z.B. für befreundete Familien. Du verwaltest sie dann, ohne selbst mitzurechnen.</p>
+		<p class="hint">Ohne Haken: Kasse für andere, z.B. befreundete Familien.</p>
 	</form>
 {/if}
 

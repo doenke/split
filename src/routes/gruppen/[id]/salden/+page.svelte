@@ -93,9 +93,6 @@
 		</div>
 	{/each}
 </div>
-{#if kassen.some((k) => kasseMembers(k.kasseId).length > 1)}
-	<p class="hint" style="margin-top: -0.5rem">Wer in einer gemeinsamen Kasse ist, gleicht zusammen aus – der Saldo steht bei der Kasse.</p>
-{/if}
 
 <a href="/gruppen/{data.group.id}/kosten" class="button full" style="margin-bottom: 1rem">📊 Was hat es gekostet? Nach Kategorien</a>
 
@@ -161,9 +158,6 @@
 						<button class="primary grow">Zahlung eintragen</button>
 						<button type="button" onclick={() => (recording = null)}>Abbrechen</button>
 					</div>
-					<p class="hint">
-						{data.myKasseId === recording.to ? 'Du bist Empfänger – die Zahlung gilt sofort als bestätigt.' : 'Der Empfänger bestätigt den Eingang.'}
-					</p>
 				</form>
 			{/if}
 		{/each}
@@ -213,10 +207,6 @@
 				<label for="free-date">Datum</label>
 				<input id="free-date" name="date" type="date" bind:value={free.date} max={today()} />
 			</div>
-			<p class="hint">
-				Z.B. Bargeld, das du jemandem gegeben hast, oder ein Teil dessen, was du schuldest. Die Zahlung wird mit den Salden
-				verrechnet. {free.to === data.myKasseId ? 'Du bist Empfänger – sie gilt sofort als bestätigt.' : 'Der Empfänger bestätigt den Eingang.'}
-			</p>
 			<div class="row">
 				<button class="primary grow">Zahlung eintragen</button>
 				<button type="button" onclick={() => (free = null)}>Abbrechen</button>

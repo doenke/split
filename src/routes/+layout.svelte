@@ -86,7 +86,9 @@
 		{#if data.user}
 			<nav class="nav">
 				<a href="/" class:active={page.url.pathname === '/' || page.url.pathname.startsWith('/gruppen')}>Gruppen</a>
-				<a href="/kassen" class:active={page.url.pathname.startsWith('/kassen')}>Kassen</a>
+				{#if data.hasKassen || page.url.pathname.startsWith('/kassen')}
+					<a href="/kassen" class:active={page.url.pathname.startsWith('/kassen')}>Kassen</a>
+				{/if}
 			</nav>
 			<a href="/profil" class="me" aria-label="Mein Profil">
 				<Avatar name={data.user.name} color={data.user.color} url={data.user.avatarUrl} size={32} />

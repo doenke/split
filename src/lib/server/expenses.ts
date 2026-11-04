@@ -27,8 +27,8 @@ export async function prepareExpense(
 ) {
 	const input = raw as ExpenseInput;
 	if (!input || typeof input !== 'object') throw new InputError('Ungültige Eingabe.');
-	const title = String(input.title ?? '').trim();
-	if (!title) throw new InputError('Bitte gib einen Titel an.');
+	// the title is optional: the form names it after the category, anything else gets a neutral one
+	const title = String(input.title ?? '').trim().slice(0, 120) || (input.type === 'income' ? 'Erstattung' : 'Ausgabe');
 	if (!isInt(input.amount) || input.amount <= 0) throw new InputError('Bitte gib einen Betrag an.');
 	if (!/^[A-Z]{3}$/.test(input.currency)) throw new InputError('Ungültige Währung.');
 	if (!isDate(input.date)) throw new InputError('Ungültiges Datum.');

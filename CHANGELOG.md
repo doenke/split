@@ -3,6 +3,15 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.35.0
+Einfacher, nach dem Vorbild von Splid:
+- Ausgabe erfassen: der Betrag steht oben und hat sofort den Fokus; „Wofür?“ ist optional (ohne Eingabe heißt die
+  Ausgabe wie ihre Kategorie); Kategorien als Chips; Datum und Beleg stehen unter „Weiteres“ (bei vorhandenem Beleg offen)
+- Drei Reiter: Ausgaben · Salden · Gruppe – unter „Gruppe“ liegen Mitglieder, Profile und Einstellungen
+- Deutlich weniger Erklärtexte auf allen Seiten (Details stehen in der Hilfe)
+- „Kassen“ erscheint oben nur noch, wenn man Kassen nutzt; sonst über Mitglieder („Familien oder Paare als Kasse
+  zusammenfassen“) oder das Profil erreichbar
+
 ## 0.34.3
 - Mitglieder: Admins können für Platzhalter (Personen ohne Zugang, z.B. Kinder) auch einen Anzeigenamen setzen
 

@@ -58,7 +58,6 @@
 		<div class="row" style="justify-content: space-between">
 			<div>
 				<strong>{completion.done.length} von {completion.required.length} fertig</strong>
-				<div class="small muted">Wenn alle ihre Ausgaben eingetragen haben, steht die Endabrechnung.</div>
 			</div>
 			<button class="link small" onclick={() => (open = !open)}>{open ? 'Weniger' : 'Wer fehlt?'}</button>
 		</div>
@@ -90,7 +89,6 @@
 			</div>
 			{#if missing.length}<p class="hint">Es fehlen noch: {missing.map((m) => m.name).join(', ')}</p>{/if}
 			{#if isAdmin}
-				<p class="hint">Als Admin kannst du Personen antippen, um sie abzuschließen oder wieder zu öffnen.</p>
 				{#if missing.length}
 					<form method="POST" action="/gruppen/{groupId}?/done" use:enhance={({ cancel }) => { if (!confirm('Alle Personen abschließen? Damit steht die Endabrechnung.')) cancel(); }}>
 						<input type="hidden" name="scope" value="all" />

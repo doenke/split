@@ -92,7 +92,6 @@
 						</select>
 						<button class="primary">Verrechnung eintragen</button>
 					</form>
-					<p class="hint">Es wird in jeder Gruppe eine passende Zahlung eingetragen, die zusammen genau {formatAmount(Math.abs(n.amount), n.currency)} ergeben.</p>
 				{/if}
 			</div>
 		{/each}
@@ -166,7 +165,6 @@
 		{/if}
 		{#if addMode === 'new'}
 			<NameFields id="kasse-name" />
-			<p class="hint">Z.B. ein Kind ohne eigenes Handy. Die Person kann später einen Zugangslink bekommen.</p>
 		{:else}
 			<div class="row" style="margin-bottom: 0.5rem">
 				<input type="search" bind:value={search} placeholder="Suchen …" class="grow" style="width: auto" aria-label="Personen suchen" />
@@ -185,7 +183,6 @@
 				{/each}
 			</div>
 		{/if}
-		<p class="hint">Ist die Person in einer offenen Gruppe zusammen mit jemandem aus dieser Kasse, rechnet sie dort ab jetzt über die Kasse ab.</p>
 		<div class="row" style="margin-top: 0.5rem">
 			<button class="primary grow" disabled={addMode === 'known' && !picked.length}>
 				{addMode === 'known' ? (picked.length > 1 ? `${picked.length} Personen hinzufügen` : picked.length ? '1 Person hinzufügen' : 'Personen auswählen') : 'Hinzufügen'}

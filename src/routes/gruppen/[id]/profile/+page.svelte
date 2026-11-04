@@ -49,11 +49,7 @@
 <svelte:head><title>Profile · {data.group.name}</title></svelte:head>
 
 <h2>Ausgaben-Profile</h2>
-<p class="small muted">
-	Profile sind Vorlagen für wiederkehrende Aufteilungen, z.B. „Mietwagen“ nur für die Mitfahrer – mit
-	<strong>bestimmten Personen</strong> und auf Wunsch eigenen Faktoren. Beim Erfassen einer Ausgabe wählst du das
-	Profil mit einem Tipp.
-</p>
+<p class="small muted">Wiederkehrende Aufteilungen, z.B. „Mietwagen“ nur für die Mitfahrer.</p>
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
@@ -94,12 +90,7 @@
 						/>
 					</div>
 				{/each}
-				<p class="hint">
-					Leer = Standard-Faktor der Person.
-					{mode === 'all'
-						? 'Abgewählte Personen sind ausgenommen; wer später dazukommt, ist automatisch dabei.'
-						: 'Personen, die später dazukommen, sind hier nicht automatisch dabei.'}
-				</p>
+				<p class="hint">Faktor leer = Standard.{mode === 'all' ? ' Wer später dazukommt, ist automatisch dabei.' : ''}</p>
 		</div>
 		<div class="field">
 			<label for="cat-{p?.id}">Kategorie vorschlagen</label>

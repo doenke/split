@@ -74,10 +74,7 @@
 	{@const m = data.members.find((x) => x.personId === inv.personId)}
 	<div class="card invite" bind:this={inviteCard}>
 		<h2>Zugangslink für {m?.name}</h2>
-		<p class="small muted">
-			Schicke ihn z.B. per Messenger oder lass den QR-Code scannen. Der Link ist der persönliche Schlüssel von
-			{m?.name}: Er funktioniert immer wieder und gilt 90 Tage ab der letzten Nutzung. Ein neuer Link ersetzt ihn.
-		</p>
+		<p class="small muted">Persönlicher Zugang für {m?.name} – funktioniert immer wieder. Ein neuer Link ersetzt ihn.</p>
 		<div class="qr">{@html invite.qr}</div>
 		<CopyField value={invite.url} label="Zugangslink" />
 		<button class="primary full" style="margin-top: 0.5rem" onclick={() => share(invite!.url, m?.name ?? '')}>
@@ -100,10 +97,7 @@
 {#if data.isAdmin}
 	<details class="card" open={!!form && 'groupLinkCreated' in form}>
 		<summary><strong>🔗 Einladungslink für die ganze Gruppe</strong></summary>
-		<p class="small muted" style="margin-top: 0.5rem">
-			Ein Link für alle, z.B. für den Gruppenchat: Wer ihn öffnet, wählt „Wer bist du?“ aus den noch nicht
-			angemeldeten Personen oder trägt sich neu ein. Achtung: Jeder mit dem Link kann beitreten.
-		</p>
+		<p class="small muted" style="margin-top: 0.5rem">Für den Gruppenchat – jeder mit dem Link kann beitreten.</p>
 		{#if data.groupLink}
 			<div class="center"><div class="qr">{@html data.groupLink.qr}</div></div>
 			<CopyField value={data.groupLink.url} label="Einladungslink" />
@@ -154,7 +148,6 @@
 				<select id="kasseId" name="kasseId">
 					{#each data.myKassen as k (k.id)}<option value={k.id}>{k.name} ({k.missing.join(', ')})</option>{/each}
 				</select>
-				<p class="hint">Alle fehlenden Mitglieder der Kasse kommen dazu und rechnen gemeinsam ab. Faktoren kannst du danach anpassen.</p>
 			</div>
 		{:else if addMode === 'new'}
 			<NameFields />
@@ -164,14 +157,13 @@
 				<select id="personId" name="personId" required>
 					{#each data.known as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
 				</select>
-				<p class="hint">Die Person ist sofort dabei und braucht keinen neuen Link.</p>
 			</div>
 		{/if}
 		{#if addMode !== 'kasse'}
 			<div class="field">
 				<label for="factor">Faktor</label>
 				<input id="factor" name="factor" value="1" inputmode="decimal" style="width: 6rem" />
-				<p class="hint">Gewichtung bei „Alle“-Ausgaben, z.B. 0,5 für ein Kind oder 0 für ein Kleinkind.</p>
+				<p class="hint">z.B. 0,5 für ein Kind</p>
 			</div>
 		{/if}
 		{#if hasExpenses}
@@ -257,7 +249,7 @@
 							<input id="to-{m.personId}" type="date" name="to" value={m.participationTo ?? ''} />
 						</div>
 					</div>
-					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit. Bei Aufteilung nach Nächten zählt der Abreisetag nicht mit, nach Tagen schon. Änderungen wirken sich auf alle „Alle“-Ausgaben aus.</p>
+					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit.</p>
 					{#if (data.kassenByPerson[m.personId] ?? []).length}
 						<div class="field">
 							<label for="k-{m.personId}">Rechnet ab über</label>
@@ -309,8 +301,13 @@
 		</div>
 	{/each}
 </div>
+<a href="/kassen" class="small kassen-link">👪 Familien oder Paare als Kasse zusammenfassen →</a>
 
 <style>
+	.kassen-link {
+		display: inline-block;
+		margin: -0.5rem 0.25rem 1rem;
+	}
 	.invite {
 		scroll-margin-top: 4.5rem;
 	}

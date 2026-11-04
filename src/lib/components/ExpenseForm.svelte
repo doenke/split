@@ -115,6 +115,8 @@
 	}
 
 	onMount(() => {
+		// a new expense starts with the amount: the number pad is up right away
+		if (!init) document.getElementById('amount')?.focus();
 		for (const a of [...attachments, ...initialAttachmentIds]) {
 			if (a.ocr) applyReceipt(a.id, a.ocr, !init || draft);
 			else if (!init || draft) recognize(a);
@@ -361,10 +363,12 @@
 		}
 	});
 
+	// without a title the expense is named after its category
+	const titleFallback = $derived(categories.find((c) => c.id === categoryId)?.name ?? (type === 'income' ? 'Erstattung' : 'Ausgabe'));
 	const payload = $derived(
 		JSON.stringify({
 			type,
-			title,
+			title: title.trim() || titleFallback,
 			amount,
 			currency,
 			date,
@@ -405,7 +409,9 @@
 	// the less common parts are folded away; a one-line summary says what is set
 	let payersOpen = $state(false);
 	let splitOpen = $state(false);
-	let moreOpen = $state(false);
+	// a receipt is there already (photographed or shared): show it
+	// svelte-ignore state_referenced_locally
+	let moreOpen = $state(attachments.length + initialAttachmentIds.length > 0);
 	const nameOf = (id: string) => members.find((m) => m.personId === id)?.name ?? '?';
 	const names = (ids: string[]) => (ids.length > 3 ? `${ids.slice(0, 3).map(nameOf).join(', ')} +${ids.length - 3}` : ids.map(nameOf).join(', '));
 	const payerSummary = $derived(
@@ -438,8 +444,14 @@
 		return base + how;
 	});
 	const moreSummary = $derived(
-		[privateAmount > 0 ? `privat ${formatAmount(privateAmount, currency)}` : '', notes.trim() ? 'Notiz' : ''].filter(Boolean).join(' · ') ||
-			'Privater Anteil, Notiz'
+		[
+			date !== today() ? new Date(date + 'T12:00:00').toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }) : '',
+			attachmentIds.length + attachments.length + initialAttachmentIds.length ? `📎 ${attachmentIds.length + attachments.length + initialAttachmentIds.length}` : '',
+			privateAmount > 0 ? `privat ${formatAmount(privateAmount, currency)}` : '',
+			notes.trim() ? 'Notiz' : ''
+		]
+			.filter(Boolean)
+			.join(' · ') || 'Heute · Beleg, privat, Notiz'
 	);
 	let submitting = $state(false);
 </script>
@@ -465,11 +477,6 @@
 	{#if error}<p class="error">{error}</p>{/if}
 
 	<div class="card">
-		<div class="field">
-			<label for="title">Wofür?</label>
-			<input id="title" bind:value={title} placeholder={type === 'income' ? 'z.B. Pfand zurück' : 'z.B. Abendessen'} required autocomplete="off" />
-		</div>
-
 		<div class="row amount-row">
 			<div class="field grow">
 				<label for="amount">{type === 'income' ? 'Betrag (Erstattung)' : 'Betrag'}</label>
@@ -489,9 +496,24 @@
 				title="Einnahme oder Erstattung, z.B. Pfand zurück – wird den Beteiligten gutgeschrieben"
 				onclick={() => (type = type === 'income' ? 'expense' : 'income')}>↩ Erstattung</button>
 		</div>
-		{#if type === 'income'}
-			<p class="hint" style="margin-top: -0.4rem">Erstattung/Einnahme: wird den Beteiligten gutgeschrieben statt geteilt bezahlt.</p>
-		{/if}
+
+		<div class="field">
+			<label for="title">Wofür? <span class="muted small">(optional)</span></label>
+			<input id="title" bind:value={title} placeholder={titleFallback} autocomplete="off" />
+		</div>
+
+		<div class="cats" role="radiogroup" aria-label="Kategorie">
+			{#each categories.filter((c) => !c.hidden || c.id === categoryId) as c (c.id)}
+				<button
+					type="button"
+					class="chip cat-chip"
+					class:active={categoryId === c.id}
+					role="radio"
+					aria-checked={categoryId === c.id}
+					onclick={() => (categoryId = categoryId === c.id ? null : c.id)}>{c.icon} {c.name}</button
+				>
+			{/each}
+		</div>
 
 		{#if currency !== baseCurrency}
 			<div class="field fx">
@@ -517,7 +539,6 @@
 					</label>
 				{:else if rateSource === 'charged'}
 					<input bind:value={chargedText} inputmode="decimal" placeholder="Tatsächlich abgebucht in {baseCurrency}" />
-					<p class="hint">Am fairsten: der Betrag laut Kontoauszug, inklusive Gebühren.</p>
 				{:else}
 					<input bind:value={manualRate} inputmode="decimal" placeholder="1 {currency} = ? {baseCurrency}" />
 				{/if}
@@ -527,27 +548,9 @@
 			</div>
 		{/if}
 
-		<div class="field">
-			<ReceiptPicker
-				{groupId}
-				existing={[...attachments, ...initialAttachmentIds]}
-				bind:ids={attachmentIds}
-				{reading}
-				onuploaded={(f) => recognize(f)}
-			/>
-			{#if reading}
-				<p class="hint">📷 Bon wird gelesen …</p>
-			{:else if readMessage}
-				<p class="hint error">{readMessage}</p>
-			{:else if receiptRecognition}
-				<p class="hint">Fotografierte Bons werden automatisch ausgelesen (über Claude von Anthropic).</p>
-			{/if}
-		</div>
-
 		{#if receipt && receiptRows.length}
 			<div class="field receipt-items">
 				<span class="label">Positionen auf dem Bon</span>
-				<p class="hint" style="margin-top: 0">Abgewählte Positionen werden nicht geteilt – sie trägt {type === 'income' ? 'der Empfänger' : 'der Zahler'} selbst.</p>
 				{#each receiptRows as r (r.index)}
 					<label class="check item" class:off={receipt.deselected.includes(r.index)}>
 						<input type="checkbox" checked={!receipt.deselected.includes(r.index)} onchange={() => toggleItem(r.index)} />
@@ -560,23 +563,8 @@
 				{/if}
 			</div>
 		{/if}
-
-		<div class="row">
-			<div class="field grow">
-				<label for="date">Datum</label>
-				<input id="date" type="date" bind:value={date} required />
-			</div>
-			<div class="field grow">
-				<label for="category">Kategorie</label>
-				<select id="category" bind:value={categoryId}>
-					<option value={null}>–</option>
-					{#each categories.filter((c) => !c.hidden || c.id === categoryId) as c (c.id)}
-						<option value={c.id}>{c.icon} {c.name}</option>
-					{/each}
-				</select>
-			</div>
-		</div>
 	</div>
+
 
 	<details class="card fold" bind:open={payersOpen}>
 		<summary>
@@ -658,23 +646,13 @@
 						<button type="button" class:active={periodUnit === 'nights'} onclick={() => ((periodUnit = 'nights'), (unitChosen = true))}>Nächte zählen</button>
 						<button type="button" class:active={periodUnit === 'days'} onclick={() => ((periodUnit = 'days'), (unitChosen = true))}>Tage zählen</button>
 					</div>
-					<p class="hint">
-						{#if periodUnit === 'nights'}
-							<strong>Nächte</strong> (z.B. Unterkunft): {unitLabel(periodTotal)} im Zeitraum. Der Abreisetag zählt nicht – wer vom 1. bis 5. da ist, zahlt 4 Nächte.
-						{:else}
-							<strong>Tage</strong> (z.B. Mietwagen, Skipass): {unitLabel(periodTotal)} im Zeitraum. An- und Abreisetag zählen beide – wer vom 1. bis 5. da ist, zahlt 5 Tage.
-						{/if}
-						Jeder zahlt {equalWeights ? '' : 'Faktor × '}eigene {periodUnit === 'nights' ? 'Nächte' : 'Tage'}; die An- und Abreise stehen bei den Mitgliedern unter „Dabei ab/bis“.
-					</p>
+					<p class="hint">{unitLabel(periodTotal)} im Zeitraum{periodUnit === 'nights' ? ' – der Abreisetag zählt nicht' : ''}.</p>
 					<label class="check small"><input type="checkbox" checked={!equalWeights} onchange={(e) => (equalWeights = !e.currentTarget.checked)} /> Faktoren zusätzlich berücksichtigen</label>
 				</div>
 			{/if}
 		{/if}
 
 
-		{#if profile}
-			<p class="hint" style="margin-top: -0.4rem">Profil „{profile.name}“: Ändert sich das Profil oder kommen Personen dazu, wird die Ausgabe automatisch neu aufgeteilt.</p>
-		{/if}
 		{#if !profile && mode === 'individual'}
 			<div class="segmented small-seg" style="margin-bottom: 0.5rem">
 				<button type="button" class:active={indivMode === 'shares'} onclick={() => (indivMode = 'shares')}>Anteile</button>
@@ -721,13 +699,7 @@
 				</p>
 			{/if}
 		{/each}
-		{#if (profile || mode !== 'individual') && preview && 'shares' in preview}
-			<p class="hint">Tippe auf ×-Faktor einer Person, um zu sehen, woher er kommt.</p>
-		{/if}
 		{#if preview && 'error' in preview}<p class="hint error">{preview.error}</p>{/if}
-		{#if mode === 'all' || mode === 'all_except'}
-			<p class="hint">Personen, die später dazukommen, werden automatisch beteiligt (je nach Teilnahmezeitraum).</p>
-		{/if}
 
 	</details>
 	{#if preview && 'error' in preview && !splitOpen}
@@ -739,6 +711,25 @@
 			<h2>Weiteres</h2>
 			<span class="sum">{moreSummary}</span>
 		</summary>
+		<div class="field">
+			<label for="date">Datum</label>
+			<input id="date" type="date" bind:value={date} required />
+		</div>
+		<div class="field">
+			<ReceiptPicker
+				{groupId}
+				existing={[...attachments, ...initialAttachmentIds]}
+				bind:ids={attachmentIds}
+				{reading}
+				onuploaded={(f) => recognize(f)}
+			/>
+			{#if reading}
+				<p class="hint">📷 Bon wird gelesen …</p>
+			{:else if readMessage}
+				<p class="hint error">{readMessage}</p>
+			{/if}
+		</div>
+
 		<label class="check"><input type="checkbox" bind:checked={showPrivate} /> Privater Anteil (z.B. eigener Einkauf auf dem Bon)</label>
 		{#if showPrivate}
 			<input bind:value={privateText} inputmode="decimal" placeholder="0,00" aria-label="Privater Anteil" />
@@ -748,14 +739,8 @@
 					<div class="row"><span class="grow">− privat, wird abgezogen</span><span class="amount">{formatAmount(privateAmount, currency)}</span></div>
 					<div class="row total"><span class="grow">= wird geteilt</span><span class="amount">{formatAmount(amount - privateAmount, currency)}</span></div>
 				</div>
-				<p class="hint">
-					Oben bleibt der volle Betrag stehen. Den privaten Teil trägt {type === 'income' ? 'der Empfänger' : 'der Zahler'} allein.
-				</p>
 			{:else}
-				<p class="hint">
-					Trage oben den <strong>vollen Betrag</strong> ein und hier nur den privaten Teil – er wird vom Betrag abgezogen und
-					nicht geteilt.
-				</p>
+				<p class="hint">Wird vom Betrag abgezogen und nicht geteilt.</p>
 			{/if}
 		{/if}
 
@@ -765,12 +750,27 @@
 		</div>
 	</details>
 
-	<button class="primary full" disabled={submitting || !title || !amount || (preview !== null && 'error' in preview)}>
+	<button class="primary full" disabled={submitting || !amount || (preview !== null && 'error' in preview)}>
 		Speichern
 	</button>
 </form>
 
 <style>
+	.cats {
+		display: flex;
+		gap: 0.35rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+		margin: 0 -0.25rem 0.75rem;
+		padding: 0 0.25rem 0.1rem;
+	}
+	.cat-chip {
+		flex: none;
+		min-height: 34px;
+		padding: 0.2rem 0.7rem;
+		font-size: 0.85rem;
+		white-space: nowrap;
+	}
 	.amount-row {
 		align-items: flex-end;
 	}
