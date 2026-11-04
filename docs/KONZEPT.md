@@ -319,7 +319,7 @@ Carla = 1.400 × 10/38 = 368,42 €
 ## 6. Kategorien
 
 - Vordefinierte Standardkategorien mit Icon & Farbe (Restaurant & Kneipe, Lebensmittel,
-  Unterkunft, Transport, Sprit, Aktivitäten, Eintritt, Einkauf, Sonstiges …)
+  Unterkunft, Transport, Sprit, Aktivitäten, Eintritt …)
 - Pro Gruppe anpassbar (umbenennen, ausblenden, eigene hinzufügen)
 - Auswertungen: Ausgaben pro Kategorie, pro Person, pro Kasse, pro Tag (Diagramme)
 - **„Was hat uns die Reise gekostet?“** – eigene Ansicht pro Person und pro Kasse:

@@ -148,6 +148,13 @@
       "when": 1793625835153,
       "tag": "0020_display_names",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793807360793,
+      "tag": "0021_remove_shopping_other",
+      "breakpoints": true
     }
   ]
 }

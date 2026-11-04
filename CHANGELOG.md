@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.3
+- Standardkategorien „Einkauf“ und „Sonstiges“ entfernt: Ausgaben mit „Einkauf“ zählen jetzt zu „Lebensmittel“,
+  „Sonstiges“ wird zu „ohne Kategorie“
+
 ## 0.38.2
 - Betragsfeld: Hinweis „minus = Erstattung“ entfernt, Währungssymbol mittig neben dem Feld
 

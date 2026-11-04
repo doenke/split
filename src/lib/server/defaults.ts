@@ -7,9 +7,7 @@ export const defaultCategories = [
 	{ id: 'transport', name: 'Transport', icon: '🚆', color: '#00798c' },
 	{ id: 'fuel', name: 'Sprit', icon: '⛽', color: '#edae49' },
 	{ id: 'activities', name: 'Aktivitäten', icon: '🎯', color: '#8e7dbe' },
-	{ id: 'tickets', name: 'Eintritt', icon: '🎟️', color: '#d1495b' },
-	{ id: 'shopping', name: 'Einkauf', icon: '🛍️', color: '#f4a261' },
-	{ id: 'other', name: 'Sonstiges', icon: '📦', color: '#6c757d' }
+	{ id: 'tickets', name: 'Eintritt', icon: '🎟️', color: '#d1495b' }
 ];
 
 export async function seedDefaults() {
