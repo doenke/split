@@ -5,7 +5,6 @@ export const defaultCategories = [
 	{ id: 'groceries', name: 'Lebensmittel', icon: '🛒', color: '#2a9d8f' },
 	{ id: 'accommodation', name: 'Unterkunft', icon: '🏠', color: '#264653' },
 	{ id: 'transport', name: 'Transport', icon: '🚆', color: '#00798c' },
-	{ id: 'fuel', name: 'Sprit', icon: '⛽', color: '#edae49' },
 	{ id: 'tickets', name: 'Eintritt', icon: '🎟️', color: '#d1495b' }
 ];
 
