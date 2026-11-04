@@ -489,7 +489,8 @@
 	<div class="card">
 		<div class="row amount-row">
 			<div class="field grow">
-				<label for="amount">{type === 'income' ? 'Erstattung' : 'Betrag'} <span class="muted small">{type === 'income' ? '' : '(minus = Erstattung)'}</span></label>
+				<label for="amount">{type === 'income' ? 'Erstattung' : 'Betrag'}</label>
+				<div class="amount-line">
 				<div class="amount-input">
 					<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
 					<!-- the iPhone number pad has no minus key: flip the sign here (minus = refund) -->
@@ -502,6 +503,10 @@
 						onclick={toggleSign}>±</button
 					>
 				</div>
+				{#if currencyChoices.length <= 1}
+					<span class="symbol" aria-label="Währung {currency}">{currencySymbol(currency)}</span>
+				{/if}
+				</div>
 			</div>
 			{#if currencyChoices.length > 1}
 				<div class="field" style="width: 6rem">
@@ -510,8 +515,6 @@
 						{#each currencyChoices as c (c)}<option value={c}>{c}</option>{/each}
 					</select>
 				</div>
-			{:else}
-				<span class="symbol" aria-label="Währung {currency}">{currencySymbol(currency)}</span>
 			{/if}
 		</div>
 
@@ -774,8 +777,14 @@
 </form>
 
 <style>
+	.amount-line {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
 	.amount-input {
 		position: relative;
+		flex: 1;
 	}
 	.amount-input input {
 		padding-right: 2.6rem;
@@ -802,7 +811,7 @@
 	.symbol {
 		font-size: 1.3rem;
 		font-weight: 600;
-		padding: 0 0.4rem 0.75rem;
+		padding: 0 0.3rem;
 		color: var(--muted);
 	}
 	.cats {
