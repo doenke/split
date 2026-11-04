@@ -1,7 +1,6 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { runMigrations } from '$lib/server/db';
 import { refreshDisplayNames } from '$lib/server/display';
-import { convertTagRules } from '$lib/server/migrate-tags';
 import { seedDefaults } from '$lib/server/defaults';
 import { refreshRatesIfStale } from '$lib/server/rates';
 import { cleanupOrphans } from '$lib/server/uploads';
@@ -10,7 +9,6 @@ import { runMailJobs } from '$lib/server/mailings';
 import { SESSION_COOKIE, validateSession } from '$lib/server/auth/session';
 
 export const init: ServerInit = async () => {
-	await convertTagRules();
 	await runMigrations();
 	await refreshDisplayNames();
 	await seedDefaults();

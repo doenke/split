@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.5
+- Aufgeräumt: die einmalige Umrechnung der früheren Merkmale beim Start und die alte Seite `/willkommen` entfallen
+  (alle Instanzen sind darüber hinweg). Achtung: Ein Datenbank-Backup von vor 0.33.0 bitte zuerst mit 0.38.4 starten
+
 ## 0.38.4
 - Gruppeneinstellungen: eigene Kategorie direkt unter der Kategorie-Auswahl anlegen; weitere Währungen als
   aufklappbare Liste zum Abhaken (mit Namen, z.B. „CHF Schweizer Franken“)
