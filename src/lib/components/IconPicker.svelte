@@ -1,6 +1,7 @@
 <script lang="ts">
 	/** Choose an emoji from a grid (or type any other one); submitted as `name`. */
-	let { name = 'icon', value = '🏷️', id }: { name?: string; value?: string; id?: string } = $props();
+	/** `form`: the id of the form the value belongs to (when the picker sits inside another form) */
+	let { name = 'icon', value = '🏷️', id, form }: { name?: string; value?: string; id?: string; form?: string } = $props();
 
 	const icons = [
 		'🏷️', '🍽️', '🍕', '🍔', '🥐', '☕', '🍺', '🍷', '🍸', '🍦',
@@ -25,7 +26,7 @@
 <svelte:window onclick={outside} onkeydown={(e) => e.key === 'Escape' && (open = false)} />
 
 <div class="picker" bind:this={root}>
-	<input type="hidden" {name} value={current} />
+	<input type="hidden" {name} {form} value={current} />
 	<button type="button" {id} class="current" aria-haspopup="true" aria-expanded={open} aria-label="Symbol wählen" onclick={() => (open = !open)}>
 		{current}
 	</button>

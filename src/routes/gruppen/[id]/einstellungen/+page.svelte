@@ -7,6 +7,8 @@
 	const s = $derived(data.group.settings);
 	// svelte-ignore state_referenced_locally
 	let altCurrencies = $state<string[]>([...data.altCurrencies]);
+	const currencyNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['de'], { type: 'currency' }) : null;
+	const currencyName = (c: string) => currencyNames?.of(c) ?? '';
 	// svelte-ignore state_referenced_locally
 	let offeredCats = $state<string[]>(data.categories.filter((c) => c.offered).map((c) => c.id));
 	$effect(() => {
@@ -80,15 +82,24 @@
 					<label class="cur" class:on={offeredCats.includes(c.id)}><input type="checkbox" name="category" value={c.id} bind:group={offeredCats} />{c.icon} {c.name}</label>
 				{/each}
 			</div>
-		</div>
-		<div class="field">
-			<span class="label">Weitere Währungen beim Erfassen</span>
-			<div class="curs">
-				{#each data.selectableCurrencies as c (c)}
-					<label class="cur" class:on={altCurrencies.includes(c)}><input type="checkbox" name="currency" value={c} bind:group={altCurrencies} />{c}</label>
-				{/each}
+			<!-- belongs to the separate form "newcat" (forms cannot be nested) -->
+			<div class="row newcat">
+				<IconPicker name="icon" value="🏷️" form="newcat" />
+				<input name="name" form="newcat" placeholder="Eigene Kategorie, z.B. Skipass" class="grow" style="width: auto" required aria-label="Name der Kategorie" />
+				<button form="newcat">Hinzufügen</button>
 			</div>
 		</div>
+		<details class="field currencies">
+			<summary>
+				<span class="label" style="display: inline">Weitere Währungen beim Erfassen:</span>
+				<span class="muted">{altCurrencies.length ? altCurrencies.join(', ') : 'keine'}</span>
+			</summary>
+			<div class="curlist">
+				{#each data.selectableCurrencies as c (c)}
+					<label class="check"><input type="checkbox" name="currency" value={c} bind:group={altCurrencies} /> <strong>{c}</strong> <span class="muted">{currencyName(c)}</span></label>
+				{/each}
+			</div>
+		</details>
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
 		<label class="check"><input type="checkbox" name="quiet" checked={s.quiet ?? false} /> Hintergrundgruppe: keine E-Mails zu dieser Gruppe</label>
@@ -111,11 +122,7 @@
 	</form>
 
 {#if data.isAdmin}
-	<form method="POST" action="?/addCategory" class="card row newcat" use:enhance>
-		<IconPicker name="icon" value="🏷️" />
-		<input name="name" placeholder="Eigene Kategorie, z.B. Skipass" class="grow" style="width: auto" required aria-label="Name der Kategorie" />
-		<button>Hinzufügen</button>
-	</form>
+	<form id="newcat" method="POST" action="?/addCategory" use:enhance></form>
 {/if}
 {:else}
 	<div class="card small muted">Nur Gruppenadmins können die Einstellungen ändern.</div>
@@ -191,6 +198,21 @@
 <style>
 	.newcat {
 		align-items: center;
+		margin-top: 0.5rem;
+	}
+	.currencies summary {
+		cursor: pointer;
+	}
+	.curlist {
+		max-height: 16rem;
+		overflow-y: auto;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 0.25rem 0.6rem;
+		margin-top: 0.4rem;
+	}
+	.curlist .check {
+		margin: 0.3rem 0;
 	}
 	.curs {
 		display: flex;
