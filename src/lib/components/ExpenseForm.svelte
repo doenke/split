@@ -69,6 +69,11 @@
 	// a refund/income is simply a negative amount
 	let amountText = $state(init && !draft ? (init.type === 'income' ? '-' : '') + amountToInput(init.amount, init.currency) : '');
 	const type = $derived<'expense' | 'income'>(/^\s*[-−]/.test(amountText) ? 'income' : 'expense');
+	function toggleSign() {
+		amountText = /^\s*[-−]/.test(amountText) ? amountText.replace(/^\s*[-−]\s*/, '') : '-' + amountText.trim();
+		// keep typing in the field (the number pad stays open)
+		document.getElementById('amount')?.focus();
+	}
 	let date = $state(init?.date ?? today());
 	let categoryId = $state<string | null>(init?.categoryId ?? null);
 	let notes = $state(init?.notes ?? '');
@@ -485,7 +490,18 @@
 		<div class="row amount-row">
 			<div class="field grow">
 				<label for="amount">{type === 'income' ? 'Erstattung' : 'Betrag'} <span class="muted small">{type === 'income' ? '' : '(minus = Erstattung)'}</span></label>
-				<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
+				<div class="amount-input">
+					<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
+					<!-- the iPhone number pad has no minus key: flip the sign here (minus = refund) -->
+					<button
+						type="button"
+						class="sign"
+						class:on={type === 'income'}
+						aria-label={type === 'income' ? 'Als Ausgabe erfassen' : 'Als Erstattung erfassen (minus)'}
+						onpointerdown={(e) => e.preventDefault()}
+						onclick={toggleSign}>±</button
+					>
+				</div>
 			</div>
 			{#if currencyChoices.length > 1}
 				<div class="field" style="width: 6rem">
@@ -758,6 +774,31 @@
 </form>
 
 <style>
+	.amount-input {
+		position: relative;
+	}
+	.amount-input input {
+		padding-right: 2.6rem;
+	}
+	.sign {
+		position: absolute;
+		right: 0.3rem;
+		top: 50%;
+		transform: translateY(-50%);
+		min-height: 0;
+		width: 2.1rem;
+		height: 2.1rem;
+		padding: 0;
+		border-radius: 8px;
+		border: 0;
+		background: var(--surface-2);
+		color: var(--muted);
+		font-size: 1.1rem;
+	}
+	.sign.on {
+		background: var(--primary);
+		color: var(--primary-text);
+	}
 	.symbol {
 		font-size: 1.3rem;
 		font-weight: 600;

@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.1
+- Betragsfeld: kleine ±-Taste zum Umschalten auf Erstattung (die iPhone-Zahlentastatur hat kein Minus)
+
 ## 0.38.0
 - Gruppeneinstellungen: „Weitere Währungen beim Erfassen“ – ohne Auswahl steht beim Betrag fest das Währungssymbol
   (z.B. €), sonst eine Auswahl. Gruppen ohne Einstellung bekommen die Fremdwährungen, die sie schon verwendet haben
