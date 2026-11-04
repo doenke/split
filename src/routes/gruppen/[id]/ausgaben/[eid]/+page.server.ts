@@ -97,7 +97,7 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		canEdit: canEditExpense(g, g.user.id, expense) && !expense.frozenShares,
 		frozen: Boolean(expense.frozenShares),
 		draft,
-		currencies: await currencyOptions(data.group.baseCurrency, used)
+		currencies: currencyOptions(data.group, used, [expense.currency])
 	};
 };
 

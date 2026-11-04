@@ -135,7 +135,7 @@ const tools: Tool[] = [
 					mine: k.kasseId === g.membership.kasseId
 				})),
 				suggested_transfers: state.transfers.map((t) => ({ from: kasseName(t.from), to: kasseName(t.to), amount: major(t.amount, cur) })),
-				categories: categories.filter((c) => !c.hidden).map((c) => c.name),
+				categories: categories.filter((c) => c.offered).map((c) => c.name),
 				profiles: state.profiles.map((p) => p.name)
 			};
 		}
@@ -216,7 +216,7 @@ const tools: Tool[] = [
 			}
 			let categoryId: string | null = null;
 			if (str(args.category)) {
-				const cats = (await loadCategories(g.group.id)).filter((c) => !c.hidden);
+				const cats = (await loadCategories(g.group.id)).filter((c) => c.offered);
 				const cat = cats.find((c) => c.id === str(args.category) || norm(c.name) === norm(str(args.category)));
 				if (!cat) throw new ToolError(`Unbekannte Kategorie. Vorhanden: ${cats.map((c) => c.name).join(', ')}.`);
 				categoryId = cat.id;

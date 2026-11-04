@@ -5,6 +5,8 @@ import { requireGroup, requireGroupAdmin } from '$lib/server/groups';
 import { audit } from '$lib/server/audit';
 import { closeUntil, reopen } from '$lib/server/closing';
 import { resetCompletion } from '$lib/server/completion';
+import { newId } from '$lib/server/ids';
+import { selectableCurrencies } from '$lib/server/currencies';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -14,10 +16,36 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.from(schema.auditLog)
 		.where(eq(schema.auditLog.groupId, params.id))
 		.orderBy(schema.auditLog.createdAt);
-	return { log: log.slice(-30).reverse(), muted: g.membership.muted };
+	const used = (await db.selectDistinct({ c: schema.expenses.currency }).from(schema.expenses).where(eq(schema.expenses.groupId, params.id))).map((r) => r.c);
+	return {
+		log: log.slice(-30).reverse(),
+		muted: g.membership.muted,
+		// chosen alternatives, or (never chosen) the foreign currencies already used
+		altCurrencies: g.group.settings.currencies ?? used.filter((c) => c !== g.group.baseCurrency),
+		selectableCurrencies: (await selectableCurrencies()).filter((c) => c !== g.group.baseCurrency)
+	};
 };
 
+const colors = ['#e76f51', '#f4a261', '#e9c46a', '#2a9d8f', '#264653', '#8ab17d', '#b56576', '#6d597a', '#457b9d'];
+
 export const actions: Actions = {
+	/** An own category for this group; it is offered right away. */
+	addCategory: async ({ params, locals, request }) => {
+		const g = await requireGroupAdmin(params.id, locals.user);
+		const f = await request.formData();
+		const name = String(f.get('name') ?? '').trim().slice(0, 40);
+		const icon = String(f.get('icon') ?? '').trim().slice(0, 8) || '🏷️';
+		if (!name) return fail(400, { message: 'Bitte einen Namen für die Kategorie angeben.' });
+		const id = newId();
+		await db.insert(schema.categories).values({ id, groupId: params.id, name, icon, color: colors[Math.floor(Math.random() * colors.length)], sort: 100 });
+		if (g.group.settings.categories) {
+			await db
+				.update(schema.groups)
+				.set({ settings: { ...g.group.settings, categories: [...g.group.settings.categories, id] } })
+				.where(eq(schema.groups.id, params.id));
+		}
+		return { categoryAdded: name };
+	},
 	save: async ({ params, locals, request }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);
 		const f = await request.formData();
@@ -30,7 +58,9 @@ export const actions: Actions = {
 			simplifyDebts: f.get('simplifyDebts') === 'on',
 			editOthers: f.get('editOthers') === 'admins' ? ('admins' as const) : ('all' as const),
 			membersCanAddPeople: f.get('membersCanAddPeople') === 'on',
-			quiet: f.get('quiet') === 'on'
+			quiet: f.get('quiet') === 'on',
+			currencies: f.getAll('currency').map(String).filter((c) => /^[A-Z]{3}$/.test(c) && c !== g.group.baseCurrency),
+			categories: f.getAll('category').map(String)
 		};
 		await db
 			.update(schema.groups)

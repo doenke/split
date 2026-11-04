@@ -139,6 +139,10 @@ export interface GroupSettings {
 	membersCanAddPeople: boolean;
 	/** background group: no e-mails about it at all */
 	quiet?: boolean;
+	/** other currencies offered when entering expenses (besides the group currency) */
+	currencies?: string[];
+	/** categories offered when entering expenses (ids); unset = all */
+	categories?: string[];
 }
 
 export const groups = pgTable('groups', {

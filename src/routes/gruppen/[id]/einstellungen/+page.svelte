@@ -1,9 +1,19 @@
 <script lang="ts">
+	import IconPicker from '$lib/components/IconPicker.svelte';
 	import { enhance } from '$app/forms';
 	import { formatDate } from '$lib/format';
 
 	let { data, form } = $props();
 	const s = $derived(data.group.settings);
+	// svelte-ignore state_referenced_locally
+	let altCurrencies = $state<string[]>([...data.altCurrencies]);
+	// svelte-ignore state_referenced_locally
+	let offeredCats = $state<string[]>(data.categories.filter((c) => c.offered).map((c) => c.id));
+	$effect(() => {
+		// a category added just now is offered too
+		const added = data.categories.filter((c) => c.offered && !offeredCats.includes(c.id) && c.groupId);
+		if (added.length && form && 'categoryAdded' in form) offeredCats = [...offeredCats, ...added.map((c) => c.id)];
+	});
 	const people = $derived(new Map(data.members.map((m) => [m.personId, m.name])));
 	const actions: Record<string, string> = {
 		'group.create': 'hat die Gruppe angelegt',
@@ -63,6 +73,22 @@
 			<span class="label">Währung</span>
 			<div>{data.group.baseCurrency}</div>
 		</div>
+		<div class="field">
+			<span class="label">Kategorien beim Erfassen</span>
+			<div class="curs">
+				{#each data.categories as c (c.id)}
+					<label class="cur" class:on={offeredCats.includes(c.id)}><input type="checkbox" name="category" value={c.id} bind:group={offeredCats} />{c.icon} {c.name}</label>
+				{/each}
+			</div>
+		</div>
+		<div class="field">
+			<span class="label">Weitere Währungen beim Erfassen</span>
+			<div class="curs">
+				{#each data.selectableCurrencies as c (c)}
+					<label class="cur" class:on={altCurrencies.includes(c)}><input type="checkbox" name="currency" value={c} bind:group={altCurrencies} />{c}</label>
+				{/each}
+			</div>
+		</div>
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
 		<label class="check"><input type="checkbox" name="quiet" checked={s.quiet ?? false} /> Hintergrundgruppe: keine E-Mails zu dieser Gruppe</label>
@@ -83,6 +109,14 @@
 		</div>
 		<button class="primary full">Speichern</button>
 	</form>
+
+{#if data.isAdmin}
+	<form method="POST" action="?/addCategory" class="card row newcat" use:enhance>
+		<IconPicker name="icon" value="🏷️" />
+		<input name="name" placeholder="Eigene Kategorie, z.B. Skipass" class="grow" style="width: auto" required aria-label="Name der Kategorie" />
+		<button>Hinzufügen</button>
+	</form>
+{/if}
 {:else}
 	<div class="card small muted">Nur Gruppenadmins können die Einstellungen ändern.</div>
 {/if}
@@ -155,6 +189,32 @@
 {/if}
 
 <style>
+	.newcat {
+		align-items: center;
+	}
+	.curs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+	}
+	.cur {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.2rem 0.6rem;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		font-size: 0.85rem;
+		cursor: pointer;
+		margin: 0;
+	}
+	.cur input {
+		display: none;
+	}
+	.cur.on {
+		background: var(--primary);
+		border-color: var(--primary);
+		color: var(--primary-text);
+	}
 	.label {
 		display: block;
 		font-weight: 600;

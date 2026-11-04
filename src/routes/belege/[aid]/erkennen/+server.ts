@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	const g = await requireGroup(a.groupId, locals.user);
 	if (!receiptRecognitionEnabled()) return json({ message: 'Die Bon-Erkennung ist nicht eingerichtet.' }, { status: 501 });
 	try {
-		const categories = (await loadCategories(a.groupId)).filter((c) => !c.hidden);
+		const categories = (await loadCategories(a.groupId)).filter((c) => c.offered);
 		return json(await recognizeReceipt(a.id, categories, g.group.baseCurrency));
 	} catch (e) {
 		return json({ message: (e as Error).message }, { status: 503 });

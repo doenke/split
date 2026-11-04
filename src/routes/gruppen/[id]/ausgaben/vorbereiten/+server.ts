@@ -49,7 +49,7 @@ export const POST: RequestHandler = async ({ params, locals, request }) => {
 	// read it in the background, so the result is ready when the user comes back to it
 	if (receiptRecognitionEnabled()) {
 		void loadCategories(params.id)
-			.then((cats) => recognizeReceipt(attachmentId, cats.filter((c) => !c.hidden), g.group.baseCurrency))
+			.then((cats) => recognizeReceipt(attachmentId, cats.filter((c) => c.offered), g.group.baseCurrency))
 			.catch((e) => console.warn('Bon-Erkennung im Hintergrund fehlgeschlagen:', (e as Error).message));
 	}
 	return json({ id });

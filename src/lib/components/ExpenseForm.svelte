@@ -42,7 +42,7 @@
 		groupId: string;
 		baseCurrency: string;
 		members: PersonOption[];
-		categories: { id: string; name: string; icon: string; hidden: boolean }[];
+		categories: { id: string; name: string; icon: string; hidden: boolean; offered?: boolean }[];
 		currencies: string[];
 		meId: string;
 		profiles?: { id: string; name: string; icon: string; rule: SplitRule; defaultCategoryId: string | null }[];
@@ -364,6 +364,10 @@
 		}
 	});
 
+	// a choice only when the group has other currencies (or the expense already uses one)
+	const currencyChoices = $derived([...new Set([...currencies, currency])]);
+	const currencySymbol = (c: string) =>
+		new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? c;
 	// without a title the expense is named after its category
 	const titleFallback = $derived(categories.find((c) => c.id === categoryId)?.name ?? (type === 'income' ? 'Erstattung' : 'Ausgabe'));
 	const payload = $derived(
@@ -483,12 +487,16 @@
 				<label for="amount">{type === 'income' ? 'Erstattung' : 'Betrag'} <span class="muted small">{type === 'income' ? '' : '(minus = Erstattung)'}</span></label>
 				<input id="amount" bind:value={amountText} inputmode="decimal" placeholder="0,00" required autocomplete="off" />
 			</div>
-			<div class="field" style="width: 6rem">
-				<label for="currency">Währung</label>
-				<select id="currency" bind:value={currency}>
-					{#each currencies as c (c)}<option value={c}>{c}</option>{/each}
-				</select>
-			</div>
+			{#if currencyChoices.length > 1}
+				<div class="field" style="width: 6rem">
+					<label for="currency">Währung</label>
+					<select id="currency" bind:value={currency}>
+						{#each currencyChoices as c (c)}<option value={c}>{c}</option>{/each}
+					</select>
+				</div>
+			{:else}
+				<span class="symbol" aria-label="Währung {currency}">{currencySymbol(currency)}</span>
+			{/if}
 		</div>
 
 		<div class="field">
@@ -497,7 +505,7 @@
 		</div>
 
 		<div class="cats" role="radiogroup" aria-label="Kategorie">
-			{#each categories.filter((c) => !c.hidden || c.id === categoryId) as c (c.id)}
+			{#each categories.filter((c) => (c.offered ?? !c.hidden) || c.id === categoryId) as c (c.id)}
 				<button
 					type="button"
 					class="chip cat-chip"
@@ -750,13 +758,17 @@
 </form>
 
 <style>
+	.symbol {
+		font-size: 1.3rem;
+		font-weight: 600;
+		padding: 0 0.4rem 0.75rem;
+		color: var(--muted);
+	}
 	.cats {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.35rem;
-		overflow-x: auto;
-		scrollbar-width: none;
-		margin: 0 -0.25rem 0.75rem;
-		padding: 0 0.25rem 0.1rem;
+		margin: 0 0 0.75rem;
 	}
 	.cat-chip {
 		flex: none;

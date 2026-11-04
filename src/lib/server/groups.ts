@@ -69,12 +69,18 @@ export async function loadMembers(groupId: string) {
 
 export type GroupMember = Awaited<ReturnType<typeof loadMembers>>[number];
 
+/** Categories of a group (built-in and own); `offered` = shown as choice when entering expenses. */
 export async function loadCategories(groupId: string) {
-	return db
-		.select()
-		.from(schema.categories)
-		.where(or(isNull(schema.categories.groupId), eq(schema.categories.groupId, groupId)))
-		.orderBy(asc(schema.categories.sort));
+	const [rows, [group]] = await Promise.all([
+		db
+			.select()
+			.from(schema.categories)
+			.where(or(isNull(schema.categories.groupId), eq(schema.categories.groupId, groupId)))
+			.orderBy(asc(schema.categories.sort), asc(schema.categories.name)),
+		db.select({ settings: schema.groups.settings }).from(schema.groups).where(eq(schema.groups.id, groupId))
+	]);
+	const chosen = group?.settings.categories;
+	return rows.map((c) => ({ ...c, offered: !c.hidden && (!chosen || chosen.includes(c.id)) }));
 }
 
 export async function loadProfiles(groupId: string) {

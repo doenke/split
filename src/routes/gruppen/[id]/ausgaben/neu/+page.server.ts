@@ -27,7 +27,9 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 					)
 				)
 		: [];
-	return { currencies: await currencyOptions(data.group.baseCurrency, used), lastCurrency: data.expenses[0]?.currency, shared };
+	const currencies = currencyOptions(data.group, used);
+	const last = data.expenses[0]?.currency;
+	return { currencies, lastCurrency: last && currencies.includes(last) ? last : undefined, shared };
 };
 
 export const actions: Actions = {

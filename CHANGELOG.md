@@ -3,6 +3,13 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.0
+- Gruppeneinstellungen: „Weitere Währungen beim Erfassen“ – ohne Auswahl steht beim Betrag fest das Währungssymbol
+  (z.B. €), sonst eine Auswahl. Gruppen ohne Einstellung bekommen die Fremdwährungen, die sie schon verwendet haben
+- Gruppeneinstellungen: „Kategorien beim Erfassen“ an- und abwählen und eigene Kategorien (mit Symbol) anlegen;
+  die Bon-Erkennung und der KI-Assistent schlagen nur diese vor
+- Kategorie-Chips brechen um statt abgeschnitten zu werden
+
 ## 0.37.0
 - Erstattungen: der Knopf „↩ Erstattung“ entfällt – ein negativer Betrag (z.B. „-3,50“) ist eine Erstattung
 
