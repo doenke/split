@@ -1,7 +1,15 @@
 <script lang="ts">
 	/** Choose an emoji from a grid (or type any other one); submitted as `name`. */
 	/** `form`: the id of the form the value belongs to (when the picker sits inside another form) */
-	let { name = 'icon', value = '🏷️', id, form }: { name?: string; value?: string; id?: string; form?: string } = $props();
+	/** `inline`: just the emoji as trigger (e.g. inside a chip); `onpick`: called with the chosen icon */
+	let {
+		name = 'icon',
+		value = '🏷️',
+		id,
+		form,
+		inline = false,
+		onpick
+	}: { name?: string; value?: string; id?: string; form?: string; inline?: boolean; onpick?: (icon: string) => void } = $props();
 
 	const icons = [
 		'🏷️', '🍽️', '🍕', '🍔', '🥐', '☕', '🍺', '🍷', '🍸', '🍦',
@@ -14,24 +22,30 @@
 	let open = $state(false);
 	function pick(icon: string) {
 		current = icon;
+		close();
+	}
+	// closing reports a changed icon (also one typed in under "Anderes")
+	function close() {
 		open = false;
+		if (current !== value) onpick?.(current);
 	}
 	let root = $state<HTMLDivElement>();
 	// a click anywhere else or Escape closes the selection
 	function outside(e: MouseEvent) {
-		if (open && root && !root.contains(e.target as Node)) open = false;
+		if (open && root && !root.contains(e.target as Node)) close();
 	}
 </script>
 
-<svelte:window onclick={outside} onkeydown={(e) => e.key === 'Escape' && (open = false)} />
+<svelte:window onclick={outside} onkeydown={(e) => e.key === 'Escape' && open && close()} />
 
-<div class="picker" bind:this={root}>
-	<input type="hidden" {name} {form} value={current} />
-	<button type="button" {id} class="current" aria-haspopup="true" aria-expanded={open} aria-label="Symbol wählen" onclick={() => (open = !open)}>
+<div class="picker" class:inline bind:this={root}>
+	{#if name}<input type="hidden" {name} {form} value={current} />{/if}
+	<button type="button" {id} class="current" aria-haspopup="true" aria-expanded={open} aria-label="Symbol wählen" title="Symbol ändern" onclick={(e) => { e.stopPropagation(); e.preventDefault(); if (open) close(); else open = true; }}>
 		{current}
 	</button>
 	{#if open}
-		<div class="pop" role="dialog" aria-label="Symbol auswählen">
+		<!-- inside a label (chip) a click in here must not toggle its checkbox -->
+		<div class="pop" role="dialog" aria-label="Symbol auswählen" tabindex="-1" onclick={(e) => inline && e.preventDefault()} onkeydown={() => {}}>
 			<div class="grid">
 				{#each icons as icon (icon)}
 					<button type="button" class:on={icon === current} onclick={() => pick(icon)} aria-label={icon}>{icon}</button>
@@ -43,10 +57,10 @@
 					maxlength="4"
 					value={icons.includes(current) ? '' : current}
 					oninput={(e) => e.currentTarget.value && (current = e.currentTarget.value)}
-					onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), (open = false))}
+					onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), close())}
 					placeholder="Emoji eingeben"
 				/>
-				<button type="button" onclick={() => (open = false)}>OK</button>
+				<button type="button" onclick={() => close()}>OK</button>
 			</label>
 		</div>
 	{/if}
@@ -55,6 +69,24 @@
 <style>
 	.picker {
 		position: relative;
+	}
+	.picker.inline {
+		display: inline-block;
+	}
+	.inline .current {
+		width: auto;
+		height: auto;
+		min-height: 0;
+		font-size: inherit;
+		border: 0;
+		background: none;
+		padding: 0 0.15rem 0 0;
+		color: inherit;
+	}
+	.inline .pop {
+		font-size: 1rem;
+		color: var(--text);
+		cursor: default;
 	}
 	.current {
 		width: 3.5rem;

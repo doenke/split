@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.46.0
+- Gruppeneinstellungen: Tipp auf das Symbol einer eigenen Kategorie öffnet die Symbolauswahl; das neue Symbol wird sofort gespeichert
+
 ## 0.45.2
 - Plus-Button: gezeichnetes Plus statt Textzeichen – sitzt jetzt wie die Kamera genau mittig
 

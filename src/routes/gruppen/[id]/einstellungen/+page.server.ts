@@ -46,6 +46,18 @@ export const actions: Actions = {
 		}
 		return { categoryAdded: name };
 	},
+	/** New icon for one of the group's own categories. */
+	categoryIcon: async ({ params, locals, request }) => {
+		await requireGroupAdmin(params.id, locals.user);
+		const f = await request.formData();
+		const icon = String(f.get('icon') ?? '').trim().slice(0, 8);
+		if (!icon) return fail(400, { message: 'Bitte ein Symbol wählen.' });
+		await db
+			.update(schema.categories)
+			.set({ icon })
+			.where(and(eq(schema.categories.id, String(f.get('id'))), eq(schema.categories.groupId, params.id)));
+		return { iconSaved: true };
+	},
 	save: async ({ params, locals, request }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);
 		const f = await request.formData();

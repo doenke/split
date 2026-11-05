@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import IconPicker from '$lib/components/IconPicker.svelte';
 	import { enhance } from '$app/forms';
 	import { phaseHints, phaseLabels, phaseOrder } from '$lib/core/phase';
@@ -9,6 +10,14 @@
 	let altCurrencies = $state<string[]>([...data.altCurrencies]);
 	const currencyNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['de'], { type: 'currency' }) : null;
 	const currencyName = (c: string) => currencyNames?.of(c) ?? '';
+	// changing the icon of an own category is saved right away (its own small form)
+	let iconForm = $state<HTMLFormElement>();
+	let iconFor = $state({ id: '', icon: '' });
+	async function setIcon(id: string, icon: string) {
+		iconFor = { id, icon };
+		await tick();
+		iconForm?.requestSubmit();
+	}
 	// svelte-ignore state_referenced_locally
 	let offeredCats = $state<string[]>(data.categories.filter((c) => c.offered).map((c) => c.id));
 	$effect(() => {
@@ -94,7 +103,10 @@
 			<span class="label">Kategorien beim Erfassen</span>
 			<div class="curs">
 				{#each data.categories as c (c.id)}
-					<label class="cur" class:on={offeredCats.includes(c.id)}><input type="checkbox" name="category" value={c.id} bind:group={offeredCats} />{c.icon} {c.name}</label>
+					<label class="cur" class:on={offeredCats.includes(c.id)}
+						><input type="checkbox" name="category" value={c.id} bind:group={offeredCats} />{#if c.groupId}<!-- own categories: tap the icon to change it -->
+							<IconPicker inline name="" value={c.icon} onpick={(icon) => setIcon(c.id, icon)} />{:else}{c.icon}&nbsp;{/if}{c.name}</label
+					>
 				{/each}
 			</div>
 			<!-- belongs to the separate form "newcat" (forms cannot be nested) -->
@@ -131,6 +143,10 @@
 
 {#if data.isAdmin}
 	<form id="newcat" method="POST" action="?/addCategory" use:enhance></form>
+	<form bind:this={iconForm} method="POST" action="?/categoryIcon" use:enhance={() => async ({ update }) => update({ reset: false })}>
+		<input type="hidden" name="id" value={iconFor.id} />
+		<input type="hidden" name="icon" value={iconFor.icon} />
+	</form>
 {/if}
 {:else}
 	<div class="card small muted">
