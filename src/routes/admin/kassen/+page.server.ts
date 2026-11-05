@@ -26,6 +26,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			kassen.map(async (k) => ({
 				id: k.id,
 				name: k.name,
+				receiverPersonId: k.receiverPersonId,
 				createdBy: k.createdBy ? (person.get(k.createdBy)?.name ?? '?') : null,
 				groups: usedIn.get(k.id) ?? 0,
 				members: (await kasseMembersOf(k.id)).map((m) => ({
@@ -57,6 +58,17 @@ export const actions: Actions = {
 			.set({ isManager: !target.isManager })
 			.where(and(eq(schema.kasseMembers.kasseId, kasseId), eq(schema.kasseMembers.personId, personId)));
 		await audit(db, { groupId: null, personId: user.id, action: 'kasse.manager', entityId: kasseId, data: { personId, isManager: !target.isManager } });
+		return { ok: true };
+	},
+	/** Who receives the payments to this Kasse (one of its members). */
+	receiver: async ({ locals, request }) => {
+		const user = requireInstanceAdmin(locals.user);
+		const f = await request.formData();
+		const kasseId = String(f.get('kasseId'));
+		const personId = String(f.get('personId'));
+		if (!(await kasseMembersOf(kasseId)).some((m) => m.personId === personId)) return fail(404, { message: 'Person nicht in der Kasse.' });
+		await db.update(schema.kassen).set({ receiverPersonId: personId }).where(eq(schema.kassen.id, kasseId));
+		await audit(db, { groupId: null, personId: user.id, action: 'kasse.receiver', entityId: kasseId, data: { personId } });
 		return { ok: true };
 	},
 	/** Only Kassen no group uses any more can be deleted. */

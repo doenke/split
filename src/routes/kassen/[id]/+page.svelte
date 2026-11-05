@@ -2,6 +2,7 @@
 	import { exactMatch, normName } from '$lib/core/people-match';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
+	import { revertOnFailure } from '$lib/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { formatAmount } from '$lib/format';
 	import CostBars from '$lib/components/CostBars.svelte';
@@ -25,15 +26,6 @@
 	const freeCount = $derived(data.known.filter((p) => !p.kassen.length).length);
 	let netting = $state<string | null>(null);
 	const me = $derived(data.members.find((m) => m.personId === data.user?.id));
-	// a refused change (e.g. the last manager) must not leave the box ticked differently than it is
-	const revertOnFailure: import('@sveltejs/kit').SubmitFunction = ({ formElement }) => {
-		const box = formElement.querySelector('input:not([type=hidden])') as HTMLInputElement | null;
-		const before = box ? !box.checked : false;
-		return async ({ result, update }) => {
-			if (result.type === 'failure' && box) box.checked = before;
-			await update();
-		};
-	};
 	const keep = () => async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) => update({ reset: false });
 	const years = $derived([...new Set(data.costs.map((c) => c.year))].sort().reverse());
 	let year = $state<string | null>(null);

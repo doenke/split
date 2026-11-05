@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { revertOnFailure } from '$lib/forms';
 
 	let { data, form } = $props();
 	let query = $state('');
@@ -34,14 +35,23 @@
 			</div>
 			<div class="members">
 				{#each k.members as m (m.personId)}
-					<form method="POST" action="?/manager" class="row member" use:enhance={keep}>
-						<input type="hidden" name="kasseId" value={k.id} />
-						<input type="hidden" name="personId" value={m.personId} />
-						<span class="grow small">
-							{m.name}{#if m.loggedIn}{' '}<span title="hat sich schon angemeldet">✔</span>{/if}{#if m.isManager}{' '}<span class="badge">Verwalter</span>{/if}
-						</span>
-						<button class="link small">{m.isManager ? 'Nicht mehr Verwalter' : 'Zum Verwalter machen'}</button>
-					</form>
+					<div class="member">
+						<div class="small">{m.name}{#if m.loggedIn}{' '}<span title="hat sich schon angemeldet">✔</span>{/if}</div>
+						<div class="row small roles">
+							<form method="POST" action="?/manager" use:enhance={revertOnFailure}>
+								<input type="hidden" name="kasseId" value={k.id} />
+								<input type="hidden" name="personId" value={m.personId} />
+								<label class="check"><input type="checkbox" checked={m.isManager} onchange={(e) => e.currentTarget.form?.requestSubmit()} /> Verwalter</label>
+							</form>
+							<form method="POST" action="?/receiver" use:enhance={revertOnFailure}>
+								<input type="hidden" name="kasseId" value={k.id} />
+								<input type="hidden" name="personId" value={m.personId} />
+								<label class="check"
+									><input type="radio" name="receiver-{k.id}" checked={k.receiverPersonId === m.personId} onchange={(e) => e.currentTarget.form?.requestSubmit()} /> empfängt Zahlungen</label
+								>
+							</form>
+						</div>
+					</div>
 				{:else}
 					<div class="small muted">noch niemand</div>
 				{/each}
@@ -75,6 +85,13 @@
 		border-left: 3px solid var(--primary-soft);
 	}
 	.member {
-		padding: 0.1rem 0;
+		padding: 0.25rem 0;
+	}
+	.roles {
+		gap: 0 1.25rem;
+	}
+	.roles .check {
+		margin: 0;
+		color: var(--muted);
 	}
 </style>

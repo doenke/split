@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { revertOnFailure } from '$lib/forms';
 	import { formatDate } from '$lib/format';
 	import { phaseLabels } from '$lib/core/phase';
 
@@ -40,12 +41,13 @@
 				<div class="body">
 					<div class="small label">Mitglieder</div>
 					{#each g.members as m (m.personId)}
-						<form method="POST" action="?/role" class="row member" use:enhance={keep}>
+						<form method="POST" action="?/role" class="row member" use:enhance={revertOnFailure}>
 							<input type="hidden" name="groupId" value={g.id} />
 							<input type="hidden" name="personId" value={m.personId} />
-							<input type="hidden" name="role" value={m.role === 'admin' ? 'member' : 'admin'} />
-							<span class="grow">{m.name}{#if m.role === 'admin'}{' '}<span class="badge">Gruppenadmin</span>{/if}</span>
-							<button class="link small">{m.role === 'admin' ? 'Nicht mehr Gruppenadmin' : 'Zum Gruppenadmin machen'}</button>
+							<span class="grow">{m.name}</span>
+							<label class="check small"
+								><input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} onchange={(e) => e.currentTarget.form?.requestSubmit()} /> Gruppenadmin</label
+							>
 						</form>
 					{/each}
 					<div class="row actions">
@@ -105,6 +107,11 @@
 	}
 	.member {
 		padding: 0.15rem 0;
+		align-items: center;
+	}
+	.member .check {
+		margin: 0;
+		color: var(--muted);
 	}
 	.actions {
 		margin-top: 0.6rem;

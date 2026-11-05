@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.50.3
+- Instanz-Admin: Rollen ebenfalls per Tickbox – „Gruppenadmin“ in Gruppen, „Verwalter“ und „empfängt Zahlungen“ (neu) in Kassen
+
 ## 0.50.2
 - Kasse: Rollen per Tickbox „Verwalter“ und Auswahlknopf „empfängt Zahlungen“ statt einer Kette von Links; Entfernen als ✕ rechts. Wird eine Änderung abgelehnt (letzter Verwalter), springt der Haken zurück
 
