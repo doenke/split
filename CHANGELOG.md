@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.43.2
+- Kein Phasen-Hinweis auf der Gruppenseite, solange die Gruppe einfach läuft (aktiv)
+
 ## 0.43.1
 - Status „abgerechnet“ heißt jetzt „Abrechnung fertig“
 

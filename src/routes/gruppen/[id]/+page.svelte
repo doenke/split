@@ -104,8 +104,8 @@
 	</a>
 </div>
 
-<!-- what to do now; the final statement card covers "settled" and "square" -->
-{#if data.phase !== 'settled' && data.phase !== 'square'}
+<!-- what to do now – not while it simply runs; the final statement card covers "settled" and "square" -->
+{#if data.phase !== 'active' && data.phase !== 'settled' && data.phase !== 'square'}
 	<p class="phase-hint small" class:due={data.phase === 'ended'}>{phaseHints[data.phase]}</p>
 {/if}
 
