@@ -24,14 +24,17 @@ export const config = {
 		get adminGroup() {
 			return env.OIDC_ADMIN_GROUP || 'admins';
 		},
-		get buttonLabel() {
-			return env.OIDC_BUTTON_LABEL ?? 'Mit OIDC anmelden';
-		},
-		/** the provider's name for texts: OIDC_PROVIDER_NAME, else taken from the button ("Mit Pocket ID anmelden") */
+		/** the provider's name (OIDC_PROVIDER_NAME), used on the login button and in texts */
 		get providerName() {
 			if (env.OIDC_PROVIDER_NAME) return env.OIDC_PROVIDER_NAME;
-			const m = this.buttonLabel.match(/^(?:mit|über|via)\s+(.+?)(?:\s+(?:anmelden|einloggen|login))?$/i);
+			// deprecated: older setups only have the button text ("Mit Pocket ID anmelden")
+			const m = env.OIDC_BUTTON_LABEL?.match(/^(?:mit|über|via)\s+(.+?)(?:\s+(?:anmelden|einloggen|login))?$/i);
 			return m && !/^(oidc|sso)$/i.test(m[1]) ? m[1] : 'Single Sign-on';
+		},
+		get buttonLabel() {
+			// the deprecated OIDC_BUTTON_LABEL only counts as long as no provider name is set
+			if (!env.OIDC_PROVIDER_NAME && env.OIDC_BUTTON_LABEL) return env.OIDC_BUTTON_LABEL;
+			return `Mit ${this.providerName} anmelden`;
 		},
 		get enabled() {
 			return Boolean(env.OIDC_ISSUER && env.OIDC_CLIENT_ID);

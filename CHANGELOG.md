@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.39.0
+- Neue Variable `OIDC_PROVIDER_NAME` (z. B. „Pocket ID“): Der Login-Button heißt dann „Mit Pocket ID anmelden“, die Texte „Angemeldet über Pocket ID“
+- `OIDC_BUTTON_LABEL` ist veraltet: Es wird nur noch gelesen, solange `OIDC_PROVIDER_NAME` fehlt, und beim Start gibt es einen Hinweis im Log
+
 ## 0.38.9
 - Der Login-Anbieter heißt in allen Texten so wie auf dem Login-Button (z. B. „Angemeldet über Pocket ID“); abgeleitet aus `OIDC_BUTTON_LABEL`, überschreibbar mit `OIDC_PROVIDER_NAME`
 

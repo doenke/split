@@ -26,8 +26,10 @@ services:
       # "groups" so the IdP sends the group memberships (for OIDC_ADMIN_GROUP)
       OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email groups}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-admins}
-      OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Anmelden}
+      # name of the login provider: button "Mit … anmelden" and texts like "Angemeldet über …"
       OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-}
+      # deprecated, only read while OIDC_PROVIDER_NAME is empty
+      OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-}
       WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Split}
       # receipt recognition: active as soon as an Anthropic API key is set
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

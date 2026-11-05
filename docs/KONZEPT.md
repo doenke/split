@@ -675,8 +675,8 @@ OIDC_CLIENT_ID=split
 OIDC_CLIENT_SECRET=<aus dem IdP>
 OIDC_SCOPES="openid profile email groups"  # groups: für OIDC_ADMIN_GROUP
 OIDC_ADMIN_GROUP=admins                  # Mitglieder dieser IdP-Gruppe sind Instanz-Admins (Standard: admins)
-OIDC_BUTTON_LABEL="Mit Authentik anmelden"
-OIDC_PROVIDER_NAME=Authentik              # Name in Texten; Standard: aus OIDC_BUTTON_LABEL abgeleitet
+OIDC_PROVIDER_NAME=Authentik             # Button „Mit Authentik anmelden“ und Texte („Angemeldet über Authentik“)
+# OIDC_BUTTON_LABEL ist veraltet und wird nur noch gelesen, solange OIDC_PROVIDER_NAME fehlt
 # Redirect-URI im IdP eintragen: https://split.example.de/auth/oidc/callback
 
 # --- Passkeys (WebAuthn) ---

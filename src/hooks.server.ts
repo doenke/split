@@ -1,4 +1,5 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { runMigrations } from '$lib/server/db';
 import { refreshDisplayNames } from '$lib/server/display';
 import { seedDefaults } from '$lib/server/defaults';
@@ -10,6 +11,8 @@ import { SESSION_COOKIE, validateSession } from '$lib/server/auth/session';
 
 export const init: ServerInit = async () => {
 	await runMigrations();
+	if (env.OIDC_BUTTON_LABEL && !env.OIDC_PROVIDER_NAME)
+		console.warn('OIDC_BUTTON_LABEL ist veraltet – bitte stattdessen OIDC_PROVIDER_NAME setzen (z. B. "Pocket ID"); der Button heißt dann „Mit Pocket ID anmelden“.');
 	await refreshDisplayNames();
 	await seedDefaults();
 	void refreshRatesIfStale();
