@@ -46,6 +46,7 @@ export const actions: Actions = {
 		const groupId = String(f.get('groupId'));
 		const personId = String(f.get('personId'));
 		const role = f.get('role') === 'admin' ? 'admin' : 'member';
+		if (role === 'member' && personId === user.id) return fail(400, { message: 'Du kannst dir die Admin-Rolle nicht selbst entziehen.' });
 		if (role === 'member') {
 			const admins = await db
 				.select({ id: schema.memberships.personId })

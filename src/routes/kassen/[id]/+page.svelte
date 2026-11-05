@@ -224,9 +224,9 @@
 				{#if data.isManager}
 					<div class="row small actions">
 						{#if data.kasse.receiverPersonId !== m.personId}
-							<form method="POST" action="?/setReceiver" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">Zahlungsempfänger</button></form>
+							<form method="POST" action="?/setReceiver" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">Zum Zahlungsempfänger machen</button></form>
 						{/if}
-						<form method="POST" action="?/toggleManager" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">{m.isManager ? 'Kein Verwalter' : 'Verwalter'}</button></form>
+						<form method="POST" action="?/toggleManager" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">{m.isManager ? 'Nicht mehr Verwalter' : 'Zum Verwalter machen'}</button></form>
 						{#if m.personId !== data.user?.id}
 							<form
 								method="POST"

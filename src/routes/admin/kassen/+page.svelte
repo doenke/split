@@ -40,7 +40,7 @@
 						<span class="grow small">
 							{m.name}{#if m.loggedIn}{' '}<span title="hat sich schon angemeldet">✔</span>{/if}{#if m.isManager}{' '}<span class="badge">Verwalter</span>{/if}
 						</span>
-						<button class="link small">{m.isManager ? 'Kein Verwalter' : 'Verwalter'}</button>
+						<button class="link small">{m.isManager ? 'Nicht mehr Verwalter' : 'Zum Verwalter machen'}</button>
 					</form>
 				{:else}
 					<div class="small muted">noch niemand</div>

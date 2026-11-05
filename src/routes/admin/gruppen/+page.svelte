@@ -45,7 +45,9 @@
 							<input type="hidden" name="personId" value={m.personId} />
 							<input type="hidden" name="role" value={m.role === 'admin' ? 'member' : 'admin'} />
 							<span class="grow">{m.name}{#if m.role === 'admin'}{' '}<span class="badge">Admin</span>{/if}</span>
-							<button class="link small">{m.role === 'admin' ? 'Kein Admin' : 'Zum Admin machen'}</button>
+							{#if !(m.role === 'admin' && m.personId === data.user?.id)}
+								<button class="link small">{m.role === 'admin' ? 'Nicht mehr Admin' : 'Zum Admin machen'}</button>
+							{/if}
 						</form>
 					{/each}
 					<div class="row actions">

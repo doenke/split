@@ -178,6 +178,7 @@ export const actions: Actions = {
 		}
 		if (g.isAdmin && f.has('role')) {
 			const role = f.get('role') === 'admin' ? 'admin' : 'member';
+			if (role === 'member' && self && g.user.isOidc) return fail(400, { message: 'Du kannst dir die Admin-Rolle nicht selbst entziehen.' });
 			if (role === 'member' && self) {
 				const admins = (await loadMembers(params.id)).filter((m) => m.role === 'admin');
 				if (admins.length <= 1) return fail(400, { message: 'Die Gruppe braucht mindestens einen Admin.' });

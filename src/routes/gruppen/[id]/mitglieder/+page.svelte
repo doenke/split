@@ -279,7 +279,8 @@
 						</select>
 					</div>
 				{/if}
-				{#if data.isAdmin}
+				<!-- login-provider accounts cannot take their own admin role away -->
+				{#if data.isAdmin && !(m.personId === data.user?.id && data.user?.isOidc && m.role === 'admin')}
 					<label class="check">
 						<input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} />
 						Gruppenadmin

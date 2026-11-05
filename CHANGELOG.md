@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.49.4
+- Klarere Schalter: „Zum Verwalter machen“ / „Nicht mehr Verwalter“, „Zum Zahlungsempfänger machen“, „Zum Admin machen“ / „Nicht mehr Admin“
+- Wer über den Login-Anbieter angemeldet ist, kann sich die Gruppenadmin-Rolle nicht mehr selbst entziehen (Mitgliederliste und Admin → Gruppen)
+
 ## 0.49.3
 - Fehlende Leerzeichen vor Zusätzen ergänzt (Admin → Personen zwischen Anzeigename und Name, Etiketten „du“, „Admin“, „Verwalter“, „von dir angelegt“)
 
