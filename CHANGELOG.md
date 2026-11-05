@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.44.1
+- Symbolauswahl: Segelboot ⛵ ergänzt
+
 ## 0.44.0
 - Status „beendet“ heißt jetzt „wieder zuhause“
 - Einstellungen: alle Status als Liste, der aktuelle ist markiert und erklärt. „Jetzt archivieren“ / „Aus dem Archiv holen“ stehen bei „archiviert“, „Endabrechnung aufheben“ (vorher „Wieder öffnen“) bei „Abrechnung fertig“
