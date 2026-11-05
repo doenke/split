@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.48.0
+- Kassen: Wer aufgenommen wird und in seinen Gruppen den Faktor 1 hat (Erwachsene; neue Personen ebenso), wird automatisch Verwalter – Kinder mit kleinerem Faktor nicht
+
 ## 0.47.2
 - Kassen-Übersicht: Kassen, die du für andere angelegt hast, heißen „von dir angelegt“ statt „von dir verwaltet“
 

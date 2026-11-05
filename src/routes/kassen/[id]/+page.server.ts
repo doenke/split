@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { and, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, max, or } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
@@ -86,9 +86,19 @@ export const actions: Actions = {
 				personIds = [await createPerson(db, { name, createdBy: k.user.id })];
 			}
 		}
-		// the first person of a Kasse set up for others manages it and receives its payments
-		const first = k.members.length === 0;
-		await db.insert(schema.kasseMembers).values(personIds.map((personId, i) => ({ kasseId: params.id, personId, isManager: first && i === 0 })));
+		// adults manage the Kasse: everyone with factor 1 in their groups (new people count as 1, kids usually have less)
+		const factors = await db
+			.select({ personId: schema.memberships.personId, factor: max(schema.memberships.factor) })
+			.from(schema.memberships)
+			.where(inArray(schema.memberships.personId, personIds))
+			.groupBy(schema.memberships.personId);
+		const factorOf = new Map(factors.map((f) => [f.personId, f.factor ?? 1]));
+		const adult = (id: string) => (factorOf.get(id) ?? 1) >= 1;
+		// nobody managing it yet and no adult among them: the first one does
+		const fallback = !k.members.some((m) => m.isManager) && !personIds.some(adult);
+		await db
+			.insert(schema.kasseMembers)
+			.values(personIds.map((personId, i) => ({ kasseId: params.id, personId, isManager: adult(personId) || (fallback && i === 0) })));
 		if (!k.kasse.receiverPersonId) await db.update(schema.kassen).set({ receiverPersonId: personIds[0] }).where(eq(schema.kassen.id, params.id));
 
 		// open groups with at least two people of this Kasse now settle with it
