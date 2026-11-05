@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.45.2
+- Plus-Button: gezeichnetes Plus statt Textzeichen – sitzt jetzt wie die Kamera genau mittig
+
 ## 0.45.1
 - Startseite: ein Abschnitt pro Status, in der Reihenfolge der Phasen (Geplant → Es geht bald los → Aktiv → Wieder zuhause → Abrechnung fertig → Quitt → Archiviert)
 

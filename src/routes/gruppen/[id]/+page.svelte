@@ -251,7 +251,9 @@
 			disabled={snapping}
 		/>
 	</label>
-	<a class="button primary fab" href="{base}/ausgaben/neu" aria-label="Neue Ausgabe">+</a>
+	<a class="button primary fab" href="{base}/ausgaben/neu" aria-label="Neue Ausgabe"
+		><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></a
+	>
 {/if}
 
 <style>
