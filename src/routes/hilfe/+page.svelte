@@ -160,7 +160,7 @@
 	<section id="app">
 		<h2>Als App & offline</h2>
 		<p>
-			Auf der Startseite oder im Profil „📲 Als App installieren“ – auf dem iPhone über Teilen → „Zum Home-Bildschirm“.
+			Oben in der Titelzeile auf „📲 Installieren“ tippen – auf dem iPhone über Teilen → „Zum Home-Bildschirm“.
 			Ausgaben lassen sich auch ohne Netz erfassen; sie werden übertragen, sobald du wieder online bist. Neue Versionen
 			lädt die App selbst.
 		</p>

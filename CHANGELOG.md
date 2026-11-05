@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.40.0
+- „📲 Installieren“ sitzt jetzt in der Titelzeile (nur wo Installieren möglich ist, auf dem iPhone mit kurzer Anleitung) statt auf der Startseite und im Profil
+
 ## 0.39.0
 - Neue Variable `OIDC_PROVIDER_NAME` (z. B. „Pocket ID“): Der Login-Button heißt dann „Mit Pocket ID anmelden“, die Texte „Angemeldet über Pocket ID“
 - `OIDC_BUTTON_LABEL` ist veraltet: Es wird nur noch gelesen, solange `OIDC_PROVIDER_NAME` fehlt, und beim Start gibt es einen Hinweis im Log

@@ -7,35 +7,38 @@
 	}
 	type W = Window & { __installPrompt?: InstallPrompt | null };
 
-	/** banner: dismissible card on the start page; otherwise always shown (profile) */
-	let { banner = false }: { banner?: boolean } = $props();
-
-	const DISMISS_KEY = 'split-install-dismissed';
+	/** Compact "install as app" button for the title bar; only where installing is possible from here. */
 	let installed = $state(false);
 	let prompt = $state<InstallPrompt | null>(null);
 	let ios = $state(false);
-	let dismissed = $state(false);
 	let help = $state(false);
 	let ready = $state(false);
+	let box = $state<HTMLElement>();
 
 	onMount(() => {
 		installed =
 			matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 		ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-		try {
-			dismissed = localStorage.getItem(DISMISS_KEY) === '1';
-		} catch {
-			// storage blocked: just show it
-		}
 		const update = () => (prompt = (window as W).__installPrompt ?? null);
 		update();
 		ready = true;
 		addEventListener('split:installable', update);
 		const onInstalled = () => (installed = true);
 		addEventListener('appinstalled', onInstalled);
+		// close the iOS help on a tap elsewhere or Esc
+		const onClick = (e: MouseEvent) => {
+			if (help && box && !box.contains(e.target as Node)) help = false;
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') help = false;
+		};
+		addEventListener('click', onClick);
+		addEventListener('keydown', onKey);
 		return () => {
 			removeEventListener('split:installable', update);
 			removeEventListener('appinstalled', onInstalled);
+			removeEventListener('click', onClick);
+			removeEventListener('keydown', onKey);
 		};
 	});
 
@@ -51,57 +54,50 @@
 		if (outcome === 'accepted') installed = true;
 	}
 
-	function dismiss() {
-		dismissed = true;
-		try {
-			localStorage.setItem(DISMISS_KEY, '1');
-		} catch {
-			// not remembered, fine
-		}
-	}
-
-	// the banner only appears where installing is actually possible from here
-	const show = $derived(ready && !installed && (!banner || (!dismissed && (prompt !== null || ios))));
+	const show = $derived(ready && !installed && (prompt !== null || ios));
 </script>
 
-{#if ready && installed && !banner}
-	<p class="small muted">✅ Split läuft als App auf diesem Gerät.</p>
-{:else if show}
-	<div class:card={banner} class="install">
-		<div class="row">
-			<button type="button" class="primary" onclick={install}>📲 Als App installieren</button>
-			{#if banner}<button type="button" class="link small" onclick={dismiss}>Nicht jetzt</button>{/if}
-		</div>
-		{#if banner}
-			<p class="small muted">Startet wie eine App vom Homescreen – mit Benachrichtigungen und auch offline.</p>
-		{/if}
+{#if show}
+	<div class="install" bind:this={box}>
+		<button type="button" class="small" onclick={install} aria-expanded={prompt ? undefined : help}>📲 Installieren</button>
 		{#if help}
-			{#if ios}
-				<ol class="small">
+			<div class="pop card small">
+				<strong>Split als App installieren</strong>
+				<ol>
 					<li>In Safari unten auf <strong>Teilen</strong> <span aria-hidden="true">(□↑)</span> tippen</li>
 					<li><strong>„Zum Home-Bildschirm“</strong> wählen</li>
 					<li>Mit <strong>„Hinzufügen“</strong> bestätigen</li>
 				</ol>
-				<p class="small muted">In anderen Browsern auf dem iPhone geht das nicht – bitte Safari verwenden.</p>
-			{:else}
-				<p class="small">
-					Dein Browser bietet das Installieren nicht direkt an. Öffne sein Menü (⋮) und wähle
-					<strong>„App installieren“</strong> oder <strong>„Zum Startbildschirm hinzufügen“</strong>.
-				</p>
-			{/if}
+				<p class="muted">In anderen Browsern auf dem iPhone geht das nicht – bitte Safari verwenden.</p>
+			</div>
 		{/if}
 	</div>
 {/if}
 
 <style>
 	.install {
-		margin-bottom: 1rem;
+		position: relative;
 	}
-	.install p,
-	.install ol {
-		margin: 0.5rem 0 0;
+	.install > button {
+		padding: 0.35rem 0.7rem;
+		white-space: nowrap;
 	}
-	.install ol {
+	.pop {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 0.5rem);
+		width: min(18rem, calc(100vw - 2rem));
+		margin: 0;
+		z-index: 20;
+		text-align: left;
+		font-weight: normal;
+		box-shadow: 0 6px 24px rgb(0 0 0 / 0.15);
+	}
+	.pop ol {
 		padding-left: 1.25rem;
+		margin: 0.5rem 0;
+	}
+	.pop p {
+		margin: 0;
 	}
 </style>

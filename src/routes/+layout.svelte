@@ -8,6 +8,7 @@
 	import { isBusy } from '$lib/busy';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import WelcomeCard from '$lib/components/WelcomeCard.svelte';
+	import InstallButton from '$lib/components/InstallButton.svelte';
 
 	let { data, children } = $props();
 	let online = $state(true);
@@ -83,11 +84,14 @@
 			<img src="/icon.svg" alt="" width="28" height="28" />
 			<span>Split</span>
 		</a>
-		{#if data.user}
-			<a href="/profil" class="me" aria-label="Mein Profil">
-				<Avatar name={data.user.name} color={data.user.color} url={data.user.avatarUrl} size={32} />
-			</a>
-		{/if}
+		<div class="right">
+			<InstallButton />
+			{#if data.user}
+				<a href="/profil" class="me" aria-label="Mein Profil">
+					<Avatar name={data.user.name} color={data.user.color} url={data.user.avatarUrl} size={32} />
+				</a>
+			{/if}
+		</div>
 	</div>
 </header>
 
@@ -137,6 +141,11 @@
 		font-size: 1.2rem;
 		color: var(--text);
 		text-decoration: none;
+	}
+	.right {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
 	}
 	.me {
 		display: flex;
