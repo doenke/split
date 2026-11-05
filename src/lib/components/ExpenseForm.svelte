@@ -175,6 +175,8 @@
 	const initOverrides = !init?.profileId && initRule && initRule.type !== 'individual' ? initRule.factorOverrides : undefined;
 	let keepOverrides = $state(Boolean(initOverrides?.persons && Object.keys(initOverrides.persons).length));
 	const profile = $derived(profiles.find((p) => p.id === profileId) ?? null);
+	// split among everyone with a full factor – directly or through a profile
+	const fullFactorRule = $derived((profile ? profile.rule.type : mode) === 'adults');
 	const factorOf = (m: PersonOption) =>
 		equalWeights && mode !== 'individual'
 			? 1
@@ -706,6 +708,7 @@
 						>×{String(factorOf(m)).replace('.', ',')}</button>
 					{/if}
 					{#if mode === 'all_except' && selected[m.personId]}<span class="badge">ausgenommen</span>{/if}
+					{#if fullFactorRule && m.factor < 1}<span class="badge">nicht dabei · Faktor {String(m.factor).replace('.', ',')}</span>{/if}
 				</span>
 				{#if !profile && mode === 'individual'}
 					<input
@@ -725,6 +728,15 @@
 				</p>
 			{/if}
 		{/each}
+		<!-- "full factor": who takes part and who doesn't, at a glance -->
+		{#if fullFactorRule}
+			{@const inside = members.filter((m) => m.factor >= 1)}
+			{@const outside = members.filter((m) => m.factor < 1)}
+			<p class="hint">
+				<strong>Dabei:</strong> {inside.length ? inside.map((m) => m.name).join(', ') : 'niemand'}
+				{#if outside.length}<br /><strong>Nicht dabei</strong> (Faktor unter 1): {outside.map((m) => `${m.name} (${String(m.factor).replace('.', ',')})`).join(', ')}{/if}
+			</p>
+		{/if}
 		{#if preview && 'error' in preview}<p class="hint error">{preview.error}</p>{/if}
 
 	</details>

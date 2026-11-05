@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.53.1
+- „Voller Faktor“ im Ausgabeformular (auch über ein Profil wie „Alkohol“): unter der Personenliste steht, wer dabei ist und wer nicht – Kinder tragen zusätzlich „nicht dabei · Faktor 0,5“
+
 ## 0.53.0
 - Neue Aufteilung „Voller Faktor“: geteilt wird zwischen allen mit Faktor 1 (oder mehr), also den Erwachsenen – auch in Profilen wählbar
 - Neue feste Kategorie „Alkohol“ 🍺
