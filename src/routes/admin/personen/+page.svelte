@@ -40,8 +40,8 @@
 				</div>
 				<div class="small muted ellipsis">
 					{p.access} · {p.lastLoginAt ? `zuletzt angemeldet ${formatDate(p.lastLoginAt.slice(0, 10))}` : 'nie angemeldet'} ·
-					{p.groups} {p.groups === 1 ? 'Gruppe' : 'Gruppen'}{#if p.email} · {p.email}{/if}
-					{#if p.deactivatedAt} · deaktiviert seit {formatDate(p.deactivatedAt.slice(0, 10))}{/if}
+					{p.groups} {p.groups === 1 ? 'Gruppe' : 'Gruppen'}{#if p.email}{' '}· {p.email}{/if}
+					{#if p.deactivatedAt}{' '}· deaktiviert seit {formatDate(p.deactivatedAt.slice(0, 10))}{/if}
 				</div>
 			</div>
 			{#if p.id !== data.user?.id}

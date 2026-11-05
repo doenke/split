@@ -36,7 +36,7 @@
 <article class="doc">
 	<h1>{data.group.emoji} {data.completion.final ? 'Endabrechnung' : 'Vorläufige Abrechnung'} {data.group.name}</h1>
 	<p class="muted small">
-		{#if data.group.startDate}{formatDate(data.group.startDate)}{#if data.group.endDate} – {formatDate(data.group.endDate)}{/if} · {/if}
+		{#if data.group.startDate}{formatDate(data.group.startDate)}{#if data.group.endDate}{' '}– {formatDate(data.group.endDate)}{/if} · {/if}
 		{data.members.length} Personen ·
 		{#if data.completion.final && data.completion.finalAt}
 			steht seit {formatDate(data.completion.finalAt.slice(0, 10))}
@@ -123,7 +123,7 @@
 					<tr>
 						<td class="nowrap c1">{formatDate(e.date, { day: '2-digit', month: '2-digit' })}</td>
 						<td class="c2">
-							{e.categoryId ? cats.get(e.categoryId)?.icon : ''} {e.title}{#if e.type === 'income'} (Einnahme){/if}
+							{e.categoryId ? cats.get(e.categoryId)?.icon : ''} {e.title}{#if e.type === 'income'}{' '}(Einnahme){/if}
 							{#if e.privateAmount > 0}<div class="muted">davon privat {formatAmount(e.privateAmount, c)}</div>{/if}
 						</td>
 						<td class="c3">{e.payers.map((p) => people.get(p.personId) ?? '?').join(', ')}</td>

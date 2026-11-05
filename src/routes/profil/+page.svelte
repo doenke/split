@@ -56,7 +56,7 @@
 	<div>
 		<h1 style="margin: 0">{user.name}</h1>
 		{#if user.fullName !== user.name}<div class="small muted">{user.fullName}</div>{/if}
-		<div class="small muted">{user.isOidc ? `Angemeldet über ${data.loginProvider}` : 'Gast-Zugang'}{#if user.isInstanceAdmin} · Instanz-Admin{/if}</div>
+		<div class="small muted">{user.isOidc ? `Angemeldet über ${data.loginProvider}` : 'Gast-Zugang'}{#if user.isInstanceAdmin}{' '}· Instanz-Admin{/if}</div>
 	</div>
 </div>
 

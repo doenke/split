@@ -547,7 +547,7 @@
 					{#if autoRate}
 						<p class="hint">
 							1 {currency} = {autoRate.rate.toLocaleString('de-DE', { maximumFractionDigits: 5 })} {baseCurrency}
-							(EZB, {autoRate.rateDate}){#if autoRate.provisional} · <strong>vorläufig</strong>{/if}
+							(EZB, {autoRate.rateDate}){#if autoRate.provisional}{' '}· <strong>vorläufig</strong>{/if}
 						</p>
 					{:else if rateError && typeof navigator !== 'undefined' && !navigator.onLine}
 						<p class="hint">Offline – der Tageskurs wird bei der Übertragung ermittelt.</p>

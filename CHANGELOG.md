@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.49.6
+- Weitere fehlende Leerzeichen ergänzt (Personenliste vor der E-Mail-Adresse, Profil vor „Instanz-Admin“, Abrechnung, Wechselkurs-Hinweis)
+
 ## 0.49.5
 - Klare Begriffe: Die Rolle in einer Gruppe heißt überall „Gruppenadmin“, die Verwaltung der ganzen Installation „Instanz-Admin“ (Profil → Instanz-Admin, Etikett in der Personenliste)
 - Die Sperre gegen das Selbst-Entziehen der Gruppenadmin-Rolle aus 0.49.4 ist wieder entfernt (wie vorher: möglich, solange ein anderer Gruppenadmin bleibt)
