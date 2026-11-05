@@ -3,6 +3,10 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.2
+- Abrechnung: In der Tabelle „Alle Ausgaben mit Anteilen pro Person“ scrollen nur noch die Personen – Datum, Wofür, Bezahlt von und Betrag bleiben stehen (auf dem Handy Datum und Wofür). Auf dem Laptop nutzt die Abrechnung die ganze Fensterbreite
+- „Kosten nach Kategorie“ hat eine Spalte „ohne“ für Ausgaben ohne Kategorie
+
 ## 0.42.1
 - E-Mail-Einstellungen: „Jemand hat eine Zahlung an dich eingetragen“ ohne „bitte bestätigen“ – die E-Mail (und die Benachrichtigung) bittet nur noch ums Bestätigen, wenn die Gruppe Bestätigungen nutzt
 
