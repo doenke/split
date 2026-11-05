@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.50.2
+- Kasse: Rollen per Tickbox „Verwalter“ und Auswahlknopf „empfängt Zahlungen“ statt einer Kette von Links; Entfernen als ✕ rechts. Wird eine Änderung abgelehnt (letzter Verwalter), springt der Haken zurück
+
 ## 0.50.1
 - Sinkt der Faktor eines Gruppenadmins unter 1, fragt Split nach, ob die Person auch nicht mehr Gruppenadmin sein soll
 

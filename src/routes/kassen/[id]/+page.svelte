@@ -25,6 +25,15 @@
 	const freeCount = $derived(data.known.filter((p) => !p.kassen.length).length);
 	let netting = $state<string | null>(null);
 	const me = $derived(data.members.find((m) => m.personId === data.user?.id));
+	// a refused change (e.g. the last manager) must not leave the box ticked differently than it is
+	const revertOnFailure: import('@sveltejs/kit').SubmitFunction = ({ formElement }) => {
+		const box = formElement.querySelector('input:not([type=hidden])') as HTMLInputElement | null;
+		const before = box ? !box.checked : false;
+		return async ({ result, update }) => {
+			if (result.type === 'failure' && box) box.checked = before;
+			await update();
+		};
+	};
 	const keep = () => async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) => update({ reset: false });
 	const years = $derived([...new Set(data.costs.map((c) => c.year))].sort().reverse());
 	let year = $state<string | null>(null);
@@ -218,29 +227,40 @@
 				<div>
 					<strong>{m.name}</strong>
 					{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
-					{#if m.isManager}<span class="badge">Verwalter</span>{/if}
-					{#if data.kasse.receiverPersonId === m.personId}<span class="badge">empfängt Zahlungen</span>{/if}
+					<!-- managers switch roles with tick boxes; others just see the roles -->
+					{#if !data.isManager}
+						{#if m.isManager}<span class="badge">Verwalter</span>{/if}
+						{#if data.kasse.receiverPersonId === m.personId}<span class="badge">empfängt Zahlungen</span>{/if}
+					{/if}
 				</div>
 				{#if data.isManager}
-					<div class="row small actions">
-						{#if data.kasse.receiverPersonId !== m.personId}
-							<form method="POST" action="?/setReceiver" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">Zum Zahlungsempfänger machen</button></form>
-						{/if}
-						<form method="POST" action="?/toggleManager" use:enhance><input type="hidden" name="personId" value={m.personId} /><button class="link">{m.isManager ? 'Nicht mehr Verwalter' : 'Zum Verwalter machen'}</button></form>
-						{#if m.personId !== data.user?.id}
-							<form
-								method="POST"
-								action="?/removeMember"
-								use:enhance={({ cancel }) => {
-									if (!confirm(`${m.name} aus der Kasse entfernen? In den Gruppen rechnet die Person dann wieder für sich allein ab.`)) cancel();
-								}}
+					<div class="row small roles">
+						<form method="POST" action="?/toggleManager" use:enhance={revertOnFailure}>
+							<input type="hidden" name="personId" value={m.personId} />
+							<label class="check"><input type="checkbox" checked={m.isManager} onchange={(e) => e.currentTarget.form?.requestSubmit()} /> Verwalter</label>
+						</form>
+						<!-- exactly one receiver: a radio button -->
+						<form method="POST" action="?/setReceiver" use:enhance={revertOnFailure}>
+							<input type="hidden" name="personId" value={m.personId} />
+							<label class="check"
+								><input type="radio" name="receiver" checked={data.kasse.receiverPersonId === m.personId} onchange={(e) => e.currentTarget.form?.requestSubmit()} /> empfängt Zahlungen</label
 							>
-								<input type="hidden" name="personId" value={m.personId} /><button class="link danger">Entfernen</button>
-							</form>
-						{/if}
+						</form>
 					</div>
 				{/if}
 			</div>
+			{#if data.isManager && m.personId !== data.user?.id}
+				<form
+					method="POST"
+					action="?/removeMember"
+					use:enhance={({ cancel }) => {
+						if (!confirm(`${m.name} aus der Kasse entfernen? In den Gruppen rechnet die Person dann wieder für sich allein ab.`)) cancel();
+					}}
+				>
+					<input type="hidden" name="personId" value={m.personId} />
+					<button class="link danger remove" aria-label="{m.name} entfernen" title="Aus der Kasse entfernen">✕</button>
+				</form>
+			{/if}
 		</div>
 	{/each}
 </div>
@@ -310,9 +330,17 @@
 	.block {
 		display: block !important;
 	}
-	.actions {
-		gap: 0.9rem;
+	.roles {
+		gap: 0.25rem 1.25rem;
 		margin-top: 0.2rem;
+	}
+	.roles .check {
+		margin: 0;
+		color: var(--muted);
+	}
+	.remove {
+		font-size: 1.1rem;
+		padding: 0.25rem 0.5rem;
 	}
 	.small-btn {
 		min-height: 36px;
