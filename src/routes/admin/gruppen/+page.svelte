@@ -17,7 +17,7 @@
 
 <svelte:head><title>Gruppen · Admin · Split</title></svelte:head>
 
-<p class="muted small">Alle Gruppen dieser Split-Instanz. Öffnen können sie nur ihre Mitglieder – hier lassen sich Admins, Archiv und Papierkorb regeln.</p>
+<p class="muted small">Alle Gruppen dieser Split-Instanz. Öffnen können sie nur ihre Mitglieder – hier lassen sich Gruppenadmins, Archiv und Papierkorb regeln.</p>
 {#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}
 
 <input type="search" bind:value={query} placeholder="Gruppe oder Person suchen …" style="margin-bottom: 0.75rem" aria-label="Gruppen suchen" />
@@ -44,10 +44,8 @@
 							<input type="hidden" name="groupId" value={g.id} />
 							<input type="hidden" name="personId" value={m.personId} />
 							<input type="hidden" name="role" value={m.role === 'admin' ? 'member' : 'admin'} />
-							<span class="grow">{m.name}{#if m.role === 'admin'}{' '}<span class="badge">Admin</span>{/if}</span>
-							{#if !(m.role === 'admin' && m.personId === data.user?.id)}
-								<button class="link small">{m.role === 'admin' ? 'Nicht mehr Admin' : 'Zum Admin machen'}</button>
-							{/if}
+							<span class="grow">{m.name}{#if m.role === 'admin'}{' '}<span class="badge">Gruppenadmin</span>{/if}</span>
+							<button class="link small">{m.role === 'admin' ? 'Nicht mehr Gruppenadmin' : 'Zum Gruppenadmin machen'}</button>
 						</form>
 					{/each}
 					<div class="row actions">

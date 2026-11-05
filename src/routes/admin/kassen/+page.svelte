@@ -15,7 +15,7 @@
 <svelte:head><title>Kassen · Admin · Split</title></svelte:head>
 
 <p class="muted small">
-	Alle gemeinsamen Kassen. Als Admin kannst du jede Kasse öffnen und dort alles bearbeiten. ✔ = hat sich schon einmal
+	Alle gemeinsamen Kassen. Als Instanz-Admin kannst du jede Kasse öffnen und dort alles bearbeiten. ✔ = hat sich schon einmal
 	angemeldet.
 </p>
 {#if form && 'message' in form && form.message}<p class="error">{form.message}</p>{/if}

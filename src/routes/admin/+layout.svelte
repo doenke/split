@@ -9,7 +9,7 @@
 </script>
 
 <a href="/profil" class="small">← Profil</a>
-<h1>Admin</h1>
+<h1>Instanz-Admin</h1>
 <nav class="segmented" style="margin-bottom: 1rem">
 	{#each tabs as [href, label] (href)}
 		<a {href} class:active={page.url.pathname.startsWith(href)}>{label}</a>

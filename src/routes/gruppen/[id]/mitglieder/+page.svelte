@@ -210,7 +210,7 @@
 				<div class="badges">
 					<strong>{m.name}</strong>
 					{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
-					{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
+					{#if m.role === 'admin'}<span class="badge">Gruppenadmin</span>{/if}
 					{#if m.doneAt}<span class="badge done" title="hat alles eingetragen">✔ fertig</span>{/if}
 				</div>
 				<div class="small muted">
@@ -279,8 +279,7 @@
 						</select>
 					</div>
 				{/if}
-				<!-- login-provider accounts cannot take their own admin role away -->
-				{#if data.isAdmin && !(m.personId === data.user?.id && data.user?.isOidc && m.role === 'admin')}
+				{#if data.isAdmin}
 					<label class="check">
 						<input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} />
 						Gruppenadmin

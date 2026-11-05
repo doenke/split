@@ -65,7 +65,7 @@
 {#if data.handedOver}
 	<p class="small muted">
 		{data.handedOver === 1 ? 'Eine Kasse, die du für andere angelegt hast, wird' : `${data.handedOver} Kassen, die du für andere angelegt hast, werden`}
-		inzwischen von ihren Verwaltern selbst geführt und hier nicht mehr angezeigt.{#if data.user?.isInstanceAdmin}{' '}Alle Kassen findest du unter <a href="/admin/kassen">Admin → Kassen</a>.{/if}
+		inzwischen von ihren Verwaltern selbst geführt und hier nicht mehr angezeigt.{#if data.user?.isInstanceAdmin}{' '}Alle Kassen findest du unter <a href="/admin/kassen">Instanz-Admin → Kassen</a>.{/if}
 	</p>
 {/if}
 

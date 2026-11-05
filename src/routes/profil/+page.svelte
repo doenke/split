@@ -75,7 +75,7 @@
 </div>
 
 {#if user.isInstanceAdmin}
-	<a href="/admin" class="button full" style="margin-bottom: 1rem">🛠️ Admin: Gruppen, Kassen, Personen</a>
+	<a href="/admin" class="button full" style="margin-bottom: 1rem">🛠️ Instanz-Admin: Gruppen, Kassen, Personen</a>
 {/if}
 
 <form method="POST" action="?/rename" class="card" use:enhance={() => async ({ update }) => update({ reset: false })}>

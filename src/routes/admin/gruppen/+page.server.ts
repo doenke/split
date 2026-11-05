@@ -39,20 +39,19 @@ async function groupOf(id: string) {
 }
 
 export const actions: Actions = {
-	/** Makes a member admin of the group or takes it back (a group keeps at least one admin). */
+	/** Makes a member group admin or takes it back (a group keeps at least one admin). */
 	role: async ({ locals, request }) => {
 		const user = requireInstanceAdmin(locals.user);
 		const f = await request.formData();
 		const groupId = String(f.get('groupId'));
 		const personId = String(f.get('personId'));
 		const role = f.get('role') === 'admin' ? 'admin' : 'member';
-		if (role === 'member' && personId === user.id) return fail(400, { message: 'Du kannst dir die Admin-Rolle nicht selbst entziehen.' });
 		if (role === 'member') {
 			const admins = await db
 				.select({ id: schema.memberships.personId })
 				.from(schema.memberships)
 				.where(and(eq(schema.memberships.groupId, groupId), eq(schema.memberships.role, 'admin')));
-			if (admins.length <= 1) return fail(400, { message: 'Die Gruppe braucht mindestens einen Admin.' });
+			if (admins.length <= 1) return fail(400, { message: 'Die Gruppe braucht mindestens einen Gruppenadmin.' });
 		}
 		await db
 			.update(schema.memberships)

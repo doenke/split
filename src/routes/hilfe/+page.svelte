@@ -95,7 +95,7 @@
 				bis er eindeutig ist (z.B. „Anna Ja.“ und „Anna Je.“). Unter Profil → Name kann sich jeder einen eigenen
 				Anzeigenamen geben, solange es ihn noch nicht gibt.
 			</li>
-			<li><strong>Admins</strong> einer Gruppe dürfen Einstellungen ändern, Personen abschließen und die Gruppe abschließen.</li>
+			<li><strong>Gruppenadmins</strong> dürfen Einstellungen ändern, Personen abschließen und die Gruppe abschließen.</li>
 		</ul>
 	</section>
 
@@ -113,7 +113,7 @@
 				Eine Kasse, zu der du selbst gehörst, kann jede(r) anlegen. Kassen für andere (z.B. befreundete Familien, wenn du
 				eine Gruppe vorbereitest) legt an, wer auch Gruppen anlegen darf (Anmeldung über {data.loginProvider}).
 			</li>
-			<li>Instanz-Admins können unter Profil → Admin alle Kassen öffnen und bearbeiten.</li>
+			<li>Instanz-Admins können unter Profil → Instanz-Admin alle Kassen öffnen und bearbeiten.</li>
 			<li>
 				<strong>Verwalter</strong> werden automatisch alle, die in ihren Gruppen den Faktor 1 haben – also die Erwachsenen,
 				nicht die Kinder. Verwalter lassen sich in der Kasse jederzeit ändern.
@@ -171,7 +171,7 @@
 			<li><strong>archiviert</strong> – von selbst 30 Tage, nachdem alle quitt sind, oder von Hand (Gruppe → Einstellungen → Status)</li>
 		</ul>
 		<p>
-			Admins können eine Endabrechnung in den Einstellungen beim Status aufheben; dann müssen alle erneut abschließen.
+			Gruppenadmins können eine Endabrechnung in den Einstellungen beim Status aufheben; dann müssen alle erneut abschließen.
 		</p>
 		<p>
 			Wer alles eingetragen hat, tippt „Ich habe alles eingetragen“ – für sich oder die ganze Kasse. Solange das Enddatum
@@ -212,7 +212,7 @@
 		</ul>
 		<p>
 			Jede E-Mail hat einen Link zum Abbestellen. Persönliche Zugangslinks kannst du beim Erstellen auch per E-Mail
-			verschicken. Admins können eine Gruppe in den Einstellungen zur <strong>Hintergrundgruppe</strong> machen – dann gibt
+			verschicken. Gruppenadmins können eine Gruppe in den Einstellungen zur <strong>Hintergrundgruppe</strong> machen – dann gibt
 			es zu ihr gar keine E-Mails, z.B. für eine laufende Haushaltskasse.
 		</p>
 	</section>

@@ -178,10 +178,9 @@ export const actions: Actions = {
 		}
 		if (g.isAdmin && f.has('role')) {
 			const role = f.get('role') === 'admin' ? 'admin' : 'member';
-			if (role === 'member' && self && g.user.isOidc) return fail(400, { message: 'Du kannst dir die Admin-Rolle nicht selbst entziehen.' });
 			if (role === 'member' && self) {
 				const admins = (await loadMembers(params.id)).filter((m) => m.role === 'admin');
-				if (admins.length <= 1) return fail(400, { message: 'Die Gruppe braucht mindestens einen Admin.' });
+				if (admins.length <= 1) return fail(400, { message: 'Die Gruppe braucht mindestens einen Gruppenadmin.' });
 			}
 			values.role = role;
 		}
@@ -293,7 +292,7 @@ export const actions: Actions = {
 		if (!members.some((m) => m.personId === personId)) error(404);
 		const claimed = await claimedPersonIds([personId]);
 		if (claimed.has(personId) && !g.isAdmin) {
-			return fail(400, { message: 'Diese Person ist bereits angemeldet. Nur Admins können einen neuen Link erzeugen.' });
+			return fail(400, { message: 'Diese Person ist bereits angemeldet. Nur Gruppenadmins können einen neuen Link erzeugen.' });
 		}
 		const invite = await createPersonalInvite(personId, params.id, g.user.id);
 		const qr = await QRCode.toString(invite.url, { type: 'svg', margin: 1, width: 220 });
