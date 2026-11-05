@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { formatAmount } from '$lib/format';
-	import { phaseSections } from '$lib/core/phase';
+	import { phaseLabels, phaseSections } from '$lib/core/phase';
 
 	let { data } = $props();
 
@@ -51,7 +51,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{#if g.phase === 'ended'}<span class="badge">wieder zuhause</span> {/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
+						{#if g.phase === 'ended' || g.phase === 'soon'}<span class="badge" style="margin-right: 0.35rem">{phaseLabels[g.phase]}</span>{/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
 					</div>
 				</div>
 				<div class="right">

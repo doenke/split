@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.45.0
+- Neuer Status „es geht bald los“ (nur mit Startdatum): Es gibt schon Ausgaben wie Anzahlungen, aber das Startdatum ist noch nicht erreicht. Aktiv wird die Gruppe dann erst mit dem Startdatum
+
 ## 0.44.4
 - Mitgliederliste nach Kasse sortiert: Kassen stehen zuerst als farbig markierter Block mit Überschrift, danach alle, die allein abrechnen
 

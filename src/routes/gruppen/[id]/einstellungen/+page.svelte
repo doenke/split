@@ -147,7 +147,9 @@
 	{@const current = phaseOrder.indexOf(data.phase)}
 	{@const final = data.phase === 'settled' || data.phase === 'square' || (data.phase === 'archived' && data.completion.final)}
 	<ol class="phases">
+		<!-- "soon" only exists with a start date -->
 		{#each phaseOrder as ph, i (ph)}
+			{#if ph !== 'soon' || data.group.startDate || data.phase === 'soon'}
 			<li class:done={i < current} class:current={i === current}>
 				<div class="row">
 					<span class="dot" aria-hidden="true"></span>
@@ -174,6 +176,7 @@
 					<p class="hint">„Endabrechnung aufheben“ führt zurück zum Abschließen – alle müssen dann erneut abschließen.</p>
 				{/if}
 			</li>
+			{/if}
 		{/each}
 	</ol>
 {/snippet}

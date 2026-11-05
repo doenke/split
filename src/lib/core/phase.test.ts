@@ -9,7 +9,11 @@ describe('groupPhase', () => {
 		expect(groupPhase(base, today)).toBe('planned');
 		expect(groupPhase({ ...base, startDate: '2026-07-20' }, today)).toBe('planned');
 		expect(groupPhase({ ...base, startDate: '2026-07-10' }, today)).toBe('active');
-		expect(groupPhase({ ...base, startDate: '2026-07-20', expenseCount: 1 }, today)).toBe('active');
+		expect(groupPhase({ ...base, expenseCount: 1 }, today)).toBe('active');
+	});
+	it('starts soon with expenses before the start date', () => {
+		expect(groupPhase({ ...base, startDate: '2026-07-20', expenseCount: 1 }, today)).toBe('soon');
+		expect(groupPhase({ ...base, startDate: '2026-07-10', expenseCount: 1 }, today)).toBe('active');
 	});
 	it('has ended the day after the end date', () => {
 		expect(groupPhase({ ...base, endDate: '2026-07-10', expenseCount: 2 }, today)).toBe('active');

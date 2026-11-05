@@ -155,7 +155,8 @@
 		<p>Jede Gruppe durchläuft von selbst diese Phasen – zu jeder steht auf der Gruppenseite, was gerade zu tun ist:</p>
 		<ul>
 			<li><strong>geplant</strong> – noch keine Ausgabe und das Startdatum ist noch nicht erreicht</li>
-			<li><strong>aktiv</strong> – ab der ersten Ausgabe oder dem Startdatum</li>
+			<li><strong>es geht bald los</strong> – nur mit Startdatum: es gibt schon Ausgaben (z.B. Anzahlungen), aber das Startdatum ist noch nicht erreicht</li>
+			<li><strong>aktiv</strong> – ab dem Startdatum (ohne Startdatum ab der ersten Ausgabe)</li>
 			<li><strong>wieder zuhause</strong> – das Enddatum ist vorbei; jetzt trägt jede(r) den Rest ein und schließt ab</li>
 			<li><strong>Abrechnung fertig</strong> – alle haben abgeschlossen, die Endabrechnung steht; die Anteile ändern sich nicht mehr</li>
 			<li><strong>quitt</strong> – alle Zahlungen aus der Endabrechnung sind geleistet</li>
