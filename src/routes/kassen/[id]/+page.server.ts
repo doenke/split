@@ -8,6 +8,7 @@ import { kasseOverview, requireKasse, syncKasseToGroups } from '$lib/server/kass
 import { groupCosts } from '$lib/server/costs';
 import { defaultCategories } from '$lib/server/defaults';
 import { today } from '$lib/format';
+import { exactMatch } from '$lib/core/people-match';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -73,10 +74,17 @@ export const actions: Actions = {
 			personIds = picked.filter((id) => !k.members.some((m) => m.personId === id));
 			if (!personIds.length) return fail(400, { message: 'Schon Mitglied.' });
 		} else {
-			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben oder bekannte Personen auswählen.' });
-			const twin = sameName(name, [...k.members, ...(await knownPersons(k.user.id))]);
-			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Personen“ oder ergänze den Nachnamen.` });
-			personIds = [await createPerson(db, { name, createdBy: k.user.id })];
+			// one name field: the exact name of someone known takes that person, anything else is someone new
+			if (!name) return fail(400, { message: 'Bitte einen Namen angeben oder Personen auswählen.' });
+			const known = (await knownPersons(k.user.id)).filter((p) => !k.members.some((m) => m.personId === p.id));
+			const m = exactMatch(name, known, []);
+			if (m.kind === 'ambiguous') return fail(400, { message: `Mehrere Personen heißen „${name}“ – bitte in der Liste auswählen.` });
+			if (m.kind === 'person') personIds = [m.person.id];
+			else {
+				const twin = sameName(name, k.members);
+				if (twin) return fail(400, { message: `${twin.name} ist schon in der Kasse.` });
+				personIds = [await createPerson(db, { name, createdBy: k.user.id })];
+			}
 		}
 		// the first person of a Kasse set up for others manages it and receives its payments
 		const first = k.members.length === 0;

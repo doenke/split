@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NameFields from '$lib/components/NameFields.svelte';
+	import { exactMatch, normName } from '$lib/core/people-match';
 	import KasseSwitchDialog from '$lib/components/KasseSwitchDialog.svelte';
 	import { enhance } from '$app/forms';
 	import Avatar from '$lib/components/Avatar.svelte';
@@ -8,17 +8,20 @@
 
 	let { data, form } = $props();
 	let adding = $state(false);
-	// people from my groups are the usual case when setting up Kassen
-	// svelte-ignore state_referenced_locally
-	let addMode = $state<'new' | 'known'>(data.known.length ? 'known' : 'new');
 	let picked = $state<string[]>([]);
 	let onlyFree = $state(true);
 	let search = $state('');
+	// one field: it filters the known people, and a name nobody has becomes a new person
 	const candidates = $derived(
 		data.known.filter(
-			(p) => (!onlyFree || !p.kassen.length || picked.includes(p.id)) && (!search.trim() || p.name.toLowerCase().includes(search.trim().toLowerCase()))
+			(p) =>
+				picked.includes(p.id) ||
+				((!onlyFree || !p.kassen.length || !!search.trim()) &&
+					(!search.trim() || [p.name, p.fullName].some((n) => normName(n).includes(normName(search)))))
 		)
 	);
+	const typed = $derived(exactMatch(search, data.known, []));
+	const taken = $derived(typed.kind === 'new' ? data.members.find((m) => [m.name, m.fullName].some((n) => normName(n) === normName(search))) : undefined);
 	const freeCount = $derived(data.known.filter((p) => !p.kassen.length).length);
 	let netting = $state<string | null>(null);
 	const me = $derived(data.members.find((m) => m.personId === data.user?.id));
@@ -154,22 +157,29 @@
 		use:enhance={() =>
 			async ({ result, update }) => {
 				await update();
-				if (result.type === 'success') picked = [];
+				if (result.type === 'success') {
+					picked = [];
+					search = '';
+				}
 			}}
 	>
-		{#if data.known.length}
-			<div class="segmented" style="margin-bottom: 0.75rem">
-				<button type="button" class:active={addMode === 'known'} onclick={() => (addMode = 'known')}>Bekannte Personen</button>
-				<button type="button" class:active={addMode === 'new'} onclick={() => (addMode = 'new')}>Neue Person</button>
-			</div>
-		{/if}
-		{#if addMode === 'new'}
-			<NameFields id="kasse-name" />
-		{:else}
-			<div class="row" style="margin-bottom: 0.5rem">
-				<input type="search" bind:value={search} placeholder="Suchen …" class="grow" style="width: auto" aria-label="Personen suchen" />
+		<div class="row" style="margin-bottom: 0.5rem">
+			<input
+				id="kasse-name"
+				name="name"
+				bind:value={search}
+				placeholder={data.known.length ? 'Name – oder unten auswählen' : 'Name, z.B. Lea Müller'}
+				autocomplete="off"
+				class="grow"
+				style="width: auto"
+				aria-label="Name"
+			/>
+			{#if data.known.length && !search.trim()}
 				<label class="check small"><input type="checkbox" bind:checked={onlyFree} /> nur ohne Kasse ({freeCount})</label>
-			</div>
+			{/if}
+		</div>
+		{#if typed.kind === 'person' && !picked.length}<input type="hidden" name="personId" value={typed.person.id} />{/if}
+		{#if data.known.length}
 			<div class="pick">
 				{#each candidates as p (p.id)}
 					<label class="check pick-row" class:on={picked.includes(p.id)}>
@@ -179,13 +189,21 @@
 						{#each p.kassen as k (k)}<span class="badge">{k}</span>{/each}
 					</label>
 				{:else}
-					<p class="small muted">{onlyFree ? 'Alle bekannten Personen sind schon in einer Kasse.' : 'Niemand gefunden.'}</p>
+					<p class="small muted">
+						{search.trim() ? 'Niemand Bekanntes – wird als neue Person angelegt.' : 'Alle bekannten Personen sind schon in einer Kasse.'}
+					</p>
 				{/each}
 			</div>
 		{/if}
+		{#if !picked.length && typed.kind === 'ambiguous'}<p class="hint">Mehrere Personen heißen so – bitte in der Liste auswählen.</p>{/if}
+		{#if !picked.length && taken}<p class="hint">{taken.name} ist schon in der Kasse.</p>{/if}
 		<div class="row" style="margin-top: 0.5rem">
-			<button class="primary grow" disabled={addMode === 'known' && !picked.length}>
-				{addMode === 'known' ? (picked.length > 1 ? `${picked.length} Personen hinzufügen` : picked.length ? '1 Person hinzufügen' : 'Personen auswählen') : 'Hinzufügen'}
+			<button class="primary grow" disabled={!picked.length && (typed.kind === 'empty' || typed.kind === 'ambiguous' || !!taken)}>
+				{#if picked.length > 1}{picked.length} Personen hinzufügen
+				{:else if picked.length}1 Person hinzufügen
+				{:else if typed.kind === 'person'}{typed.person.name} hinzufügen
+				{:else if typed.kind === 'new'}„{search.trim()}“ neu hinzufügen
+				{:else}Name eingeben oder auswählen{/if}
 			</button>
 			<button type="button" onclick={() => (adding = false)}>Fertig</button>
 		</div>

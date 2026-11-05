@@ -84,7 +84,12 @@
 				<strong>Teilnahmezeitraum:</strong> Wer später anreist oder früher abreist, zahlt nur Ausgaben aus seiner Zeit mit.
 				Wer später dazukommt, ist bei „Alle“-Ausgaben ab dann automatisch dabei.
 			</li>
-			<li><strong>Personen anlegen:</strong> mit Vorname und optionalem Nachname. Gibt es den Namen schon, wählst du die bekannte Person.</li>
+			<li>
+				<strong>Personen hinzufügen:</strong> einfach den Namen tippen (Vorname, optional mit Nachname). Split schlägt dabei
+				bekannte Personen aus deinen Gruppen und Kassen vor – und auch die Kasse, in der jemand ist. Wählst du einen
+				Vorschlag oder tippst den vollständigen Namen, kommt genau diese Person (oder die ganze Kasse) dazu; sonst wird
+				eine neue Person angelegt.
+			</li>
 			<li>
 				<strong>Anzeigename:</strong> Split zeigt den Vornamen – und nur wenn es ihn mehrfach gibt, so viel vom Nachnamen,
 				bis er eindeutig ist (z.B. „Anna Ja.“ und „Anna Je.“). Unter Profil → Name kann sich jeder einen eigenen

@@ -9,6 +9,7 @@ import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, 
 import { audit } from '$lib/server/audit';
 import { refreshDisplayNames, shownName } from '$lib/server/display';
 import { displayNameFree } from '$lib/core/display-names';
+import { exactMatch } from '$lib/core/people-match';
 import { mailAddedToGroup, sendInviteMail } from '$lib/server/mailings';
 import { smtpConfigured } from '$lib/server/mail';
 import { today } from '$lib/format';
@@ -29,14 +30,9 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 	const kassenByPerson = Object.fromEntries(
 		await Promise.all(ids.map(async (id) => [id, (await sharedKassenOf(id)).map((k) => ({ id: k.id, name: k.name }))] as const))
 	);
-	// my Kassen with members that are not in the group yet (to add a whole family at once)
-	const myKassen = [];
 	const mine = await accessibleKassenOf(g.user.id);
 	const managedKassen = mine.filter((k) => k.isManager).map((k) => k.id);
-	for (const k of mine) {
-		const missing = (await kasseMembersOf(k.id)).filter((m) => !ids.includes(m.personId));
-		if (missing.length) myKassen.push({ id: k.id, name: k.name, missing: missing.map((m) => m.name) });
-	}
+	const myKassen = await kassenToAdd(g.user.id, ids);
 	const groupLink = g.isAdmin ? await activeGroupInvite(params.id) : null;
 	return {
 		groupLink: groupLink
@@ -52,9 +48,39 @@ export const load: PageServerLoad = async ({ parent, locals, params }) => {
 	};
 };
 
+/** My Kassen with their members – to add a whole family at once (only those not in the group yet). */
+async function kassenToAdd(userId: string, memberIds: string[]) {
+	const out = [];
+	for (const k of await accessibleKassenOf(userId)) {
+		const members = await kasseMembersOf(k.id);
+		out.push({
+			id: k.id,
+			name: k.name,
+			missing: members.filter((m) => !memberIds.includes(m.personId)).map((m) => m.name),
+			members: members.flatMap((m) => [m.name, m.fullName])
+		});
+	}
+	return out;
+}
+
 function parseFactor(v: FormDataEntryValue | null) {
 	const n = parseFloat(String(v ?? '1').replace(',', '.'));
 	return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+}
+
+/** Adds all members of one of my Kassen that are not in the group yet. */
+async function addWholeKasse(g: Awaited<ReturnType<typeof requireGroup>>, groupId: string, kasseId: string, from: string | null) {
+	const current = new Set((await loadMembers(groupId)).map((m) => m.personId));
+	const members = (await kasseMembersOf(kasseId)).filter((m) => !current.has(m.personId));
+	if (!members.length) return fail(400, { message: 'Alle aus dieser Kasse sind schon in der Gruppe.' });
+	for (const m of members) {
+		await db.insert(schema.memberships).values({ groupId, personId: m.personId, participationFrom: from, kasseId });
+		await audit(db, { groupId, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
+	}
+	// members already in the group (settling alone so far) switch to the Kasse as well
+	const switched = await syncKasseToGroups(kasseId, groupId);
+	void mailAddedToGroup(groupId, members.map((m) => m.personId), g.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
+	return { addedKasse: members.length, switched };
 }
 
 export const actions: Actions = {
@@ -74,16 +100,30 @@ export const actions: Actions = {
 			if (!isDate(from)) return fail(400, { message: 'Bitte ein Datum angeben.' });
 		}
 
+		// one name field: a known person or Kasse (picked, or its exact name typed) – otherwise someone new
+		const members = await loadMembers(params.id);
+		const memberIds = members.map((m) => m.personId);
+		const known = (await knownPersons(g.user.id)).filter((p) => !memberIds.includes(p.id));
+		const kassen = await kassenToAdd(g.user.id, memberIds);
+		const pickedKasse = String(f.get('kasseId') ?? '');
+		let target = existingId ? known.find((p) => p.id === existingId) : undefined;
+		let kasse: { id: string } | undefined = pickedKasse ? kassen.find((k) => k.id === pickedKasse) : undefined;
+		if ((existingId && !target) || (pickedKasse && !kasse)) return fail(400, { message: 'Unbekannte Person oder Kasse.' });
+		if (!target && !kasse) {
+			if (!name) return fail(400, { message: 'Bitte einen Namen angeben.' });
+			const m = exactMatch(name, known, kassen);
+			if (m.kind === 'ambiguous') return fail(400, { message: `Mehrere Personen heißen „${name}“ – bitte aus der Liste wählen.` });
+			if (m.kind === 'person') target = known.find((p) => p.id === m.person.id);
+			if (m.kind === 'kasse') kasse = m.kasse;
+		}
+		if (kasse) return addWholeKasse(g, params.id, kasse.id, from);
+
 		let personId: string;
-		if (existingId) {
-			const known = await knownPersons(g.user.id);
-			if (!known.some((p) => p.id === existingId)) return fail(400, { message: 'Unbekannte Person.' });
-			personId = existingId;
-		} else {
-			if (!name) return fail(400, { message: 'Bitte einen Vornamen angeben.' });
-			// the same name twice only confuses: pick the known person or add the last name
-			const twin = sameName(name, [...(await loadMembers(params.id)), ...(await knownPersons(g.user.id))]);
-			if (twin) return fail(400, { message: `„${twin.name}“ gibt es schon. Wähle die Person unter „Bekannte Person“ oder ergänze den Nachnamen.` });
+		if (target) personId = target.id;
+		else {
+			// the same name twice only confuses
+			const twin = sameName(name, members);
+			if (twin) return fail(400, { message: `${twin.name} ist schon in der Gruppe.` });
 			personId = await createPerson(db, { name, createdBy: g.user.id });
 		}
 		const [already] = await db
@@ -106,27 +146,6 @@ export const actions: Actions = {
 		const switched = await syncPersonKassen(personId, params.id);
 		void mailAddedToGroup(params.id, [personId], g.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
 		return { added: personId, switched };
-	},
-
-	/** Adds all members of one of my Kassen that are not in the group yet. */
-	addKasse: async ({ params, locals, request }) => {
-		const g = await requireGroup(params.id, locals.user);
-		if (!canAddPeople(g)) error(403, 'Du darfst keine Personen hinzufügen.');
-		const f = await request.formData();
-		const kasseId = String(f.get('kasseId'));
-		if (!(await accessibleKassenOf(g.user.id)).some((k) => k.id === kasseId)) error(404);
-		const join = String(f.get('join') ?? 'all');
-		const from = join === 'today' ? today() : join === 'date' && isDate(String(f.get('from'))) ? String(f.get('from')) : null;
-		const current = new Set((await loadMembers(params.id)).map((m) => m.personId));
-		const members = (await kasseMembersOf(kasseId)).filter((m) => !current.has(m.personId));
-		for (const m of members) {
-			await db.insert(schema.memberships).values({ groupId: params.id, personId: m.personId, participationFrom: from, kasseId });
-			await audit(db, { groupId: params.id, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
-		}
-		// members already in the group (settling alone so far) switch to the Kasse as well
-		const switched = await syncKasseToGroups(kasseId, params.id);
-		void mailAddedToGroup(params.id, members.map((m) => m.personId), g.user).catch((e) => console.warn('E-Mail fehlgeschlagen:', e));
-		return { addedKasse: members.length, switched };
 	},
 
 	update: async ({ params, locals, request }) => {

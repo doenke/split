@@ -5,17 +5,17 @@
 	import { page } from '$app/state';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { formatDate, today } from '$lib/format';
+	import PersonInput from '$lib/components/PersonInput.svelte';
+	import type { Match } from '$lib/core/people-match';
 
 	let { data, form } = $props();
 	const claimed = $derived(new Set(data.claimed));
 	const hasExpenses = $derived(data.expenses.length > 0);
 
 	let optsOpen = $state(false);
-	let addMode = $state<'new' | 'known' | 'kasse'>('new');
-	// fall back when the chosen source has nobody left to add
-	$effect(() => {
-		if ((addMode === 'kasse' && !data.myKassen.length) || (addMode === 'known' && !data.known.length)) addMode = 'new';
-	});
+	let newName = $state('');
+	let match = $state<Match>({ kind: 'empty' });
+	const isKasse = $derived(match.kind === 'kasse');
 	const canEdit = (personId: string) =>
 		data.isAdmin ||
 		personId === data.user?.id ||
@@ -120,12 +120,13 @@
 {#if data.canAddPeople}
 	<form
 		method="POST"
-		action={addMode === 'kasse' ? '?/addKasse' : '?/add'}
+		action="?/add"
 		class="card"
 		use:enhance={() =>
 			async ({ result, update }) => {
 				await update();
 				if (result.type === 'success') {
+					newName = '';
 					join = 'all';
 					factorText = '1';
 					// next person right away
@@ -133,33 +134,25 @@
 				}
 			}}
 	>
-		{#if addMode === 'kasse'}
-			<div class="field">
-				<label for="kasseId">Kasse</label>
-				<select id="kasseId" name="kasseId">
-					{#each data.myKassen as k (k.id)}<option value={k.id}>{k.name} ({k.missing.join(', ')})</option>{/each}
-				</select>
-			</div>
-		{:else if addMode === 'new'}
-			<!-- one line, like a simple app: name and Enter -->
-			<div class="row">
-				<input id="new-name" name="name" placeholder="Name, z.B. Lea Müller" required autocomplete="off" class="grow" style="width: auto" aria-label="Name" />
-				<button class="primary">Hinzufügen</button>
-			</div>
-		{:else}
-			<div class="field">
-				<label for="personId">Person</label>
-				<select id="personId" name="personId" required>
-					{#each data.known as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
-				</select>
-			</div>
-		{/if}
-		{#if addMode !== 'kasse' || hasExpenses}
+		<!-- one line, like a simple app: name and Enter; known people and Kassen are suggested while typing -->
+		<div class="row top-align">
+			<PersonInput
+				id="new-name"
+				placeholder={data.known.length || data.myKassen.length ? 'Name oder Kasse' : 'Name, z.B. Lea Müller'}
+				persons={data.known}
+				kassen={data.myKassen}
+				taken={data.members}
+				bind:value={newName}
+				bind:match
+			/>
+			<button class="primary">Hinzufügen</button>
+		</div>
+		{#if !isKasse || hasExpenses}
 			<details class="opts" bind:open={optsOpen}>
 				<summary class="small muted">
-					Optionen{addMode !== 'kasse' ? ` · Faktor ${factorText || '1'}` : ''}{hasExpenses ? ` · ${{ all: 'an allen Ausgaben beteiligt', today: 'ab heute', date: 'ab Datum' }[join]}` : ''}
+					Optionen{!isKasse ? ` · Faktor ${factorText || '1'}` : ''}{hasExpenses ? ` · ${{ all: 'an allen Ausgaben beteiligt', today: 'ab heute', date: 'ab Datum' }[join]}` : ''}
 				</summary>
-				{#if addMode !== 'kasse'}
+				{#if !isKasse}
 					<div class="field">
 						<label for="factor">Faktor</label>
 						<input id="factor" name="factor" bind:value={factorText} inputmode="decimal" style="width: 6rem" />
@@ -176,17 +169,6 @@
 					</fieldset>
 				{/if}
 			</details>
-		{/if}
-		{#if addMode !== 'new'}
-			<div class="row">
-				<button class="primary grow">Hinzufügen</button>
-				<button type="button" onclick={() => (addMode = 'new')}>Abbrechen</button>
-			</div>
-		{:else if data.known.length || data.myKassen.length}
-			<div class="small modes">
-				{#if data.known.length}<button type="button" class="link" onclick={() => (addMode = 'known')}>Bekannte Person wählen</button>{/if}
-				{#if data.myKassen.length}<button type="button" class="link" onclick={() => (addMode = 'kasse')}>Ganze Kasse hinzufügen</button>{/if}
-			</div>
 		{/if}
 	</form>
 {/if}
@@ -319,10 +301,8 @@
 	.opts summary {
 		cursor: pointer;
 	}
-	.modes {
-		display: flex;
-		gap: 1rem;
-		margin-top: 0.5rem;
+	.top-align {
+		align-items: flex-start;
 	}
 	.kassen-link {
 		display: inline-block;

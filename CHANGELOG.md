@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.41.0
+- Personen hinzufügen ohne Umschalten zwischen „neu“, „bekannt“ und „Kasse“: Ein Namensfeld schlägt beim Tippen bekannte Personen und Kassen vor – auch die Kasse, in der eine gesuchte Person ist
+- Wer einen Vorschlag wählt oder den vollständigen Namen einer bekannten Person (oder Kasse) eintippt, bekommt genau diese – sonst entsteht eine neue Person
+- Auf der Kassenseite ist das Suchfeld zugleich das Namensfeld für neue Personen
+
 ## 0.40.0
 - „📲 Installieren“ sitzt jetzt in der Titelzeile (nur wo Installieren möglich ist, auf dem iPhone mit kurzer Anleitung) statt auf der Startseite und im Profil
 
