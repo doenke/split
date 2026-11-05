@@ -54,6 +54,18 @@
 		setTimeout(() => (copied = false), 2000);
 	}
 
+	// members grouped by the Kasse they settle with: shared Kassen first, then everyone alone (each by name)
+	const units = $derived.by(() => {
+		const byKasse = new Map<string, typeof data.members>();
+		for (const m of data.members) byKasse.set(m.kasseId, [...(byKasse.get(m.kasseId) ?? []), m]);
+		const list = [...byKasse].map(([id, ms]) => ({
+			id,
+			shared: !ms[0].kassePersonal,
+			name: ms[0].kassePersonal ? ms[0].name : ms[0].kasseName,
+			members: ms.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'))
+		}));
+		return list.sort((a, b) => Number(b.shared) - Number(a.shared) || a.name.localeCompare(b.name, 'de'));
+	});
 	const factorLabel = (f: number) => String(f).replace('.', ',');
 </script>
 
@@ -173,125 +185,139 @@
 	</form>
 {/if}
 
+<!-- sorted by Kasse: families and couples together in a box, then everyone settling alone -->
 <div class="list">
-	{#each data.members as m (m.personId)}
-		<div class="member" class:open={editing === m.personId}>
-			<div class="row top">
-				<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={38} />
-				<div class="grow">
-					<div class="badges">
-						<strong>{m.name}</strong>
-						{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
-						{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
-						{#if m.doneAt}<span class="badge done" title="hat alles eingetragen">✔ fertig</span>{/if}
-					</div>
-					<div class="small muted">
-						{#if claimed.has(m.personId)}angemeldet{:else}ohne Login{/if}
-						{#if m.factor !== 1}· Faktor {factorLabel(m.factor)}{/if}
-						{#if m.participationFrom || m.participationTo}
-							· {m.participationFrom ? formatDate(m.participationFrom, { day: 'numeric', month: 'short' }) : '…'}
-							– {m.participationTo ? formatDate(m.participationTo, { day: 'numeric', month: 'short' }) : '…'}
-						{/if}
-						{#if !m.kassePersonal}· Kasse {m.kasseName}{/if}
-					</div>
+	{#each units as u (u.id)}
+		{#if u.shared}
+			<div class="kasse-group">
+				<div class="kasse-head small">
+					<span>👪</span>
+					<span class="grow"><strong>Kasse {u.name}</strong> <span class="muted">· {u.members.length} Personen, rechnen gemeinsam ab</span></span>
 				</div>
-				{#if canEdit(m.personId)}
-					<button class="link" onclick={() => (editing = editing === m.personId ? null : m.personId)}>
-						{editing === m.personId ? 'Schließen' : 'Bearbeiten'}
-					</button>
-				{/if}
+				{#each u.members as m (m.personId)}{@render member(m)}{/each}
 			</div>
-
-			{#if editing === m.personId}
-				<form
-					method="POST"
-					action="?/update"
-					class="edit"
-					use:enhance={() =>
-						async ({ result, update }) => {
-							await update({ reset: false });
-							if (result.type === 'success') editing = null;
-						}}
-				>
-					<input type="hidden" name="personId" value={m.personId} />
-					{#if data.isAdmin && !claimed.has(m.personId)}
-						<div class="row">
-							<div class="field grow">
-								<label for="n-{m.personId}">Name</label>
-								<input id="n-{m.personId}" name="name" value={m.fullName} />
-							</div>
-							<div class="field grow">
-								<label for="dn-{m.personId}">Anzeigename</label>
-								<input id="dn-{m.personId}" name="displayName" value={m.displayName ?? ''} placeholder={m.name} maxlength="40" />
-							</div>
-						</div>
-					{/if}
-					<div class="row">
-						<div class="field" style="width: 6rem">
-							<label for="f-{m.personId}">Faktor</label>
-							<input id="f-{m.personId}" name="factor" value={factorLabel(m.factor)} inputmode="decimal" />
-						</div>
-						<div class="field grow">
-							<label for="from-{m.personId}">Dabei ab (Anreise)</label>
-							<input id="from-{m.personId}" type="date" name="from" value={m.participationFrom ?? ''} />
-						</div>
-						<div class="field grow">
-							<label for="to-{m.personId}">Dabei bis (Abreise)</label>
-							<input id="to-{m.personId}" type="date" name="to" value={m.participationTo ?? ''} />
-						</div>
-					</div>
-					<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit.</p>
-					{#if (data.kassenByPerson[m.personId] ?? []).length}
-						<div class="field">
-							<label for="k-{m.personId}">Rechnet ab über</label>
-							<select id="k-{m.personId}" name="kasseId">
-								<option value="personal" selected={!!m.kassePersonal}>sich allein</option>
-								{#each data.kassenByPerson[m.personId] as k (k.id)}
-									<option value={k.id} selected={k.id === m.kasseId}>Kasse {k.name}</option>
-								{/each}
-							</select>
-						</div>
-					{/if}
-					{#if data.isAdmin}
-						<label class="check">
-							<input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} />
-							Gruppenadmin
-						</label>
-						<input type="hidden" name="role" value="member" />
-					{/if}
-					<div class="row" style="margin-top: 0.5rem">
-						<button class="primary grow">Speichern</button>
-					</div>
-				</form>
-				<div class="row actions">
-					{#if data.canAddPeople && m.personId !== data.user?.id}
-						<form method="POST" action="?/invite" use:enhance>
-							<input type="hidden" name="personId" value={m.personId} />
-							<button>🔗 {claimed.has(m.personId) ? 'Neuen Zugangslink' : 'Zugangslink erstellen'}</button>
-						</form>
-					{/if}
-					{#if data.isAdmin && m.personId !== data.user?.id}
-						<form
-							method="POST"
-							action="?/remove"
-							use:enhance={({ cancel }) => {
-								if (!confirm(`${m.name} aus der Gruppe entfernen?`)) cancel();
-							}}
-						>
-							<input type="hidden" name="personId" value={m.personId} />
-							<button class="danger">Entfernen</button>
-						</form>
-					{/if}
-				</div>
-			{:else if data.canAddPeople && !claimed.has(m.personId)}
-				<form method="POST" action="?/invite" use:enhance class="inline-invite">
-					<input type="hidden" name="personId" value={m.personId} />
-					<button class="link small">🔗 Zugangslink erstellen</button>
-				</form>
-			{/if}
-		</div>
+		{:else}
+			{@render member(u.members[0])}
+		{/if}
 	{/each}
 </div>
+
+{#snippet member(m: (typeof data.members)[number])}
+	<div class="member" class:open={editing === m.personId}>
+		<div class="row top">
+			<Avatar name={m.name} color={m.color} url={m.avatarUrl} size={38} />
+			<div class="grow">
+				<div class="badges">
+					<strong>{m.name}</strong>
+					{#if m.personId === data.user?.id}<span class="badge">du</span>{/if}
+					{#if m.role === 'admin'}<span class="badge">Admin</span>{/if}
+					{#if m.doneAt}<span class="badge done" title="hat alles eingetragen">✔ fertig</span>{/if}
+				</div>
+				<div class="small muted">
+					{#if claimed.has(m.personId)}angemeldet{:else}ohne Login{/if}
+					{#if m.factor !== 1}· Faktor {factorLabel(m.factor)}{/if}
+					{#if m.participationFrom || m.participationTo}
+						· {m.participationFrom ? formatDate(m.participationFrom, { day: 'numeric', month: 'short' }) : '…'}
+						– {m.participationTo ? formatDate(m.participationTo, { day: 'numeric', month: 'short' }) : '…'}
+					{/if}
+				</div>
+			</div>
+			{#if canEdit(m.personId)}
+				<button class="link" onclick={() => (editing = editing === m.personId ? null : m.personId)}>
+					{editing === m.personId ? 'Schließen' : 'Bearbeiten'}
+				</button>
+			{/if}
+		</div>
+
+		{#if editing === m.personId}
+			<form
+				method="POST"
+				action="?/update"
+				class="edit"
+				use:enhance={() =>
+					async ({ result, update }) => {
+						await update({ reset: false });
+						if (result.type === 'success') editing = null;
+					}}
+			>
+				<input type="hidden" name="personId" value={m.personId} />
+				{#if data.isAdmin && !claimed.has(m.personId)}
+					<div class="row">
+						<div class="field grow">
+							<label for="n-{m.personId}">Name</label>
+							<input id="n-{m.personId}" name="name" value={m.fullName} />
+						</div>
+						<div class="field grow">
+							<label for="dn-{m.personId}">Anzeigename</label>
+							<input id="dn-{m.personId}" name="displayName" value={m.displayName ?? ''} placeholder={m.name} maxlength="40" />
+						</div>
+					</div>
+				{/if}
+				<div class="row">
+					<div class="field" style="width: 6rem">
+						<label for="f-{m.personId}">Faktor</label>
+						<input id="f-{m.personId}" name="factor" value={factorLabel(m.factor)} inputmode="decimal" />
+					</div>
+					<div class="field grow">
+						<label for="from-{m.personId}">Dabei ab (Anreise)</label>
+						<input id="from-{m.personId}" type="date" name="from" value={m.participationFrom ?? ''} />
+					</div>
+					<div class="field grow">
+						<label for="to-{m.personId}">Dabei bis (Abreise)</label>
+						<input id="to-{m.personId}" type="date" name="to" value={m.participationTo ?? ''} />
+					</div>
+				</div>
+				<p class="hint" style="margin-top: -0.5rem">Leer = die ganze Zeit.</p>
+				{#if (data.kassenByPerson[m.personId] ?? []).length}
+					<div class="field">
+						<label for="k-{m.personId}">Rechnet ab über</label>
+						<select id="k-{m.personId}" name="kasseId">
+							<option value="personal" selected={!!m.kassePersonal}>sich allein</option>
+							{#each data.kassenByPerson[m.personId] as k (k.id)}
+								<option value={k.id} selected={k.id === m.kasseId}>Kasse {k.name}</option>
+							{/each}
+						</select>
+					</div>
+				{/if}
+				{#if data.isAdmin}
+					<label class="check">
+						<input type="checkbox" name="role" value="admin" checked={m.role === 'admin'} />
+						Gruppenadmin
+					</label>
+					<input type="hidden" name="role" value="member" />
+				{/if}
+				<div class="row" style="margin-top: 0.5rem">
+					<button class="primary grow">Speichern</button>
+				</div>
+			</form>
+			<div class="row actions">
+				{#if data.canAddPeople && m.personId !== data.user?.id}
+					<form method="POST" action="?/invite" use:enhance>
+						<input type="hidden" name="personId" value={m.personId} />
+						<button>🔗 {claimed.has(m.personId) ? 'Neuen Zugangslink' : 'Zugangslink erstellen'}</button>
+					</form>
+				{/if}
+				{#if data.isAdmin && m.personId !== data.user?.id}
+					<form
+						method="POST"
+						action="?/remove"
+						use:enhance={({ cancel }) => {
+							if (!confirm(`${m.name} aus der Gruppe entfernen?`)) cancel();
+						}}
+					>
+						<input type="hidden" name="personId" value={m.personId} />
+						<button class="danger">Entfernen</button>
+					</form>
+				{/if}
+			</div>
+		{:else if data.canAddPeople && !claimed.has(m.personId)}
+			<form method="POST" action="?/invite" use:enhance class="inline-invite">
+				<input type="hidden" name="personId" value={m.personId} />
+				<button class="link small">🔗 Zugangslink erstellen</button>
+			</form>
+		{/if}
+	</div>
+{/snippet}
 <a href="/kassen" class="small kassen-link">👪 Familien oder Paare als Kasse zusammenfassen →</a>
 
 <style>
@@ -316,6 +342,24 @@
 	}
 	.member {
 		display: block !important;
+	}
+	/* a shared Kasse: framed, with a coloured bar on the left */
+	.kasse-group {
+		display: block !important;
+		padding: 0 !important;
+		border-left: 4px solid var(--primary);
+		background: var(--primary-soft);
+	}
+	.kasse-head {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+	}
+	.kasse-group .member {
+		background: var(--surface);
+		border-top: 1px solid var(--border);
+		padding: 0.75rem 1rem 0.75rem 1.25rem;
 	}
 	.top {
 		flex-wrap: nowrap;
