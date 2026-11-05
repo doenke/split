@@ -38,7 +38,7 @@
 						<input type="hidden" name="kasseId" value={k.id} />
 						<input type="hidden" name="personId" value={m.personId} />
 						<span class="grow small">
-							{m.name}{#if m.loggedIn} <span title="hat sich schon angemeldet">✔</span>{/if}{#if m.isManager} <span class="badge">Verwalter</span>{/if}
+							{m.name}{#if m.loggedIn}{' '}<span title="hat sich schon angemeldet">✔</span>{/if}{#if m.isManager}{' '}<span class="badge">Verwalter</span>{/if}
 						</span>
 						<button class="link small">{m.isManager ? 'Kein Verwalter' : 'Verwalter'}</button>
 					</form>

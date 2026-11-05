@@ -36,7 +36,7 @@
 			<Avatar name={p.display} color={p.color} url={p.avatarUrl} size={34} />
 			<div class="grow">
 				<div class="ellipsis">
-					<strong>{p.display}</strong>{#if p.display !== p.name} <span class="small muted">{p.name}</span>{/if}{#if p.id === data.user?.id} <span class="badge">du</span>{/if}{#if p.isAdmin} <span class="badge">Admin</span>{/if}
+					<strong>{p.display}</strong>{#if p.display !== p.name}{' '}<span class="small muted">{p.name}</span>{/if}{#if p.id === data.user?.id}{' '}<span class="badge">du</span>{/if}{#if p.isAdmin}{' '}<span class="badge">Admin</span>{/if}
 				</div>
 				<div class="small muted ellipsis">
 					{p.access} · {p.lastLoginAt ? `zuletzt angemeldet ${formatDate(p.lastLoginAt.slice(0, 10))}` : 'nie angemeldet'} ·

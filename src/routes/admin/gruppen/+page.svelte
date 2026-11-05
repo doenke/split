@@ -44,7 +44,7 @@
 							<input type="hidden" name="groupId" value={g.id} />
 							<input type="hidden" name="personId" value={m.personId} />
 							<input type="hidden" name="role" value={m.role === 'admin' ? 'member' : 'admin'} />
-							<span class="grow">{m.name}{#if m.role === 'admin'} <span class="badge">Admin</span>{/if}</span>
+							<span class="grow">{m.name}{#if m.role === 'admin'}{' '}<span class="badge">Admin</span>{/if}</span>
 							<button class="link small">{m.role === 'admin' ? 'Kein Admin' : 'Zum Admin machen'}</button>
 						</form>
 					{/each}
