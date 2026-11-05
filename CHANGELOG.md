@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.43.1
+- Status „abgerechnet“ heißt jetzt „Abrechnung fertig“
+
 ## 0.43.0
 - Gruppen-Status ergibt sich jetzt von selbst: geplant → aktiv (erste Ausgabe oder Startdatum) → beendet (Enddatum vorbei) → abgerechnet (alle haben abgeschlossen) → quitt (alles bezahlt) → archiviert
 - Archiviert wird automatisch 30 Tage nach „quitt“ – oder von Hand in den Einstellungen; „Aus dem Archiv holen“ führt zurück in die passende Phase

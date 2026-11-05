@@ -145,7 +145,7 @@ Eine Gruppe hat:
 - **Basiswährung** (z.B. EUR) – siehe Fremdwährungen
 - optional Zeitraum (Reise vom … bis …)
 - Kategorien und Profile (gruppenspezifisch, mit Vorlagen)
-- Status: *aktiv* → *abgerechnet* → *archiviert*
+- Status (ergibt sich von selbst): *geplant* → *aktiv* → *beendet* → *Abrechnung fertig* → *quitt* → *archiviert* (30 Tage nach „quitt“ oder von Hand)
 
 **Gruppe als Vorlage:** Eine bestehende Gruppe kann kopiert werden
 („Sommerurlaub 2028 wie 2027“). Übernommen werden wahlweise Personen samt

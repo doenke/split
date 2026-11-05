@@ -28,7 +28,7 @@ export const phaseLabels: Record<Phase, string> = {
 	planned: 'geplant',
 	active: 'aktiv',
 	ended: 'beendet',
-	settled: 'abgerechnet',
+	settled: 'Abrechnung fertig',
 	square: 'quitt',
 	archived: 'archiviert'
 };
@@ -37,7 +37,7 @@ export const phaseLabels: Record<Phase, string> = {
 export const phaseSections: { title: string; phases: Phase[]; folded?: boolean }[] = [
 	{ title: 'Laufend', phases: ['active', 'ended'] },
 	{ title: 'Geplant', phases: ['planned'] },
-	{ title: 'Abgerechnet', phases: ['settled'] },
+	{ title: 'Abrechnung fertig', phases: ['settled'] },
 	{ title: 'Quitt', phases: ['square'] },
 	{ title: 'Archiviert', phases: ['archived'], folded: true }
 ];
