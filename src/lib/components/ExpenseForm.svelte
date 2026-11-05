@@ -728,15 +728,6 @@
 				</p>
 			{/if}
 		{/each}
-		<!-- "full factor": who takes part and who doesn't, at a glance -->
-		{#if fullFactorRule}
-			{@const inside = members.filter((m) => m.factor >= 1)}
-			{@const outside = members.filter((m) => m.factor < 1)}
-			<p class="hint">
-				<strong>Dabei:</strong> {inside.length ? inside.map((m) => m.name).join(', ') : 'niemand'}
-				{#if outside.length}<br /><strong>Nicht dabei</strong> (Faktor unter 1): {outside.map((m) => `${m.name} (${String(m.factor).replace('.', ',')})`).join(', ')}{/if}
-			</p>
-		{/if}
 		{#if preview && 'error' in preview}<p class="hint error">{preview.error}</p>{/if}
 
 	</details>
