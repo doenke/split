@@ -14,11 +14,11 @@ export type PaymentMethod = (typeof paymentMethods)[number];
 export class SettlementError extends Error {}
 
 /**
- * Records a payment from one Kasse of the group to another. The recipient recording it confirms it at the
- * same time; otherwise the recipient is asked to confirm.
+ * Records a payment from one Kasse of the group to another. Only in groups that want confirmations, the
+ * recipient is asked to confirm (unless they record it themselves); otherwise payments simply count.
  */
 export async function recordSettlement(
-	g: { group: { id: string; name: string; emoji: string; baseCurrency: string }; membership: { kasseId: string }; user: SessionUser },
+	g: { group: { id: string; name: string; emoji: string; baseCurrency: string; settings: { confirmPayments?: boolean } }; membership: { kasseId: string }; user: SessionUser },
 	p: { from: string; to: string; amount: number; method: PaymentMethod; date?: string }
 ) {
 	const groupId = g.group.id;
@@ -26,7 +26,7 @@ export async function recordSettlement(
 	const kassen = new Set((await loadMembers(groupId)).map((m) => m.kasseId));
 	if (!kassen.has(p.from) || !kassen.has(p.to) || p.from === p.to) throw new SettlementError('Ungültige Zahlung.');
 	const id = newId();
-	const confirmed = g.membership.kasseId === p.to;
+	const confirmed = !g.group.settings.confirmPayments || g.membership.kasseId === p.to;
 	await db.insert(schema.settlements).values({
 		id,
 		groupId,
@@ -43,8 +43,10 @@ export async function recordSettlement(
 	const money = formatAmount(p.amount, g.group.baseCurrency);
 	const url = `/gruppen/${groupId}/salden`;
 	const title = `${g.group.emoji} ${g.group.name}`;
-	if (confirmed) {
+	if (g.membership.kasseId === p.to) {
 		void kasseRecipients(groupId, p.from, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat ${money} von dir erhalten. Danke!`, url }));
+	} else if (confirmed) {
+		void kasseRecipients(groupId, p.to, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt.`, url }));
 	} else {
 		void kasseRecipients(groupId, p.to, g.user.id).then((ids) =>
 			notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt – bitte den Eingang bestätigen.`, url })

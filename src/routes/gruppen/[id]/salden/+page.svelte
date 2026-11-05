@@ -8,6 +8,7 @@
 
 	let { data, form } = $props();
 	const currency = $derived(data.group.baseCurrency);
+	const confirming = $derived(data.group.settings.confirmPayments ?? false);
 	const people = $derived(new Map(data.members.map((m) => [m.personId, m])));
 	const kasseName = (id: string) => data.kassen[id]?.name ?? '?';
 	const kasseMembers = (id: string) => data.members.filter((m) => m.kasseId === id);
@@ -229,12 +230,12 @@
 					<div><strong>{kasseName(s.fromKasseId)}</strong> → <strong>{kasseName(s.toKasseId)}</strong></div>
 					<div class="small muted">
 						{formatDate(s.date)} · {methodLabels[s.method]} ·
-						{#if s.status === 'confirmed'}<span class="positive">bestätigt</span>{:else}wartet auf Bestätigung{/if}
-						· eingetragen von {people.get(s.createdBy)?.name ?? '?'}
+						{#if confirming}{#if s.status === 'confirmed'}<span class="positive">bestätigt</span>{:else}wartet auf Bestätigung{/if} ·{/if}
+						eingetragen von {people.get(s.createdBy)?.name ?? '?'}
 					</div>
 				</div>
 				<span class="amount">{formatAmount(s.amount, currency)}</span>
-				{#if s.status === 'pending' && (s.toKasseId === data.myKasseId || data.isAdmin)}
+				{#if confirming && s.status === 'pending' && (s.toKasseId === data.myKasseId || data.isAdmin)}
 					<form method="POST" action="?/confirm" use:enhance>
 						<input type="hidden" name="id" value={s.id} />
 						<button class="small-btn primary">Erhalten</button>

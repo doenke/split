@@ -142,7 +142,10 @@
 			<li>Positiver Saldo: du bekommst Geld. Negativer Saldo: du schuldest Geld.</li>
 			<li>„So wird ausgeglichen“ schlägt möglichst wenige Zahlungen vor. „Bezahlen“ zeigt Wero, Überweisung (GiroCode) oder PayPal mit fertigem Betrag.</li>
 			<li>„Bezahlt“ trägt eine Zahlung ein – auch einen Teilbetrag. „+ Zahlung eintragen“ erfasst z.B. Bargeld, das jemand braucht.</li>
-			<li>Der Empfänger bestätigt den Eingang; trägt er sie selbst ein, gilt sie sofort als bestätigt.</li>
+			<li>
+				Eingetragene Zahlungen zählen sofort. Wer möchte, schaltet in den Gruppeneinstellungen „Empfänger bestätigen
+				Zahlungen“ ein – dann bestätigt der Empfänger den Eingang (trägt er sie selbst ein, gilt sie gleich als bestätigt).
+			</li>
 			<li>Deine Zahlungsdaten (Wero-Adresse, IBAN, PayPal.me) hinterlegst du im Profil.</li>
 		</ul>
 	</section>

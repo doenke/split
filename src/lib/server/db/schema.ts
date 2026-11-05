@@ -139,6 +139,8 @@ export interface GroupSettings {
 	membersCanAddPeople: boolean;
 	/** background group: no e-mails about it at all */
 	quiet?: boolean;
+	/** recipients confirm payments recorded by others (off by default: payments simply count) */
+	confirmPayments?: boolean;
 	/** other currencies offered when entering expenses (besides the group currency) */
 	currencies?: string[];
 	/** categories offered when entering expenses (ids); unset = all */

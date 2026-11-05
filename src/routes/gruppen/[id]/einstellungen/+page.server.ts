@@ -59,6 +59,7 @@ export const actions: Actions = {
 			editOthers: f.get('editOthers') === 'admins' ? ('admins' as const) : ('all' as const),
 			membersCanAddPeople: f.get('membersCanAddPeople') === 'on',
 			quiet: f.get('quiet') === 'on',
+			confirmPayments: f.get('confirmPayments') === 'on',
 			currencies: f.getAll('currency').map(String).filter((c) => /^[A-Z]{3}$/.test(c) && c !== g.group.baseCurrency),
 			categories: f.getAll('category').map(String)
 		};

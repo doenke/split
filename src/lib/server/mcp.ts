@@ -272,7 +272,7 @@ const tools: Tool[] = [
 		name: 'record_payment',
 		title: 'Zahlung eintragen',
 		description:
-			'Trägt eine Zahlung zwischen zwei Personen bzw. Kassen der Gruppe ein (Ausgleich, Teilzahlung, Bargeld). Ohne from zahlt der Nutzer selbst. Der Empfänger muss den Eingang bestätigen, außer der Nutzer ist selbst Empfänger.',
+			'Trägt eine Zahlung zwischen zwei Personen bzw. Kassen der Gruppe ein (Ausgleich, Teilzahlung, Bargeld). Ohne from zahlt der Nutzer selbst. Nur wenn die Gruppe Bestätigungen nutzt, muss der Empfänger den Eingang bestätigen (außer der Nutzer ist selbst Empfänger).',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -308,7 +308,7 @@ const tools: Tool[] = [
 					from: from.kassePersonal ? from.name : from.kasseName,
 					to: to.kassePersonal ? to.name : to.kasseName,
 					amount: major(amount, g.group.baseCurrency),
-					status: res.confirmed ? 'bestätigt' : 'wartet auf Bestätigung durch den Empfänger'
+					...(res.confirmed ? {} : { status: 'wartet auf Bestätigung durch den Empfänger' })
 				};
 			} catch (e) {
 				if (e instanceof SettlementError) throw new ToolError(e.message);

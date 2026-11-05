@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.0
+- Zahlungen bestätigen ist jetzt optional: neue Gruppeneinstellung „Empfänger bestätigen Zahlungen“, standardmäßig aus. Ohne sie zählen eingetragene Zahlungen sofort, und „bestätigt“ / „wartet auf Bestätigung“ wird nirgends angezeigt
+
 ## 0.41.1
 - Verlauf: Schließt jemand für andere ab, steht dort „Sönke hat Stefan abgeschlossen“ (bzw. „hat alle abgeschlossen“, „hat für die ganze Kasse abgeschlossen“) statt nur „hat abgeschlossen“ – auch bei bestehenden Einträgen
 

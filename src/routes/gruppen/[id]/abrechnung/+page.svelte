@@ -77,7 +77,7 @@
 		<table>
 			<tbody>
 				{#each data.settlements as s (s.id)}
-					<tr><td>{formatDate(s.date)}</td><td>{kasseName(s.fromKasseId)} → {kasseName(s.toKasseId)}</td><td>{s.status === 'confirmed' ? 'bestätigt' : 'offen'}</td><td class="r">{formatAmount(s.amount, c)}</td></tr>
+					<tr><td>{formatDate(s.date)}</td><td>{kasseName(s.fromKasseId)} → {kasseName(s.toKasseId)}</td>{#if data.group.settings.confirmPayments}<td>{s.status === 'confirmed' ? 'bestätigt' : 'offen'}</td>{/if}<td class="r">{formatAmount(s.amount, c)}</td></tr>
 				{/each}
 			</tbody>
 		</table>

@@ -172,11 +172,15 @@ export const actions: Actions = {
 		const entry = overview.netting.find((n) => n.kasseId === other && n.currency === currency);
 		if (!entry) return fail(400, { message: 'Die Verrechnung ist nicht mehr aktuell. Bitte neu laden.' });
 		const linkId = newId();
-		// the net receiver recording it confirms it right away
-		const confirmed = entry.amount > 0;
+		// the net receiver recording it confirms it right away; most groups don't use confirmations at all
+		const receiverRecords = entry.amount > 0;
+		const groupSettings = new Map(
+			(await db.select({ id: schema.groups.id, settings: schema.groups.settings }).from(schema.groups).where(inArray(schema.groups.id, entry.parts.map((p) => p.groupId)))).map((r) => [r.id, r.settings])
+		);
 		await db.transaction(async (tx) => {
 			for (const part of entry.parts) {
 				const id = newId();
+				const confirmed = receiverRecords || !groupSettings.get(part.groupId)?.confirmPayments;
 				await tx.insert(schema.settlements).values({
 					id,
 					groupId: part.groupId,
