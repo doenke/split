@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.44.2
+- Salden: Link „Vorläufige Abrechnung ansehen“ ohne „(PDF, CSV)“
+
 ## 0.44.1
 - Symbolauswahl: Segelboot ⛵ ergänzt
 
