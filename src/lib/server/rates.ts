@@ -33,8 +33,28 @@ export async function refreshRatesIfStale() {
 	}
 }
 
+/**
+ * Currencies the ECB doesn't publish but that are pegged to the US dollar (units per 1 USD):
+ * their rate follows from the ECB's USD rate.
+ */
+export const usdPegs: Record<string, number> = {
+	XCD: 2.7, // East Caribbean dollar
+	BBD: 2, // Barbados
+	BSD: 1, // Bahamas
+	BZD: 2, // Belize
+	BMD: 1, // Bermuda
+	KYD: 1 / 1.2 // Cayman Islands
+};
+
+/** Caribbean dollars offered by default (Jamaica, Trinidad & Tobago and Guyana float: rate by hand). */
+export const caribbeanCurrencies = ['XCD', 'BBD', 'BSD', 'BZD', 'BMD', 'KYD', 'JMD', 'TTD', 'GYD'];
+
 async function perEur(currency: string, date: string): Promise<{ perEur: number; date: string } | null> {
 	if (currency === 'EUR') return { perEur: 1, date };
+	if (usdPegs[currency]) {
+		const usd = await perEur('USD', date);
+		return usd && { perEur: usd.perEur * usdPegs[currency], date: usd.date };
+	}
 	const [row] = await db
 		.select()
 		.from(schema.exchangeRates)

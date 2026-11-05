@@ -1,5 +1,5 @@
 import type { GroupSettings } from './db/schema';
-import { commonCurrencies, knownCurrencies } from './rates';
+import { caribbeanCurrencies, commonCurrencies, knownCurrencies } from './rates';
 
 /**
  * Currencies offered in the expense form: the group currency plus the group's alternative currencies.
@@ -11,7 +11,16 @@ export function currencyOptions(group: { baseCurrency: string; settings: GroupSe
 	return [...new Set([group.baseCurrency, ...alternatives, ...extra])];
 }
 
-/** All currencies that can be chosen as alternatives (common ones first). */
-export async function selectableCurrencies() {
-	return [...new Set([...commonCurrencies, ...(await knownCurrencies())])];
+/** Currencies listed for choosing alternatives: common ones first, those with ECB rates, Caribbean dollars, and `own` ones. */
+export async function selectableCurrencies(own: string[] = []) {
+	return [...new Set([...commonCurrencies, ...(await knownCurrencies()), ...caribbeanCurrencies, ...own])];
+}
+
+/** Any ISO 4217 currency is allowed (rates for ones the ECB doesn't publish are entered by hand). */
+export function isCurrency(code: string) {
+	try {
+		return /^[A-Z]{3}$/.test(code) && (Intl.supportedValuesOf?.('currency') ?? [code]).includes(code);
+	} catch {
+		return false;
+	}
 }

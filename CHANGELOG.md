@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.52.0
+- Währungen: Karibische Dollar stehen standardmäßig zur Auswahl (Ostkaribischer, Barbados-, Bahamas-, Belize-, Bermuda-, Kaiman-, Jamaika-, Trinidad-und-Tobago- und Guyana-Dollar)
+- Für die an den US-Dollar gekoppelten (XCD, BBD, BSD, BZD, BMD, KYD) ermittelt Split den Tageskurs automatisch über den EZB-Kurs des US-Dollars
+- Gruppeneinstellungen: „Weitere Währung …“ fügt jede andere ISO-Währung zur Liste hinzu; ohne EZB-Kurs gibt man beim Erfassen den Kurs oder den abgebuchten Betrag an
+
 ## 0.51.0
 - Gruppeneinstellung „Neue Mitglieder mit Faktor 1 werden automatisch Gruppenadmin“ (standardmäßig an); ausgeschaltet kommen alle neuen Mitglieder als normale Mitglieder dazu – auch über den Gruppenlink
 

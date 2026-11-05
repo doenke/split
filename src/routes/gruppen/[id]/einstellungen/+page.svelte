@@ -10,6 +10,24 @@
 	let altCurrencies = $state<string[]>([...data.altCurrencies]);
 	const currencyNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['de'], { type: 'currency' }) : null;
 	const currencyName = (c: string) => currencyNames?.of(c) ?? '';
+	// the listed currencies plus those added here; all ISO currencies to add more
+	let added = $state<string[]>([]);
+	const listed = $derived([...new Set([...data.selectableCurrencies, ...added])]);
+	const allCurrencies: string[] = (() => {
+		try {
+			return Intl.supportedValuesOf('currency');
+		} catch {
+			return [];
+		}
+	})();
+	const moreCurrencies = $derived(allCurrencies.filter((c) => c !== data.group.baseCurrency && !listed.includes(c)));
+	let pickCurrency = $state('');
+	function addCurrency() {
+		if (!pickCurrency) return;
+		added = [...added, pickCurrency];
+		if (!altCurrencies.includes(pickCurrency)) altCurrencies = [...altCurrencies, pickCurrency];
+		pickCurrency = '';
+	}
 	// changing the icon of an own category is saved right away (its own small form)
 	let iconForm = $state<HTMLFormElement>();
 	let iconFor = $state({ id: '', icon: '' });
@@ -122,10 +140,21 @@
 				<span class="muted">{altCurrencies.length ? altCurrencies.join(', ') : 'keine'}</span>
 			</summary>
 			<div class="curlist">
-				{#each data.selectableCurrencies as c (c)}
+				{#each listed as c (c)}
 					<label class="check"><input type="checkbox" name="currency" value={c} bind:group={altCurrencies} /> <strong>{c}</strong> <span class="muted">{currencyName(c)}</span></label>
 				{/each}
 			</div>
+			<!-- any other ISO currency: added to the list and ticked (saved with "Speichern") -->
+			{#if moreCurrencies.length}
+				<div class="row addcur">
+					<select bind:value={pickCurrency} class="grow" aria-label="Weitere Währung">
+						<option value="">Weitere Währung …</option>
+						{#each moreCurrencies as c (c)}<option value={c}>{c} – {currencyName(c)}</option>{/each}
+					</select>
+					<button type="button" disabled={!pickCurrency} onclick={addCurrency}>Hinzufügen</button>
+				</div>
+			{/if}
+			<p class="hint">Für Währungen ohne EZB-Kurs gibst du beim Erfassen den Kurs oder den abgebuchten Betrag an.</p>
 		</details>
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
@@ -235,6 +264,9 @@
 <style>
 	.newcat {
 		align-items: center;
+		margin-top: 0.5rem;
+	}
+	.addcur {
 		margin-top: 0.5rem;
 	}
 	.currencies summary {

@@ -6,7 +6,7 @@ import { audit } from '$lib/server/audit';
 import { reopen } from '$lib/server/closing';
 import { resetCompletion } from '$lib/server/completion';
 import { newId } from '$lib/server/ids';
-import { selectableCurrencies } from '$lib/server/currencies';
+import { isCurrency, selectableCurrencies } from '$lib/server/currencies';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		muted: g.membership.muted,
 		// chosen alternatives, or (never chosen) the foreign currencies already used
 		altCurrencies: g.group.settings.currencies ?? used.filter((c) => c !== g.group.baseCurrency),
-		selectableCurrencies: (await selectableCurrencies()).filter((c) => c !== g.group.baseCurrency)
+		selectableCurrencies: (await selectableCurrencies(g.group.settings.currencies ?? [])).filter((c) => c !== g.group.baseCurrency)
 	};
 };
 
@@ -72,7 +72,7 @@ export const actions: Actions = {
 			quiet: f.get('quiet') === 'on',
 			confirmPayments: f.get('confirmPayments') === 'on',
 			adultsAreAdmins: f.get('adultsAreAdmins') === 'on',
-			currencies: f.getAll('currency').map(String).filter((c) => /^[A-Z]{3}$/.test(c) && c !== g.group.baseCurrency),
+			currencies: [...new Set(f.getAll('currency').map(String))].filter((c) => isCurrency(c) && c !== g.group.baseCurrency),
 			categories: f.getAll('category').map(String)
 		};
 		await db
