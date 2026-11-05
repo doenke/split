@@ -129,6 +129,7 @@
 		</details>
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
+		<label class="check"><input type="checkbox" name="adultsAreAdmins" checked={s.adultsAreAdmins !== false} /> Neue Mitglieder mit Faktor 1 werden automatisch Gruppenadmin</label>
 		<label class="check"><input type="checkbox" name="confirmPayments" checked={s.confirmPayments ?? false} /> Empfänger bestätigen Zahlungen</label>
 		<!-- unticked: only whoever entered an expense, and admins, may change it -->
 		<label class="check"><input type="checkbox" name="editOthers" checked={s.editOthers === 'all'} /> Jeder darf alle Ausgaben bearbeiten</label>

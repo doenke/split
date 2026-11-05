@@ -171,4 +171,6 @@ export async function usualFactors(personIds: string[]) {
 	return new Map(personIds.map((id) => [id, found.get(id) ?? 1]));
 }
 
-export const roleForFactor = (factor: number) => (factor >= 1 ? ('admin' as const) : ('member' as const));
+/** The role of someone joining a group: adults are group admins, unless the group switched that off. */
+export const roleForFactor = (factor: number, settings: { adultsAreAdmins?: boolean }) =>
+	factor >= 1 && settings.adultsAreAdmins !== false ? ('admin' as const) : ('member' as const);

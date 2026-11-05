@@ -43,7 +43,8 @@ async function joinAs(groupId: string, personId: string, actorId: string) {
 	const kasseId = await pickKasseForGroup(personId, groupId, await personalKasseId(db, personId));
 	// someone joining by themselves: with the factor they usually have, adults as group admins
 	const factor = (await usualFactors([personId])).get(personId) ?? 1;
-	await db.insert(schema.memberships).values({ groupId, personId, kasseId, factor, role: roleForFactor(factor) }).onConflictDoNothing();
+	const [group] = await db.select({ settings: schema.groups.settings }).from(schema.groups).where(eq(schema.groups.id, groupId));
+	await db.insert(schema.memberships).values({ groupId, personId, kasseId, factor, role: roleForFactor(factor, group?.settings ?? {}) }).onConflictDoNothing();
 	await audit(db, { groupId, personId: actorId, action: 'member.add', entityId: personId, data: { via: 'group-link' } });
 }
 

@@ -77,7 +77,7 @@ async function addWholeKasse(g: Awaited<ReturnType<typeof requireGroup>>, groupI
 	const factors = await usualFactors(members.map((m) => m.personId));
 	for (const m of members) {
 		const factor = factors.get(m.personId) ?? 1;
-		await db.insert(schema.memberships).values({ groupId, personId: m.personId, factor, role: roleForFactor(factor), participationFrom: from, kasseId });
+		await db.insert(schema.memberships).values({ groupId, personId: m.personId, factor, role: roleForFactor(factor, g.group.settings), participationFrom: from, kasseId });
 		await audit(db, { groupId, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
 	}
 	// members already in the group (settling alone so far) switch to the Kasse as well
@@ -142,7 +142,7 @@ export const actions: Actions = {
 			personId,
 			factor,
 			// adults (factor 1) are group admins from the start
-			role: roleForFactor(factor),
+			role: roleForFactor(factor, g.group.settings),
 			participationFrom: from,
 			kasseId
 		});

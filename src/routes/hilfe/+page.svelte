@@ -95,7 +95,7 @@
 				bis er eindeutig ist (z.B. „Anna Ja.“ und „Anna Je.“). Unter Profil → Name kann sich jeder einen eigenen
 				Anzeigenamen geben, solange es ihn noch nicht gibt.
 			</li>
-			<li><strong>Gruppenadmins</strong> dürfen Einstellungen ändern, Personen abschließen und die Gruppe abschließen. Wer mit Faktor 1 hinzukommt (Erwachsene), ist automatisch Gruppenadmin – Kinder mit kleinerem Faktor nicht.</li>
+			<li><strong>Gruppenadmins</strong> dürfen Einstellungen ändern, Personen abschließen und die Gruppe abschließen. Wer mit Faktor 1 hinzukommt (Erwachsene), ist automatisch Gruppenadmin – Kinder mit kleinerem Faktor nicht. Das lässt sich in den Gruppeneinstellungen abschalten.</li>
 		</ul>
 	</section>
 

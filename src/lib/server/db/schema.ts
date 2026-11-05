@@ -143,6 +143,8 @@ export interface GroupSettings {
 	quiet?: boolean;
 	/** recipients confirm payments recorded by others (off by default: payments simply count) */
 	confirmPayments?: boolean;
+	/** new members with factor 1 become group admins (unset = yes) */
+	adultsAreAdmins?: boolean;
 	/** other currencies offered when entering expenses (besides the group currency) */
 	currencies?: string[];
 	/** categories offered when entering expenses (ids); unset = all */

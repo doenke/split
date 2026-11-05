@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.51.0
+- Gruppeneinstellung „Neue Mitglieder mit Faktor 1 werden automatisch Gruppenadmin“ (standardmäßig an); ausgeschaltet kommen alle neuen Mitglieder als normale Mitglieder dazu – auch über den Gruppenlink
+
 ## 0.50.3
 - Instanz-Admin: Rollen ebenfalls per Tickbox – „Gruppenadmin“ in Gruppen, „Verwalter“ und „empfängt Zahlungen“ (neu) in Kassen
 
