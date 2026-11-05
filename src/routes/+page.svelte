@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { formatAmount } from '$lib/format';
-	import { phaseLabels, phaseSections } from '$lib/core/phase';
+	import { phaseSections } from '$lib/core/phase';
 
 	let { data } = $props();
 
-	// groups by phase: running ones first, archived ones folded away
+	// groups by phase, in the order of the phases; archived ones folded away
 	const sections = $derived(phaseSections.map((s) => ({ ...s, list: data.groups.filter((g) => s.phases.includes(g.phase)) })));
 </script>
 
@@ -51,7 +51,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{#if g.phase === 'ended' || g.phase === 'soon'}<span class="badge" style="margin-right: 0.35rem">{phaseLabels[g.phase]}</span>{/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
+						{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
 					</div>
 				</div>
 				<div class="right">

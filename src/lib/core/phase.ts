@@ -39,14 +39,6 @@ export const phaseLabels: Record<Phase, string> = {
 	archived: 'archiviert'
 };
 
-/** Sections of the group overview, in this order. */
-export const phaseSections: { title: string; phases: Phase[]; folded?: boolean }[] = [
-	{ title: 'Laufend', phases: ['active', 'ended'] },
-	{ title: 'Geplant', phases: ['soon', 'planned'] },
-	{ title: 'Abrechnung fertig', phases: ['settled'] },
-	{ title: 'Quitt', phases: ['square'] },
-	{ title: 'Archiviert', phases: ['archived'], folded: true }
-];
 
 /** What to do in each phase – shown on the group page and next to the status. */
 export const phaseHints: Record<Phase, string> = {
@@ -58,3 +50,10 @@ export const phaseHints: Record<Phase, string> = {
 	square: 'Alles ausgeglichen – ihr seid quitt! 🎉 Nach 30 Tagen kommt die Gruppe von selbst ins Archiv.',
 	archived: 'Diese Gruppe ist archiviert – von Hand oder von selbst 30 Tage, nachdem alle quitt waren.'
 };
+
+/** Sections of the group overview: one per phase, in the order of the phases; archived ones folded away. */
+export const phaseSections: { title: string; phases: Phase[]; folded?: boolean }[] = phaseOrder.map((ph) => ({
+	title: phaseLabels[ph].charAt(0).toUpperCase() + phaseLabels[ph].slice(1),
+	phases: [ph],
+	folded: ph === 'archived'
+}));
