@@ -108,13 +108,14 @@
 				</p>
 		</div>
 		<div class="field">
-			<label for="cat-{p?.id}">Kategorie vorschlagen</label>
+			<label for="cat-{p?.id}">Mit Kategorie verknüpfen</label>
 			<select id="cat-{p?.id}" name="defaultCategoryId">
 				<option value="">–</option>
 				{#each data.categories as c (c.id)}
 					<option value={c.id} selected={c.id === p?.defaultCategoryId}>{c.icon} {c.name}</option>
 				{/each}
 			</select>
+			<p class="hint">Wer das Profil wählt, bekommt die Kategorie dazu – und wer die Kategorie wählt, das Profil.</p>
 		</div>
 		<div class="row">
 			<button class="primary grow">Speichern</button>
@@ -132,7 +133,7 @@
 				<span class="icon">{p.icon}</span>
 				<div class="grow">
 					<strong>{p.name}</strong>
-					<div class="small muted">{describe(p.rule)}{#if p.defaultCategoryId && cats.get(p.defaultCategoryId)}{` · ${cats.get(p.defaultCategoryId)?.name}`}{/if}</div>
+					<div class="small muted">{describe(p.rule)}{#if p.defaultCategoryId && cats.get(p.defaultCategoryId)}{` · verknüpft mit ${cats.get(p.defaultCategoryId)?.icon} ${cats.get(p.defaultCategoryId)?.name}`}{/if}</div>
 				</div>
 				{#if data.isAdmin && editing !== p.id}
 					<button class="link" onclick={() => startEdit(p.id, p.rule)}>Bearbeiten</button>
