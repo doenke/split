@@ -1,6 +1,5 @@
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
-import { accessibleKassenOf } from '$lib/server/kassen';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
@@ -14,7 +13,5 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			.limit(1);
 		hasPasskey = rows.length > 0;
 	}
-	// the Kassen menu only for those who use Kassen (it stays reachable from members and profile)
-	const hasKassen = locals.user ? (await accessibleKassenOf(locals.user.id)).length > 0 : false;
-	return { user: locals.user, hasPasskey, hasKassen };
+	return { user: locals.user, hasPasskey };
 };

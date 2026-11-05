@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.8
+- Titelzeile aufgeräumt: nur noch Logo (zur Gruppenübersicht) und Profilbild – „Gruppen“ und „Kassen“ sind raus, Kassen findest du im Profil
+
 ## 0.38.7
 - Standardkategorie „Sprit“ entfernt – Ausgaben damit zählen jetzt zu „Transport“
 
