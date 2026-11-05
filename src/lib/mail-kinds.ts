@@ -4,7 +4,8 @@ export const mailKinds = [
 	{ key: 'payment_reminder', label: 'Zahlungserinnerung, wenn dich jemand an eine offene Zahlung erinnert', default: true },
 	{ key: 'group_added', label: 'Jemand hat dich zu einer Gruppe hinzugefügt', default: false },
 	{ key: 'new_expense', label: 'Neue Ausgabe in einer deiner Gruppen', default: false },
-	{ key: 'payment_to_confirm', label: 'Jemand hat eine Zahlung an dich eingetragen – bitte bestätigen', default: false },
+	// key kept from when payments always had to be confirmed (stored preferences use it)
+	{ key: 'payment_to_confirm', label: 'Jemand hat eine Zahlung an dich eingetragen', default: false },
 	{ key: 'completion_reminder', label: 'Erinnerung, deine Ausgaben einzutragen und abzuschließen', default: false },
 	{ key: 'final_statement', label: 'Die Endabrechnung einer Gruppe steht', default: false },
 	{ key: 'open_payments', label: 'Wöchentliche Erinnerung an Zahlungen, die du noch leisten musst', default: false }

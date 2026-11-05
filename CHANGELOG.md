@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.1
+- E-Mail-Einstellungen: „Jemand hat eine Zahlung an dich eingetragen“ ohne „bitte bestätigen“ – die E-Mail (und die Benachrichtigung) bittet nur noch ums Bestätigen, wenn die Gruppe Bestätigungen nutzt
+
 ## 0.42.0
 - Zahlungen bestätigen ist jetzt optional: neue Gruppeneinstellung „Empfänger bestätigen Zahlungen“, standardmäßig aus. Ohne sie zählen eingetragene Zahlungen sofort, und „bestätigt“ / „wartet auf Bestätigung“ wird nirgends angezeigt
 

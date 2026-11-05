@@ -134,8 +134,8 @@ export async function mailPaymentReminder(group: Group, from: string, to: string
 	);
 }
 
-/** A payment to the recipient was recorded by someone else: please confirm it. */
-export async function mailPaymentToConfirm(group: Group, to: string, amount: number, author: { id: string; name: string }) {
+/** A payment to the recipient was recorded by someone else (in groups with confirmations: please confirm it). */
+export async function mailPaymentReceived(group: Group, to: string, amount: number, author: { id: string; name: string }, confirm: boolean) {
 	const ids = await kasseRecipients(group.id, to, author.id);
 	await mailPeople(
 		ids,
@@ -144,9 +144,10 @@ export async function mailPaymentToConfirm(group: Group, to: string, amount: num
 			subject: `${group.emoji} ${group.name}: ${author.name} hat dir ${formatAmount(amount, group.baseCurrency)} gezahlt`,
 			lines: [
 				`Hallo ${p.name},`,
-				`${author.name} hat in „${group.name}“ eine Zahlung über ${formatAmount(amount, group.baseCurrency)} an dich eingetragen. Bitte bestätige den Eingang, sobald das Geld da ist.`
+				`${author.name} hat in „${group.name}“ eine Zahlung über ${formatAmount(amount, group.baseCurrency)} an dich eingetragen.` +
+					(confirm ? ' Bitte bestätige den Eingang, sobald das Geld da ist.' : '')
 			],
-			action: { label: 'Eingang bestätigen', url: groupUrl(group.id, '/salden') }
+			action: { label: confirm ? 'Eingang bestätigen' : 'Zahlungen ansehen', url: groupUrl(group.id, '/salden') }
 		}),
 		{ groupId: group.id }
 	);

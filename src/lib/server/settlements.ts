@@ -3,7 +3,7 @@ import { audit } from './audit';
 import { newId } from './ids';
 import { loadMembers } from './groups';
 import { kasseRecipients, notify } from './push';
-import { mailPaymentToConfirm } from './mailings';
+import { mailPaymentReceived } from './mailings';
 import { formatAmount } from '$lib/core/currency';
 import { today } from '$lib/format';
 import type { SessionUser } from './auth/session';
@@ -45,13 +45,11 @@ export async function recordSettlement(
 	const title = `${g.group.emoji} ${g.group.name}`;
 	if (g.membership.kasseId === p.to) {
 		void kasseRecipients(groupId, p.from, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat ${money} von dir erhalten. Danke!`, url }));
-	} else if (confirmed) {
-		void kasseRecipients(groupId, p.to, g.user.id).then((ids) => notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt.`, url }));
 	} else {
 		void kasseRecipients(groupId, p.to, g.user.id).then((ids) =>
-			notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt – bitte den Eingang bestätigen.`, url })
+			notify(ids, { title, body: `${g.user.name} hat dir ${money} gezahlt${confirmed ? '.' : ' – bitte den Eingang bestätigen.'}`, url })
 		);
-		void mailPaymentToConfirm(g.group, p.to, p.amount, g.user).catch((e) => console.warn('E-Mail zur Zahlung fehlgeschlagen:', e));
+		void mailPaymentReceived(g.group, p.to, p.amount, g.user, !confirmed).catch((e) => console.warn('E-Mail zur Zahlung fehlgeschlagen:', e));
 	}
 	return { id, confirmed };
 }
