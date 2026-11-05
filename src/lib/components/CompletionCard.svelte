@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Avatar from './Avatar.svelte';
 	import { formatDate } from '$lib/format';
+	import { page } from '$app/state';
 
 	interface M {
 		personId: string;
@@ -38,16 +39,22 @@
 	const shared = $derived(myKasse.length > 1);
 	const kasseDone = $derived(myKasse.every((m) => done.has(m.personId) || !completion.required.includes(m.personId)));
 	const missing = $derived(members.filter((m) => completion.required.includes(m.personId) && !done.has(m.personId)));
+	// on the balances page the link to it would point to itself
+	const onSalden = $derived(page.url.pathname.endsWith('/salden'));
 	let open = $state(false);
 	// before the end date (or without one) the hint stays small; it unfolds on request
 	let expanded = $state(false);
 </script>
 
 {#if completion.final}
-	<a class="card final" href="/gruppen/{groupId}/salden">
+	<div class="card final">
 		<strong>✅ Die Endabrechnung steht{completion.finalAt ? ` seit ${formatDate(completion.finalAt.slice(0, 10))}` : ''}.</strong>
-		<span class="small">Alle haben ihre Ausgaben eingetragen. Zum Ausgleichen →</span>
-	</a>
+		<span class="small">Alle haben ihre Ausgaben eingetragen.</span>
+		<span class="small links">
+			{#if !onSalden}<a href="/gruppen/{groupId}/salden">Zum Ausgleichen →</a>{/if}
+			<a href="/gruppen/{groupId}/abrechnung">📄 Detaillierte Abrechnung →</a>
+		</span>
+	</div>
 {:else if completion.required.length && !completion.due && !expanded}
 	<div class="compact small muted">
 		<span class="grow">{meDone ? '✔ Du bist fertig · ' : ''}{completion.done.length} von {completion.required.length} haben alles eingetragen</span>
@@ -147,6 +154,12 @@
 		color: inherit;
 		background: var(--primary-soft);
 		border-color: var(--primary);
+	}
+	.final .links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.25rem;
+		margin-top: 0.2rem;
 	}
 	.progress {
 		height: 6px;

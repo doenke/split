@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.3
+- Box „Die Endabrechnung steht“: zusätzlich ein Link zur detaillierten Abrechnung; auf der Salden-Seite fällt der Link „Zum Ausgleichen“ weg (er führte auf die Seite selbst)
+
 ## 0.42.2
 - Abrechnung: In der Tabelle „Alle Ausgaben mit Anteilen pro Person“ scrollen nur noch die Personen – Datum, Wofür, Bezahlt von und Betrag bleiben stehen (auf dem Handy Datum und Wofür). Auf dem Laptop nutzt die Abrechnung die ganze Fensterbreite
 - „Kosten nach Kategorie“ hat eine Spalte „ohne“ für Ausgaben ohne Kategorie
