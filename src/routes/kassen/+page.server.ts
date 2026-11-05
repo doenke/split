@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { and, inArray, isNotNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { accessibleKassenOf, kasseMembersOf, kasseOverview } from '$lib/server/kassen';
@@ -6,15 +7,26 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(303, '/login');
-	const kassen = await accessibleKassenOf(locals.user.id);
+	const all = await Promise.all(
+		(await accessibleKassenOf(locals.user.id)).map(async (k) => ({ ...k, members: await kasseMembersOf(k.id) }))
+	);
+	// Kassen set up for others are handed over once one of their managers has logged in: they leave this list
+	// (the creator can still open them; instance admins find all of them under Admin → Kassen)
+	const managers = [...new Set(all.filter((k) => !k.isMember).flatMap((k) => k.members.filter((m) => m.isManager).map((m) => m.personId)))];
+	const loggedIn = new Set(
+		managers.length
+			? (
+					await db
+						.select({ id: schema.persons.id })
+						.from(schema.persons)
+						.where(and(inArray(schema.persons.id, managers), isNotNull(schema.persons.lastLoginAt)))
+				).map((r) => r.id)
+			: []
+	);
+	const kassen = all.filter((k) => k.isMember || !k.members.some((m) => m.isManager && loggedIn.has(m.personId)));
 	return {
-		kassen: await Promise.all(
-			kassen.map(async (k) => ({
-				...k,
-				members: await kasseMembersOf(k.id),
-				totals: (await kasseOverview(k.id)).totals
-			}))
-		)
+		kassen: await Promise.all(kassen.map(async (k) => ({ ...k, totals: (await kasseOverview(k.id)).totals }))),
+		handedOver: all.length - kassen.length
 	};
 };
 

@@ -58,10 +58,10 @@ export async function requireKasse(kasseId: string, user: SessionUser | null) {
 	if (!kasse || kasse.personalOf) error(404, 'Kasse nicht gefunden.');
 	const members = await kasseMembersOf(kasseId);
 	const me = members.find((m) => m.personId === user.id);
-	// whoever created a Kasse for others manages it without being a member
+	// whoever created a Kasse for others manages it without being a member; instance admins manage all
 	const creator = kasse.createdBy === user.id;
-	if (!me && !creator) error(404, 'Kasse nicht gefunden.');
-	return { kasse, members, isManager: me ? me.isManager : creator, isMember: !!me, user };
+	if (!me && !creator && !user.isInstanceAdmin) error(404, 'Kasse nicht gefunden.');
+	return { kasse, members, isManager: (me ? me.isManager : creator) || user.isInstanceAdmin, isMember: !!me, user };
 }
 
 /**

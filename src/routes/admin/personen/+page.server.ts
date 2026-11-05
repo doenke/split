@@ -1,15 +1,11 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { requireInstanceAdmin } from '$lib/server/admin';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { audit } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
 import { shownName } from '$lib/server/display';
 
-function requireInstanceAdmin(user: App.Locals['user']) {
-	if (!user) redirect(303, '/login');
-	if (!user.isInstanceAdmin) error(403, 'Nur für Instanz-Admins.');
-	return user;
-}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireInstanceAdmin(locals.user);
@@ -23,7 +19,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 				color: schema.persons.color,
 				avatarUrl: schema.persons.avatarUrl,
 				isAdmin: schema.persons.isAdmin,
-				deactivatedAt: schema.persons.deactivatedAt
+				deactivatedAt: schema.persons.deactivatedAt,
+				lastLoginAt: schema.persons.lastLoginAt
 			})
 			.from(schema.persons)
 			.where(isNull(schema.persons.mergedInto))
@@ -43,6 +40,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			return {
 				...p,
 				deactivatedAt: p.deactivatedAt?.toISOString() ?? null,
+				lastLoginAt: p.lastLoginAt?.toISOString() ?? null,
 				access: types.includes('oidc') ? 'Login' : types.includes('passkey') ? 'Passkey' : 'ohne Zugang',
 				groups: groupCount.get(p.id) ?? 0
 			};

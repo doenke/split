@@ -3,6 +3,14 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.49.0
+- Admin-Bereich (Profil → Admin) mit drei Reitern:
+  - Gruppen: alle Gruppen mit Status, Mitgliedern und Ausgaben; Admins ernennen/abziehen, archivieren, in den Papierkorb legen/wiederherstellen
+  - Kassen: alle gemeinsamen Kassen mit Mitgliedern; Verwalter setzen, ungenutzte Kassen löschen, jede Kasse öffnen und bearbeiten
+  - Personen: wie bisher, jetzt mit „zuletzt angemeldet“
+- Split merkt sich, wann sich jemand zuletzt angemeldet hat (Link, Passkey oder Login-Anbieter)
+- Meine Kassen: Kassen, die du für andere angelegt hast, verschwinden aus deiner Liste, sobald sich einer ihrer Verwalter angemeldet hat
+
 ## 0.48.0
 - Kassen: Wer aufgenommen wird und in seinen Gruppen den Faktor 1 hat (Erwachsene; neue Personen ebenso), wird automatisch Verwalter – Kinder mit kleinerem Faktor nicht
 

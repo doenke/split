@@ -237,7 +237,8 @@ button:disabled {
 	gap: 3px;
 	flex-wrap: wrap;
 }
-.segmented button {
+.segmented button,
+.segmented > a {
 	flex: 1;
 	border: 0;
 	background: transparent;
@@ -245,7 +246,16 @@ button:disabled {
 	padding: 0.4rem 0.6rem;
 	font-weight: 500;
 }
-.segmented button.active {
+.segmented > a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
+	color: var(--text);
+	text-decoration: none;
+}
+.segmented button.active,
+.segmented > a.active {
 	background: var(--surface);
 	box-shadow: var(--shadow);
 	font-weight: 700;

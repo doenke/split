@@ -25,6 +25,7 @@ export async function createSession(cookies: Cookies, personId: string, isOidc: 
 	const token = newToken();
 	const expiresAt = new Date(Date.now() + SESSION_DAYS * 86_400_000);
 	await db.insert(schema.sessions).values({ id: hashToken(token), personId, isOidc, expiresAt });
+	await db.update(schema.persons).set({ lastLoginAt: new Date() }).where(eq(schema.persons.id, personId));
 	cookies.set(SESSION_COOKIE, token, {
 		path: '/',
 		httpOnly: true,
