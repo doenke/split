@@ -165,10 +165,12 @@
 </article>
 
 <style>
+	/* theme colours, so it stays readable in dark mode (print: see below) */
 	.pending {
 		border-left: 3px solid #c58a1d;
 		padding: 0.3rem 0.6rem;
-		background: #fdf5e4;
+		background: var(--warning-bg);
+		color: var(--text);
 	}
 	.doc {
 		background: var(--surface);
@@ -309,6 +311,10 @@
 		:global(header),
 		.noprint {
 			display: none !important;
+		}
+		.pending {
+			background: #fdf5e4 !important;
+			color: #000 !important;
 		}
 		:global(html),
 		:global(body),

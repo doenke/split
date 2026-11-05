@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.47.1
+- Abrechnung: Hinweis „Noch nicht abgeschlossen“ ist im Dark Mode wieder lesbar
+
 ## 0.47.0
 - Eigenes Profilbild: im Profil auf das Bild tippen oder „Profilbild hochladen“. Das Foto wird schon auf dem Gerät quadratisch zugeschnitten und verkleinert (256×256), „Entfernen“ löscht es wieder. Ein selbst hochgeladenes Bild überschreibt der Login-Anbieter nicht mehr
 
