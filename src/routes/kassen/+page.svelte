@@ -13,7 +13,8 @@
 
 <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
 	<h1 style="margin: 0">Meine Kassen</h1>
-	{#if !creating}<button class="primary" onclick={() => (creating = true)}>+ Neue Kasse</button>{/if}
+	<!-- like groups: only people logged in via the login provider create Kassen -->
+	{#if !creating && data.user?.isOidc}<button class="primary" onclick={() => (creating = true)}>+ Neue Kasse</button>{/if}
 </div>
 <p class="muted small">Familien oder Paare, die in allen Gruppen gemeinsam abrechnen.</p>
 

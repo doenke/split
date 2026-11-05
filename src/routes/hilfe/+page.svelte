@@ -109,7 +109,10 @@
 		<ul>
 			<li>Sind zwei Personen einer Kasse in derselben offenen Gruppe, rechnen sie dort automatisch über die Kasse ab.</li>
 			<li>In einer Gruppe fügst du eine ganze Familie mit „Ganze Kasse“ auf einmal hinzu.</li>
-			<li>Kassen kannst du auch für andere anlegen (z.B. befreundete Familien), ohne selbst dazuzugehören.</li>
+			<li>
+				Kassen anlegen darf, wer auch Gruppen anlegen darf (Anmeldung über {data.loginProvider}) – auch für andere, z.B.
+				befreundete Familien, ohne selbst dazuzugehören.
+			</li>
 			<li>
 				<strong>Verwalter</strong> werden automatisch alle, die in ihren Gruppen den Faktor 1 haben – also die Erwachsenen,
 				nicht die Kinder. Verwalter lassen sich in der Kasse jederzeit ändern.
