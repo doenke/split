@@ -42,6 +42,18 @@
 		'member.undone': 'trägt doch noch etwas ein',
 		'group.final': 'hat als Letzte(r) abgeschlossen – die Endabrechnung steht'
 	};
+	/** what happened – "Sönke hat Stefan abgeschlossen" when someone reports for others */
+	function describe(l: (typeof data.log)[number]) {
+		const d = (l.data && typeof l.data === 'object' ? l.data : {}) as Record<string, unknown>;
+		if (l.action === 'member.done' || l.action === 'member.undone') {
+			const done = l.action === 'member.done';
+			const other = d.scope === 'person' && l.entityId && l.entityId !== l.personId ? (people.get(l.entityId) ?? 'jemanden') : null;
+			if (other) return done ? `hat ${other} abgeschlossen` : `hat den Abschluss von ${other} zurückgenommen`;
+			if (d.scope === 'all') return done ? 'hat alle abgeschlossen' : 'hat den Abschluss für alle zurückgenommen';
+			if (d.scope === 'kasse') return done ? 'hat für die ganze Kasse abgeschlossen' : 'trägt für die Kasse doch noch etwas ein';
+		}
+		return (actions[l.action] ?? l.action) + ('title' in d && d.title ? `: ${d.title}` : '');
+	}
 </script>
 
 <svelte:head><title>Einstellungen · {data.group.name}</title></svelte:head>
@@ -178,7 +190,7 @@
 <div class="list small">
 	{#each data.log as l (l.id)}
 		<div>
-			<span class="grow">{people.get(l.personId ?? '') ?? 'Jemand'} {actions[l.action] ?? l.action}{#if l.data && typeof l.data === 'object' && 'title' in l.data}: {l.data.title}{/if}</span>
+			<span class="grow">{people.get(l.personId ?? '') ?? 'Jemand'} {describe(l)}</span>
 			<span class="muted">{new Date(l.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</span>
 		</div>
 	{/each}

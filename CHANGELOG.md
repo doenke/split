@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.41.1
+- Verlauf: Schließt jemand für andere ab, steht dort „Sönke hat Stefan abgeschlossen“ (bzw. „hat alle abgeschlossen“, „hat für die ganze Kasse abgeschlossen“) statt nur „hat abgeschlossen“ – auch bei bestehenden Einträgen
+
 ## 0.41.0
 - Personen hinzufügen ohne Umschalten zwischen „neu“, „bekannt“ und „Kasse“: Ein Namensfeld schlägt beim Tippen bekannte Personen und Kassen vor – auch die Kasse, in der eine gesuchte Person ist
 - Wer einen Vorschlag wählt oder den vollständigen Namen einer bekannten Person (oder Kasse) eintippt, bekommt genau diese – sonst entsteht eine neue Person
