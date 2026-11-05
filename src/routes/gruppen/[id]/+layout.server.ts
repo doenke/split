@@ -1,4 +1,4 @@
-import { loadCategories, loadExpenses, loadGroupState, requireGroup } from '$lib/server/groups';
+import { loadCategories, loadExpenses, loadGroupState, phaseOfState, requireGroup } from '$lib/server/groups';
 import { completionState } from '$lib/server/completion';
 import { receiptRecognitionEnabled } from '$lib/server/receipts';
 import type { LayoutServerLoad } from './$types';
@@ -19,6 +19,7 @@ export const load: LayoutServerLoad = async ({ params, locals, depends }) => {
 	};
 	return {
 		group: state.group,
+		phase: phaseOfState(state),
 		isAdmin: g.isAdmin,
 		myKasseId: g.membership.kasseId,
 		members: state.members,

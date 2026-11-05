@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db, schema } from './db';
-import { loadGroupState } from './groups';
+import { loadGroupState, phaseOfState } from './groups';
 import type { SessionUser } from './auth/session';
 import { shownName } from './display';
 
@@ -110,7 +110,7 @@ export async function kasseOverview(kasseId: string) {
 			name: state.group.name,
 			emoji: state.group.emoji,
 			currency: state.group.baseCurrency,
-			status: state.group.status,
+			phase: phaseOfState(state),
 			paid: balance?.paid ?? 0,
 			consumed: balance?.consumed ?? 0,
 			balance: balance?.balance ?? 0,
@@ -172,6 +172,7 @@ export async function syncKasseToGroups(kasseId: string, onlyGroupId?: string): 
 			and(
 				inArray(schema.memberships.personId, members.map((m) => m.personId)),
 				eq(schema.groups.status, 'active'),
+				isNull(schema.groups.archivedAt),
 				isNull(schema.groups.deletedAt),
 				onlyGroupId ? eq(schema.memberships.groupId, onlyGroupId) : undefined
 			)

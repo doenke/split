@@ -3,6 +3,14 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.43.0
+- Gruppen-Status ergibt sich jetzt von selbst: geplant → aktiv (erste Ausgabe oder Startdatum) → beendet (Enddatum vorbei) → abgerechnet (alle haben abgeschlossen) → quitt (alles bezahlt) → archiviert
+- Archiviert wird automatisch 30 Tage nach „quitt“ – oder von Hand in den Einstellungen; „Aus dem Archiv holen“ führt zurück in die passende Phase
+- Zu jeder Phase steht auf der Gruppenseite, was jetzt zu tun ist (z.B. „Willkommen zurück! Sobald du alle deine Ausgaben eingetragen hast, klicke auf „Abschließen““)
+- Gruppenübersicht nach Phasen: Laufend, Geplant, Abgerechnet, Quitt, Archiviert
+- Einstellungen: Status zeigt die Phase mit „Wieder öffnen“ bzw. „Archivieren“; das Auswahlfeld Status und „Festschreiben bis Stichtag“ sind entfernt
+- Einstellungen: „Ausgaben anderer bearbeiten dürfen“ ist jetzt die Tickbox „Jeder darf alle Ausgaben bearbeiten“
+
 ## 0.42.5
 - Gruppeneinstellungen: Box „Abrechnung & Export“ entfernt. „Wieder öffnen“ steht jetzt beim Status, das Festschreiben bis zu einem Stichtag hat eine eigene kleine Box
 - Der CSV-Export ist jetzt auf der Abrechnungsseite (neben „Drucken / als PDF speichern“); „Zurück“ führt dort zu den Salden

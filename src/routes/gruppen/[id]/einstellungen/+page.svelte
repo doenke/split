@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IconPicker from '$lib/components/IconPicker.svelte';
 	import { enhance } from '$app/forms';
-	import { formatDate } from '$lib/format';
+	import { phaseHints, phaseLabels } from '$lib/core/phase';
 
 	let { data, form } = $props();
 	const s = $derived(data.group.settings);
@@ -37,6 +37,8 @@
 		'group.link': 'hat einen Gruppenlink erstellt',
 		'group.close': 'hat die Abrechnung abgeschlossen',
 		'group.reopen': 'hat die Abrechnung wieder geöffnet',
+		'group.archive': 'hat die Gruppe archiviert',
+		'group.unarchive': 'hat die Gruppe aus dem Archiv geholt',
 		'settlement.remind': 'hat an eine Zahlung erinnert',
 		'member.done': 'hat abgeschlossen',
 		'member.undone': 'trägt doch noch etwas ein',
@@ -52,6 +54,7 @@
 			if (d.scope === 'all') return done ? 'hat alle abgeschlossen' : 'hat den Abschluss für alle zurückgenommen';
 			if (d.scope === 'kasse') return done ? 'hat für die ganze Kasse abgeschlossen' : 'trägt für die Kasse doch noch etwas ein';
 		}
+		if (l.action === 'group.archive' && d.auto) return 'hat die Gruppe archiviert (30 Tage nach „quitt“)';
 		return (actions[l.action] ?? l.action) + ('title' in d && d.title ? `: ${d.title}` : '');
 	}
 </script>
@@ -115,31 +118,25 @@
 		<label class="check"><input type="checkbox" name="simplifyDebts" checked={s.simplifyDebts} /> Schulden vereinfachen (möglichst wenige Überweisungen)</label>
 		<label class="check"><input type="checkbox" name="membersCanAddPeople" checked={s.membersCanAddPeople} /> Alle Mitglieder dürfen Personen hinzufügen</label>
 		<label class="check"><input type="checkbox" name="confirmPayments" checked={s.confirmPayments ?? false} /> Empfänger bestätigen Zahlungen</label>
+		<!-- unticked: only whoever entered an expense, and admins, may change it -->
+		<label class="check"><input type="checkbox" name="editOthers" checked={s.editOthers === 'all'} /> Jeder darf alle Ausgaben bearbeiten</label>
 		<label class="check"><input type="checkbox" name="quiet" checked={s.quiet ?? false} /> Hintergrundgruppe: keine E-Mails zu dieser Gruppe</label>
-		<div class="field" style="margin-top: 0.5rem">
-			<label for="editOthers">Ausgaben anderer bearbeiten dürfen</label>
-			<select id="editOthers" name="editOthers">
-				<option value="all" selected={s.editOthers === 'all'}>alle Mitglieder</option>
-				<option value="admins" selected={s.editOthers === 'admins'}>nur Ersteller und Admins</option>
-			</select>
-		</div>
+		<!-- the phase follows from what happens; only archiving (and reopening a statement) is done here -->
 		<div class="field">
-			<label for="status">Status</label>
-			<select id="status" name="status">
-				<option value="active" selected={data.group.status === 'active'}>aktiv</option>
-				<option value="settled" selected={data.group.status === 'settled'}>abgerechnet</option>
-				<option value="archived" selected={data.group.status === 'archived'}>archiviert</option>
-			</select>
-			{#if data.completion.final || data.group.closedUntil}
-				<p class="hint">{@render frozen()}</p>
-				<button
-					formaction="?/reopen"
-					class="small"
-					onclick={(e) => {
-						if (!confirm(`${data.completion.final ? 'Endabrechnung' : 'Abrechnung'} wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.`)) e.preventDefault();
-					}}>Wieder öffnen</button
-				>
-			{/if}
+			<span class="label">Status</span>
+			<div class="row phase">
+				<span class="badge">{phaseLabels[data.phase]}</span>
+				<span class="grow"></span>
+				{#if data.phase === 'settled' || data.phase === 'square'}
+					<button formaction="?/reopen" class="small" onclick={(e) => { if (!confirm('Endabrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) e.preventDefault(); }}>Wieder öffnen</button>
+				{/if}
+				{#if data.phase === 'archived'}
+					<button formaction="?/unarchive" class="small">Aus dem Archiv holen</button>
+				{:else}
+					<button formaction="?/archive" class="small">Archivieren</button>
+				{/if}
+			</div>
+			<p class="hint">{phaseHints[data.phase]}</p>
 		</div>
 		<button class="primary full">Speichern</button>
 	</form>
@@ -150,19 +147,10 @@
 {:else}
 	<div class="card small muted">
 		Nur Gruppenadmins können die Einstellungen ändern.
-		{#if data.completion.final || data.group.closedUntil}<p style="margin: 0.5rem 0 0">{@render frozen()}</p>{/if}
+		<p style="margin: 0.5rem 0 0">Status: <span class="badge">{phaseLabels[data.phase]}</span> – {phaseHints[data.phase]}</p>
 	</div>
 {/if}
 
-{#snippet frozen()}
-	{#if data.completion.final}
-		✅ Die Endabrechnung steht{data.completion.finalAt ? ` seit ${formatDate(data.completion.finalAt.slice(0, 10))}` : ''}. Die Anteile sind
-		festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.
-	{:else if data.group.closedUntil}
-		🔒 Ausgaben bis einschließlich <strong>{formatDate(data.group.closedUntil)}</strong> sind festgeschrieben und ändern sich nicht mehr,
-		auch wenn Personen oder Faktoren geändert werden.
-	{/if}
-{/snippet}
 
 
 <form method="POST" action="?/toggleMute" class="card row" use:enhance>
@@ -170,18 +158,6 @@
 	<button>{data.muted ? 'Einschalten' : 'Stummschalten'}</button>
 </form>
 
-<!-- fixing the shares up to a date (e.g. after the trip); reopening is next to the status -->
-{#if data.isAdmin && !data.completion.final && !data.group.closedUntil}
-	<form method="POST" action="?/close" class="card" use:enhance>
-		<h2>Festschreiben</h2>
-		<p class="small muted">Schreibt die Anteile aller Ausgaben bis zum Stichtag fest – z.B. nach der Reise, bevor ausgeglichen wird.</p>
-		<div class="row">
-			<input type="date" name="until" value={data.group.endDate ?? new Date().toISOString().slice(0, 10)} class="grow" style="width: auto" />
-			<button>Abschließen</button>
-		</div>
-	</form>
-{/if}
-{#if form && 'failed' in form && form.failed?.length}<p class="error small">Nicht aufteilbar und daher nicht festgeschrieben: {form.failed.join(', ')}</p>{/if}
 
 {#if data.user?.isOidc}
 	<a class="button full" href="/gruppen/neu?vorlage={data.group.id}" style="margin-bottom: 1rem">📋 Neue Gruppe mit dieser als Vorlage</a>
@@ -192,7 +168,7 @@
 <div class="list small">
 	{#each data.log as l (l.id)}
 		<div>
-			<span class="grow">{people.get(l.personId ?? '') ?? 'Jemand'} {describe(l)}</span>
+			<span class="grow">{l.personId ? (people.get(l.personId) ?? 'Jemand') : 'Split'} {describe(l)}</span>
 			<span class="muted">{new Date(l.createdAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</span>
 		</div>
 	{/each}
@@ -216,6 +192,10 @@
 	}
 	.currencies summary {
 		cursor: pointer;
+	}
+	.phase {
+		align-items: center;
+		gap: 0.5rem;
 	}
 	.curlist {
 		max-height: 16rem;

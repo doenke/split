@@ -6,6 +6,8 @@ import { db, schema } from './db';
 import type { SessionUser } from './auth/session';
 import type { GroupSettings } from './db/schema';
 import { shownName } from './display';
+import { groupPhase } from '$lib/core/phase';
+import { today } from '$lib/format';
 
 export const defaultSettings: GroupSettings = {
 	simplifyDebts: true,
@@ -212,4 +214,12 @@ export function canEditExpense(
 	expense: { createdBy: string }
 ) {
 	return g.isAdmin || g.group.settings.editOthers === 'all' || expense.createdBy === userId;
+}
+
+/** The phase of a group (planned … archived) from its loaded state. */
+export function phaseOfState(state: { group: typeof schema.groups.$inferSelect; expenses: unknown[]; transfers: unknown[] }) {
+	return groupPhase(
+		{ ...state.group, expenseCount: state.expenses.length, openTransfers: state.transfers.length },
+		today()
+	);
 }

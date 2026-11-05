@@ -155,8 +155,11 @@ export const groups = pgTable('groups', {
 	baseCurrency: text('base_currency').notNull().default('EUR'),
 	startDate: date('start_date'),
 	endDate: date('end_date'),
-	status: text('status', { enum: ['active', 'settled', 'archived'] }).notNull().default('active'),
-	/** Expenses up to this date are frozen (their shares no longer change). */
+	/** 'settled' once everyone reported done and the final statement stands; the phase shown is derived (see core/phase) */
+	status: text('status', { enum: ['active', 'settled'] }).notNull().default('active'),
+	/** archived by hand (the only manual phase) */
+	archivedAt: timestamp('archived_at', { withTimezone: true }),
+	/** Expenses up to this date are frozen (their shares no longer change) – set by the final statement. */
 	closedUntil: date('closed_until'),
 	settings: jsonb('settings').$type<GroupSettings>().notNull(),
 	templateOf: text('template_of'),

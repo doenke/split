@@ -49,6 +49,7 @@
 {#if form?.message}<p class="error">{form.message}</p>{/if}
 
 <CompletionCard
+	square={data.completion.final && data.transfers.length === 0}
 	completion={data.completion}
 	members={data.members}
 	meId={data.user!.id}

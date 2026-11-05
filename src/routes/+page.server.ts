@@ -3,7 +3,7 @@ import { and, count, eq, isNotNull, isNull } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { audit } from '$lib/server/audit';
 import { db, schema } from '$lib/server/db';
-import { loadGroupState } from '$lib/server/groups';
+import { loadGroupState, phaseOfState } from '$lib/server/groups';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				id: group.id,
 				name: group.name,
 				emoji: group.emoji,
-				status: group.status,
+				phase: phaseOfState(state),
 				currency: group.baseCurrency,
 				startDate: group.startDate,
 				memberCount: state.members.length,
@@ -42,7 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(schema.memberships)
 		.innerJoin(schema.groups, eq(schema.groups.id, schema.memberships.groupId))
 		.where(and(eq(schema.memberships.personId, me), eq(schema.memberships.role, 'admin'), isNotNull(schema.groups.deletedAt)));
-	groups.sort((a, b) => (a.status === 'archived' ? 1 : 0) - (b.status === 'archived' ? 1 : 0) || b.lastActivity.localeCompare(a.lastActivity));
+	groups.sort((a, b) => b.lastActivity.localeCompare(a.lastActivity));
 	return { groups, deleted };
 };
 

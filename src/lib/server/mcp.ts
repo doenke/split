@@ -5,7 +5,8 @@ import { today } from '$lib/format';
 import type { ExpenseInput } from '$lib/expense-input';
 import type { SplitRule } from '$lib/core/types';
 import { db, schema } from './db';
-import { loadCategories, loadExpenses, loadGroupState, requireGroup, type GroupMember } from './groups';
+import { loadCategories, loadExpenses, loadGroupState, phaseOfState, requireGroup, type GroupMember } from './groups';
+import { phaseLabels } from '$lib/core/phase';
 import { announceExpense, InputError, prepareExpense, saveExpense } from './expenses';
 import { isClosed } from './closing';
 import { paymentMethods, recordSettlement, SettlementError } from './settlements';
@@ -94,7 +95,7 @@ const tools: Tool[] = [
 						id: group.id,
 						name: group.name,
 						emoji: group.emoji,
-						status: { active: 'laufend', settled: 'abgerechnet', archived: 'archiviert' }[group.status],
+						status: phaseLabels[phaseOfState(state)],
 						currency: group.baseCurrency,
 						members: state.members.length,
 						my_balance: major(balance, group.baseCurrency)
@@ -116,7 +117,7 @@ const tools: Tool[] = [
 			const cur = g.group.baseCurrency;
 			const kasseName = (id: string) => state.kassen.find((k) => k.id === id)?.name ?? '?';
 			return {
-				group: { id: g.group.id, name: g.group.name, currency: cur, status: g.group.status, closed_until: g.group.closedUntil },
+				group: { id: g.group.id, name: g.group.name, currency: cur, status: phaseLabels[phaseOfState(state)], closed_until: g.group.closedUntil },
 				me: user.name,
 				members: state.members.map((m) => ({
 					id: m.personId,

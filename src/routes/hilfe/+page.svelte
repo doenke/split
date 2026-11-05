@@ -152,6 +152,18 @@
 
 	<section id="abschluss">
 		<h2>Abschließen & Endabrechnung</h2>
+		<p>Jede Gruppe durchläuft von selbst diese Phasen – zu jeder steht auf der Gruppenseite, was gerade zu tun ist:</p>
+		<ul>
+			<li><strong>geplant</strong> – noch keine Ausgabe und das Startdatum ist noch nicht erreicht</li>
+			<li><strong>aktiv</strong> – ab der ersten Ausgabe oder dem Startdatum</li>
+			<li><strong>beendet</strong> – das Enddatum ist vorbei; jetzt trägt jede(r) den Rest ein und schließt ab</li>
+			<li><strong>abgerechnet</strong> – alle haben abgeschlossen, die Endabrechnung steht; die Anteile ändern sich nicht mehr</li>
+			<li><strong>quitt</strong> – alle Zahlungen aus der Endabrechnung sind geleistet</li>
+			<li><strong>archiviert</strong> – von selbst 30 Tage, nachdem alle quitt sind, oder von Hand (Gruppe → Einstellungen → Status)</li>
+		</ul>
+		<p>
+			Admins können eine Endabrechnung in den Einstellungen beim Status wieder öffnen; dann müssen alle erneut abschließen.
+		</p>
 		<p>
 			Wer alles eingetragen hat, tippt „Ich habe alles eingetragen“ – für sich oder die ganze Kasse. Solange das Enddatum
 			der Gruppe noch nicht erreicht ist (oder es keines gibt), steht dieser Hinweis nur klein unter der Übersicht; ab dem

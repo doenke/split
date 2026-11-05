@@ -3,6 +3,7 @@
 	import { clearBusy, markBusy } from '$lib/busy';
 	import { formatAmount, formatDate } from '$lib/format';
 	import CompletionCard from '$lib/components/CompletionCard.svelte';
+	import { phaseHints } from '$lib/core/phase';
 	import { onMount } from 'svelte';
 	import { invalidateAll, preloadData } from '$app/navigation';
 	import { enhance } from '$app/forms';
@@ -103,8 +104,14 @@
 	</a>
 </div>
 
+<!-- what to do now; the final statement card covers "settled" and "square" -->
+{#if data.phase !== 'settled' && data.phase !== 'square'}
+	<p class="phase-hint small" class:due={data.phase === 'ended'}>{phaseHints[data.phase]}</p>
+{/if}
+
 {#if data.expenses.length || data.drafts.length || data.completion.final}
 	<CompletionCard
+		square={data.completion.final && data.transfers.length === 0}
 		completion={data.completion}
 		members={data.members}
 		meId={data.user!.id}
@@ -228,7 +235,7 @@
 	</div>
 {/each}
 
-{#if data.group.status === 'active'}
+{#if data.group.status === 'active' && !data.group.archivedAt}
 	<label class="button primary fab camera" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
 		{snapping ? '…' : '📷'}
 		<!-- while the camera is open, a pending update must not reload the page (the photo would be lost) -->
@@ -300,5 +307,16 @@
 		justify-content: center;
 		font-size: 1.2rem;
 		flex-shrink: 0;
+	}
+	.phase-hint {
+		margin: 0 0.25rem 1rem;
+		color: var(--muted);
+	}
+	.phase-hint.due {
+		color: var(--text);
+		background: var(--primary-soft);
+		border-radius: var(--radius);
+		padding: 0.6rem 0.8rem;
+		margin: 0 0 1rem;
 	}
 </style>

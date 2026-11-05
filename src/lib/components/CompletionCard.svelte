@@ -21,7 +21,8 @@
 		kasseName,
 		groupId,
 		isAdmin = false,
-		draftCount = 0
+		draftCount = 0,
+		square = false
 	}: {
 		completion: { required: string[]; done: string[]; final: boolean; finalAt?: string | null; due?: boolean };
 		members: M[];
@@ -31,6 +32,8 @@
 		groupId: string;
 		isAdmin?: boolean;
 		draftCount?: number;
+		/** everything paid back */
+		square?: boolean;
 	} = $props();
 
 	const done = $derived(new Set(completion.done));
@@ -48,8 +51,13 @@
 
 {#if completion.final}
 	<div class="card final">
-		<strong>✅ Die Endabrechnung steht{completion.finalAt ? ` seit ${formatDate(completion.finalAt.slice(0, 10))}` : ''}.</strong>
-		<span class="small">Alle haben ihre Ausgaben eingetragen.</span>
+		{#if square}
+			<strong>🎉 Ihr seid quitt!</strong>
+			<span class="small">Alles ist ausgeglichen. Nach 30 Tagen kommt die Gruppe von selbst ins Archiv.</span>
+		{:else}
+			<strong>✅ Die Endabrechnung steht{completion.finalAt ? ` seit ${formatDate(completion.finalAt.slice(0, 10))}` : ''}.</strong>
+			<span class="small">Jetzt nur noch ausgleichen – wer wem was zahlt, steht {onSalden ? 'unten' : 'unter Salden'}.</span>
+		{/if}
 		<span class="small links">
 			{#if !onSalden}<a href="/gruppen/{groupId}/salden">Zum Ausgleichen →</a>{/if}
 			<a href="/gruppen/{groupId}/abrechnung">📄 Detaillierte Abrechnung →</a>

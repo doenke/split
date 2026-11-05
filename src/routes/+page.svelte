@@ -1,17 +1,11 @@
 <script lang="ts">
 	import { formatAmount } from '$lib/format';
+	import { phaseSections } from '$lib/core/phase';
 
 	let { data } = $props();
 
-	// groups by status: running ones first, archived ones folded away
-	const sections = [
-		{ status: 'active', title: 'Laufend' },
-		{ status: 'settled', title: 'Abgerechnet' },
-		{ status: 'archived', title: 'Archiviert' }
-	] as const;
-	const byStatus = $derived(
-		Object.fromEntries(sections.map(({ status }) => [status, data.groups.filter((g) => g.status === status)]))
-	);
+	// groups by phase: running ones first, archived ones folded away
+	const sections = $derived(phaseSections.map((s) => ({ ...s, list: data.groups.filter((g) => s.phases.includes(g.phase)) })));
 </script>
 
 <svelte:head><title>Meine Gruppen · Split</title></svelte:head>
@@ -33,10 +27,10 @@
 		{/if}
 	</div>
 {:else}
-	{#each sections as sec (sec.status)}
-		{@const list = byStatus[sec.status]}
+	{#each sections as sec (sec.title)}
+		{@const list = sec.list}
 		{#if list.length}
-			{#if sec.status === 'archived'}
+			{#if sec.folded}
 				<details class="archived">
 					<summary><h2 class="section">{sec.title} ({list.length})</h2></summary>
 					{@render groupList(list)}
@@ -57,7 +51,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
+						{#if g.phase === 'ended'}<span class="badge">beendet</span> {/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
 					</div>
 				</div>
 				<div class="right">

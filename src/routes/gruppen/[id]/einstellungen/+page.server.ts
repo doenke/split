@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { requireGroup, requireGroupAdmin } from '$lib/server/groups';
 import { audit } from '$lib/server/audit';
-import { closeUntil, reopen } from '$lib/server/closing';
+import { reopen } from '$lib/server/closing';
 import { resetCompletion } from '$lib/server/completion';
 import { newId } from '$lib/server/ids';
 import { selectableCurrencies } from '$lib/server/currencies';
@@ -53,10 +53,9 @@ export const actions: Actions = {
 		if (!name) return fail(400, { message: 'Name fehlt.' });
 		const startDate = String(f.get('startDate') ?? '') || null;
 		const endDate = String(f.get('endDate') ?? '') || null;
-		const status = (['active', 'settled', 'archived'] as const).find((s) => s === f.get('status')) ?? 'active';
 		const settings = {
 			simplifyDebts: f.get('simplifyDebts') === 'on',
-			editOthers: f.get('editOthers') === 'admins' ? ('admins' as const) : ('all' as const),
+			editOthers: f.get('editOthers') === 'on' ? ('all' as const) : ('admins' as const),
 			membersCanAddPeople: f.get('membersCanAddPeople') === 'on',
 			quiet: f.get('quiet') === 'on',
 			confirmPayments: f.get('confirmPayments') === 'on',
@@ -65,7 +64,7 @@ export const actions: Actions = {
 		};
 		await db
 			.update(schema.groups)
-			.set({ name, emoji: String(f.get('emoji') ?? '').trim() || g.group.emoji, startDate, endDate, status, settings })
+			.set({ name, emoji: String(f.get('emoji') ?? '').trim() || g.group.emoji, startDate, endDate, settings })
 			.where(eq(schema.groups.id, params.id));
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.update', entityId: params.id });
 		return { saved: true };
@@ -78,20 +77,25 @@ export const actions: Actions = {
 			.where(and(eq(schema.memberships.groupId, params.id), eq(schema.memberships.personId, g.user.id)));
 		return { muted: !g.membership.muted };
 	},
-	close: async ({ params, locals, request }) => {
-		const g = await requireGroupAdmin(params.id, locals.user);
-		const until = String((await request.formData()).get('until') ?? '');
-		if (!/^\d{4}-\d{2}-\d{2}$/.test(until)) return fail(400, { message: 'Bitte ein Datum angeben.' });
-		const { failed } = await closeUntil(params.id, until);
-		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.close', data: { until } });
-		return { closed: true, failed };
-	},
 	reopen: async ({ params, locals }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);
 		await reopen(params.id, null);
 		await resetCompletion(params.id);
 		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.reopen' });
 		return { reopened: true };
+	},
+	/** Archiving is the only manual phase; unarchiving returns to the phase the group is in. */
+	archive: async ({ params, locals }) => {
+		const g = await requireGroupAdmin(params.id, locals.user);
+		await db.update(schema.groups).set({ archivedAt: new Date() }).where(eq(schema.groups.id, params.id));
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.archive' });
+		return { archived: true };
+	},
+	unarchive: async ({ params, locals }) => {
+		const g = await requireGroupAdmin(params.id, locals.user);
+		await db.update(schema.groups).set({ archivedAt: null }).where(eq(schema.groups.id, params.id));
+		await audit(db, { groupId: params.id, personId: g.user.id, action: 'group.unarchive' });
+		return { unarchived: true };
 	},
 	delete: async ({ params, locals, request }) => {
 		const g = await requireGroupAdmin(params.id, locals.user);

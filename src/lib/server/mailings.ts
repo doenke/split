@@ -179,7 +179,7 @@ export async function runMailJobs() {
 	const ended = await db
 		.select()
 		.from(schema.groups)
-		.where(and(eq(schema.groups.status, 'active'), isNull(schema.groups.deletedAt), lt(schema.groups.endDate, today())));
+		.where(and(eq(schema.groups.status, 'active'), isNull(schema.groups.archivedAt), isNull(schema.groups.deletedAt), lt(schema.groups.endDate, today())));
 	for (const group of ended) {
 		const state = await loadGroupState(group.id);
 		const c = await completionState(state.members, group);
@@ -201,7 +201,10 @@ export async function runMailJobs() {
 		);
 	}
 
-	const settled = await db.select().from(schema.groups).where(and(eq(schema.groups.status, 'settled'), isNull(schema.groups.deletedAt)));
+	const settled = await db
+		.select()
+		.from(schema.groups)
+		.where(and(eq(schema.groups.status, 'settled'), isNull(schema.groups.archivedAt), isNull(schema.groups.deletedAt)));
 	for (const group of settled) {
 		// the payment request went out with the statement; weekly reminders start a week later
 		const [final] = await db

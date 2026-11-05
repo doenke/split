@@ -7,6 +7,7 @@ import { refreshRatesIfStale } from '$lib/server/rates';
 import { cleanupOrphans } from '$lib/server/uploads';
 import { purgeTrash } from '$lib/server/trash';
 import { runMailJobs } from '$lib/server/mailings';
+import { autoArchive } from '$lib/server/autoarchive';
 import { SESSION_COOKIE, validateSession } from '$lib/server/auth/session';
 
 export const init: ServerInit = async () => {
@@ -17,11 +18,15 @@ export const init: ServerInit = async () => {
 	await seedDefaults();
 	void refreshRatesIfStale();
 	// reminders also shortly after a restart (each one is sent at most weekly anyway)
-	setTimeout(() => void runMailJobs().catch((e) => console.warn('E-Mail-Erinnerungen fehlgeschlagen:', e)), 30_000).unref();
+	setTimeout(() => {
+		void runMailJobs().catch((e) => console.warn('E-Mail-Erinnerungen fehlgeschlagen:', e));
+		void autoArchive().catch((e) => console.warn('Automatisches Archivieren fehlgeschlagen:', e));
+	}, 30_000).unref();
 	setInterval(() => {
 		void refreshRatesIfStale();
 		void cleanupOrphans().catch((e) => console.warn('Aufräumen der Belege fehlgeschlagen:', e));
 		void purgeTrash().catch((e) => console.warn('Leeren des Papierkorbs fehlgeschlagen:', e));
+		void autoArchive().catch((e) => console.warn('Automatisches Archivieren fehlgeschlagen:', e));
 		void runMailJobs().catch((e) => console.warn('E-Mail-Erinnerungen fehlgeschlagen:', e));
 	}, 3_600_000).unref();
 };
