@@ -3,7 +3,7 @@ import { and, eq, isNull, or } from 'drizzle-orm';
 import QRCode from 'qrcode';
 import { db, schema } from '$lib/server/db';
 import { loadMembers, requireGroup } from '$lib/server/groups';
-import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
+import { claimedPersonIds, createPerson, knownPersons, nameFromForm, personalKasseId, roleForFactor, sameName, usualFactors } from '$lib/server/persons';
 import { activeGroupInvite, createGroupInvite, createPersonalInvite, findInvite, revokeGroupInvite } from '$lib/server/auth/invites';
 import { accessibleKassenOf, pickKasseForGroup, sharedKassenOf, kasseMembersOf, syncKasseToGroups, syncPersonKassen } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
@@ -73,8 +73,11 @@ async function addWholeKasse(g: Awaited<ReturnType<typeof requireGroup>>, groupI
 	const current = new Set((await loadMembers(groupId)).map((m) => m.personId));
 	const members = (await kasseMembersOf(kasseId)).filter((m) => !current.has(m.personId));
 	if (!members.length) return fail(400, { message: 'Alle aus dieser Kasse sind schon in der Gruppe.' });
+	// everyone keeps the factor they usually have (children!); adults become group admins
+	const factors = await usualFactors(members.map((m) => m.personId));
 	for (const m of members) {
-		await db.insert(schema.memberships).values({ groupId, personId: m.personId, participationFrom: from, kasseId });
+		const factor = factors.get(m.personId) ?? 1;
+		await db.insert(schema.memberships).values({ groupId, personId: m.personId, factor, role: roleForFactor(factor), participationFrom: from, kasseId });
 		await audit(db, { groupId, personId: g.user.id, action: 'member.add', entityId: m.personId, data: { from, kasseId } });
 	}
 	// members already in the group (settling alone so far) switch to the Kasse as well
@@ -138,6 +141,8 @@ export const actions: Actions = {
 			groupId: params.id,
 			personId,
 			factor,
+			// adults (factor 1) are group admins from the start
+			role: roleForFactor(factor),
 			participationFrom: from,
 			kasseId
 		});

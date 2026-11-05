@@ -4,7 +4,7 @@ import { db, schema } from '$lib/server/db';
 import { findGroupInvite } from '$lib/server/auth/invites';
 import { createSession } from '$lib/server/auth/session';
 import { loadMembers } from '$lib/server/groups';
-import { claimedPersonIds, createPerson, mergePersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
+import { claimedPersonIds, createPerson, mergePersons, nameFromForm, personalKasseId, sameName, roleForFactor, usualFactors } from '$lib/server/persons';
 import { pickKasseForGroup } from '$lib/server/kassen';
 import { audit } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
@@ -41,7 +41,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 async function joinAs(groupId: string, personId: string, actorId: string) {
 	const kasseId = await pickKasseForGroup(personId, groupId, await personalKasseId(db, personId));
-	await db.insert(schema.memberships).values({ groupId, personId, kasseId }).onConflictDoNothing();
+	// someone joining by themselves: with the factor they usually have, adults as group admins
+	const factor = (await usualFactors([personId])).get(personId) ?? 1;
+	await db.insert(schema.memberships).values({ groupId, personId, kasseId, factor, role: roleForFactor(factor) }).onConflictDoNothing();
 	await audit(db, { groupId, personId: actorId, action: 'member.add', entityId: personId, data: { via: 'group-link' } });
 }
 

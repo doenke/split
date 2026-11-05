@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, max, sql } from 'drizzle-orm';
 import { db, schema, type Tx } from './db';
 import { newId } from './ids';
 import { refreshDisplayNames, shownName } from './display';
@@ -154,3 +154,21 @@ const normName = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase(
 export function sameName<T extends { name: string; fullName?: string }>(name: string, people: T[]) {
 	return people.find((p) => normName(p.fullName ?? p.name) === normName(name) || normName(p.name) === normName(name));
 }
+
+/**
+ * The factor people usually have (the highest in their groups; 1 for someone new). Factor 1 = an adult:
+ * they become group admins and Kasse managers when added; children (less than 1) don't.
+ */
+export async function usualFactors(personIds: string[]) {
+	const rows = personIds.length
+		? await db
+				.select({ personId: schema.memberships.personId, factor: max(schema.memberships.factor) })
+				.from(schema.memberships)
+				.where(inArray(schema.memberships.personId, personIds))
+				.groupBy(schema.memberships.personId)
+		: [];
+	const found = new Map(rows.map((r) => [r.personId, r.factor ?? 1]));
+	return new Map(personIds.map((id) => [id, found.get(id) ?? 1]));
+}
+
+export const roleForFactor = (factor: number) => (factor >= 1 ? ('admin' as const) : ('member' as const));

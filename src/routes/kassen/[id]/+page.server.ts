@@ -1,9 +1,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { and, eq, inArray, isNull, max, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
 import { audit } from '$lib/server/audit';
-import { createPerson, knownPersons, nameFromForm, personalKasseId, sameName } from '$lib/server/persons';
+import { createPerson, knownPersons, nameFromForm, personalKasseId, sameName, usualFactors } from '$lib/server/persons';
 import { kasseOverview, requireKasse, syncKasseToGroups } from '$lib/server/kassen';
 import { groupCosts } from '$lib/server/costs';
 import { defaultCategories } from '$lib/server/defaults';
@@ -87,12 +87,7 @@ export const actions: Actions = {
 			}
 		}
 		// adults manage the Kasse: everyone with factor 1 in their groups (new people count as 1, kids usually have less)
-		const factors = await db
-			.select({ personId: schema.memberships.personId, factor: max(schema.memberships.factor) })
-			.from(schema.memberships)
-			.where(inArray(schema.memberships.personId, personIds))
-			.groupBy(schema.memberships.personId);
-		const factorOf = new Map(factors.map((f) => [f.personId, f.factor ?? 1]));
+		const factorOf = await usualFactors(personIds);
 		const adult = (id: string) => (factorOf.get(id) ?? 1) >= 1;
 		// nobody managing it yet and no adult among them: the first one does
 		const fallback = !k.members.some((m) => m.isManager) && !personIds.some(adult);
