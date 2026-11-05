@@ -51,7 +51,7 @@
 				<div class="grow">
 					<div class="ellipsis"><strong>{g.name}</strong></div>
 					<div class="small muted">
-						{#if g.phase === 'ended'}<span class="badge">beendet</span> {/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
+						{#if g.phase === 'ended'}<span class="badge">wieder zuhause</span> {/if}{g.memberCount} Personen{#if g.drafts}{' · 📷 '}{g.drafts} vorbereitet{/if}
 					</div>
 				</div>
 				<div class="right">

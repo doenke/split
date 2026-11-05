@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IconPicker from '$lib/components/IconPicker.svelte';
 	import { enhance } from '$app/forms';
-	import { phaseHints, phaseLabels } from '$lib/core/phase';
+	import { phaseHints, phaseLabels, phaseOrder } from '$lib/core/phase';
 
 	let { data, form } = $props();
 	const s = $derived(data.group.settings);
@@ -36,7 +36,7 @@
 		'group.restore': 'hat die Gruppe wiederhergestellt',
 		'group.link': 'hat einen Gruppenlink erstellt',
 		'group.close': 'hat die Abrechnung abgeschlossen',
-		'group.reopen': 'hat die Abrechnung wieder geöffnet',
+		'group.reopen': 'hat die Endabrechnung aufgehoben',
 		'group.archive': 'hat die Gruppe archiviert',
 		'group.unarchive': 'hat die Gruppe aus dem Archiv geholt',
 		'settlement.remind': 'hat an eine Zahlung erinnert',
@@ -124,19 +124,7 @@
 		<!-- the phase follows from what happens; only archiving (and reopening a statement) is done here -->
 		<div class="field">
 			<span class="label">Status</span>
-			<div class="row phase">
-				<span class="badge">{phaseLabels[data.phase]}</span>
-				<span class="grow"></span>
-				{#if data.phase === 'settled' || data.phase === 'square'}
-					<button formaction="?/reopen" class="small" onclick={(e) => { if (!confirm('Endabrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) e.preventDefault(); }}>Wieder öffnen</button>
-				{/if}
-				{#if data.phase === 'archived'}
-					<button formaction="?/unarchive" class="small">Aus dem Archiv holen</button>
-				{:else}
-					<button formaction="?/archive" class="small">Archivieren</button>
-				{/if}
-			</div>
-			<p class="hint">{phaseHints[data.phase]}</p>
+			{@render phases(true)}
 		</div>
 		<button class="primary full">Speichern</button>
 	</form>
@@ -147,9 +135,48 @@
 {:else}
 	<div class="card small muted">
 		Nur Gruppenadmins können die Einstellungen ändern.
-		<p style="margin: 0.5rem 0 0">Status: <span class="badge">{phaseLabels[data.phase]}</span> – {phaseHints[data.phase]}</p>
+	</div>
+	<div class="card">
+		<span class="label">Status</span>
+		{@render phases(false)}
 	</div>
 {/if}
+
+<!-- all phases, the current one marked; the buttons sit at the phase they change -->
+{#snippet phases(admin: boolean)}
+	{@const current = phaseOrder.indexOf(data.phase)}
+	{@const final = data.phase === 'settled' || data.phase === 'square' || (data.phase === 'archived' && data.completion.final)}
+	<ol class="phases">
+		{#each phaseOrder as ph, i (ph)}
+			<li class:done={i < current} class:current={i === current}>
+				<div class="row">
+					<span class="dot" aria-hidden="true"></span>
+					<span class="grow">{phaseLabels[ph]}{#if i === current}<span class="small muted now">· jetzt</span>{/if}</span>
+					{#if admin && ph === 'settled' && final && data.phase !== 'archived'}
+						<button
+							formaction="?/reopen"
+							class="small"
+							onclick={(e) => {
+								if (!confirm('Endabrechnung aufheben? Die Anteile werden wieder neu berechnet, und alle müssen erneut abschließen.')) e.preventDefault();
+							}}>Endabrechnung aufheben</button
+						>
+					{/if}
+					{#if admin && ph === 'archived'}
+						{#if data.phase === 'archived'}
+							<button formaction="?/unarchive" class="small">Aus dem Archiv holen</button>
+						{:else}
+							<button formaction="?/archive" class="small">Jetzt archivieren</button>
+						{/if}
+					{/if}
+				</div>
+				{#if i === current}<p class="hint">{phaseHints[ph]}</p>{/if}
+				{#if admin && ph === 'settled' && final && data.phase !== 'archived'}
+					<p class="hint">„Endabrechnung aufheben“ führt zurück zum Abschließen – alle müssen dann erneut abschließen.</p>
+				{/if}
+			</li>
+		{/each}
+	</ol>
+{/snippet}
 
 
 
@@ -193,9 +220,60 @@
 	.currencies summary {
 		cursor: pointer;
 	}
-	.phase {
+	.phases {
+		list-style: none;
+		margin: 0.25rem 0 0;
+		padding: 0;
+	}
+	.phases li {
+		position: relative;
+		padding: 0.3rem 0 0.3rem 0;
+		color: var(--muted);
+	}
+	.phases li .row {
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.6rem;
+		min-height: 2rem;
+	}
+	/* a line connecting the dots */
+	.phases li:not(:last-child)::before {
+		content: '';
+		position: absolute;
+		left: 0.4rem;
+		top: 1.3rem;
+		bottom: -0.3rem;
+		width: 2px;
+		background: var(--border);
+	}
+	.phases .dot {
+		width: 0.8rem;
+		height: 0.8rem;
+		border-radius: 50%;
+		border: 2px solid var(--border);
+		background: var(--surface);
+		flex: none;
+		position: relative;
+		z-index: 1;
+	}
+	.phases li.done .dot {
+		background: var(--border);
+	}
+	.phases li.current {
+		color: var(--text);
+		font-weight: 600;
+	}
+	.phases li.current .dot {
+		border-color: var(--primary);
+		background: var(--primary);
+		box-shadow: 0 0 0 3px var(--primary-soft);
+	}
+	.phases .now {
+		margin-left: 0.35rem;
+		font-weight: normal;
+	}
+	.phases .hint {
+		margin: 0.1rem 0 0.2rem 1.4rem;
+		font-weight: normal;
 	}
 	.curlist {
 		max-height: 16rem;

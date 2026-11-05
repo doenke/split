@@ -24,10 +24,13 @@ export function groupPhase(g: PhaseInput, today: string): Phase {
 	return 'planned';
 }
 
+/** All phases in their order (archived comes last). */
+export const phaseOrder: Phase[] = ['planned', 'active', 'ended', 'settled', 'square', 'archived'];
+
 export const phaseLabels: Record<Phase, string> = {
 	planned: 'geplant',
 	active: 'aktiv',
-	ended: 'beendet',
+	ended: 'wieder zuhause',
 	settled: 'Abrechnung fertig',
 	square: 'quitt',
 	archived: 'archiviert'
