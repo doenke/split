@@ -113,7 +113,7 @@ export const actions: Actions = {
 	saveEmail: async ({ locals, request }) => {
 		if (!locals.user) redirect(303, '/login');
 		const [person] = await db.select().from(schema.persons).where(eq(schema.persons.id, locals.user.id));
-		if (person.emailFromOidc) return fail(400, { mailError: 'Deine Adresse kommt von deinem Login-Anbieter.' });
+		if (person.emailFromOidc) return fail(400, { mailError: `Deine Adresse kommt von ${config.oidc.providerName}.` });
 		const email = String((await request.formData()).get('email') ?? '').trim().toLowerCase();
 		if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(400, { mailError: 'Das sieht nicht nach einer E-Mail-Adresse aus.' });
 		if (email === (person.email ?? '')) return { mailSaved: true };

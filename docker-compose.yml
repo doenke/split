@@ -27,6 +27,7 @@ services:
       OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email groups}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-admins}
       OIDC_BUTTON_LABEL: ${OIDC_BUTTON_LABEL:-Anmelden}
+      OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-}
       WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Split}
       # receipt recognition: active as soon as an Anthropic API key is set
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

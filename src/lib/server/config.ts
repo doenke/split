@@ -27,6 +27,12 @@ export const config = {
 		get buttonLabel() {
 			return env.OIDC_BUTTON_LABEL ?? 'Mit OIDC anmelden';
 		},
+		/** the provider's name for texts: OIDC_PROVIDER_NAME, else taken from the button ("Mit Pocket ID anmelden") */
+		get providerName() {
+			if (env.OIDC_PROVIDER_NAME) return env.OIDC_PROVIDER_NAME;
+			const m = this.buttonLabel.match(/^(?:mit|über|via)\s+(.+?)(?:\s+(?:anmelden|einloggen|login))?$/i);
+			return m && !/^(oidc|sso)$/i.test(m[1]) ? m[1] : 'Single Sign-on';
+		},
 		get enabled() {
 			return Boolean(env.OIDC_ISSUER && env.OIDC_CLIENT_ID);
 		}

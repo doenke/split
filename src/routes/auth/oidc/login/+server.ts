@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
 		login = await buildLoginUrl();
 	} catch (e) {
 		console.error('OIDC discovery failed', e);
-		redirect(303, '/login?error=' + encodeURIComponent('Der Login-Anbieter ist nicht erreichbar.'));
+		redirect(303, '/login?error=' + encodeURIComponent(`${config.oidc.providerName} ist nicht erreichbar.`));
 	}
 	const opts = { path: '/', httpOnly: true, sameSite: 'lax' as const, secure: config.secureCookies, maxAge: 600 };
 	cookies.set('oidc_verifier', login.verifier, opts);

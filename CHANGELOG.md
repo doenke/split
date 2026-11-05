@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.38.9
+- Der Login-Anbieter heißt in allen Texten so wie auf dem Login-Button (z. B. „Angemeldet über Pocket ID“); abgeleitet aus `OIDC_BUTTON_LABEL`, überschreibbar mit `OIDC_PROVIDER_NAME`
+
 ## 0.38.8
 - Titelzeile aufgeräumt: nur noch Logo (zur Gruppenübersicht) und Profilbild – „Gruppen“ und „Kassen“ sind raus, Kassen findest du im Profil
 

@@ -47,7 +47,7 @@
 	<section id="start">
 		<h2>Erste Schritte</h2>
 		<ol>
-			<li>Wer sich über den Login-Anbieter anmeldet, kann <strong>Gruppen anlegen</strong> (Startseite → „+ Neue Gruppe“).</li>
+			<li>Wer sich über {data.loginProvider} anmeldet, kann <strong>Gruppen anlegen</strong> (Startseite → „+ Neue Gruppe“).</li>
 			<li>
 				Unter <strong>Mitglieder</strong> alle Mitreisenden eintragen – auch Kinder oder Personen ohne Smartphone. Wer selbst
 				mitmachen soll, bekommt einen persönlichen <strong>Zugangslink</strong>, oder du teilst den
@@ -172,7 +172,7 @@
 			<p class="notice small">Auf diesem Server ist der E-Mail-Versand nicht eingerichtet.</p>
 		{/if}
 		<p>
-			Split schickt nur wenige E-Mails – und nur, wenn du das möchtest. Wer sich über den Login-Anbieter anmeldet, hat
+			Split schickt nur wenige E-Mails – und nur, wenn du das möchtest. Wer sich über {data.loginProvider} anmeldet, hat
 			seine Adresse schon hinterlegt; alle anderen tragen sie unter <a href="/profil#mail">Profil → E-Mails</a> ein und
 			bestätigen sie über einen Link. Dort stellst du auch ein, welche E-Mails du bekommst:
 		</p>

@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
+import { config } from '$lib/server/config';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
@@ -13,5 +14,5 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			.limit(1);
 		hasPasskey = rows.length > 0;
 	}
-	return { user: locals.user, hasPasskey };
+	return { user: locals.user, hasPasskey, loginProvider: config.oidc.providerName };
 };

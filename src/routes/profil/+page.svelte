@@ -20,7 +20,7 @@
 	<div>
 		<h1 style="margin: 0">{user.name}</h1>
 		{#if user.fullName !== user.name}<div class="small muted">{user.fullName}</div>{/if}
-		<div class="small muted">{user.isOidc ? 'Angemeldet über Login-Anbieter' : 'Gast-Zugang'}{#if user.isInstanceAdmin} · Instanz-Admin{/if}</div>
+		<div class="small muted">{user.isOidc ? `Angemeldet über ${data.loginProvider}` : 'Gast-Zugang'}{#if user.isInstanceAdmin} · Instanz-Admin{/if}</div>
 	</div>
 </div>
 
@@ -93,7 +93,7 @@
 		<h2>E-Mails</h2>
 		{#if form?.mailError}<p class="error">{form.mailError}</p>{/if}
 		{#if data.mail.fromOidc}
-			<p class="small">Adresse: <strong>{data.mail.email}</strong> <span class="muted">(von deinem Login-Anbieter)</span></p>
+			<p class="small">Adresse: <strong>{data.mail.email}</strong> <span class="muted">(von {data.loginProvider})</span></p>
 		{:else}
 			<form method="POST" action="?/saveEmail" use:enhance={() => async ({ update }) => update({ reset: false })}>
 				<label for="email">Deine E-Mail-Adresse (optional)</label>
@@ -154,7 +154,7 @@
 {#if !data.hasOidc && data.oidcEnabled}
 	<div class="card">
 		<h2>Login verknüpfen</h2>
-		<p class="small muted">Wenn du ein Konto beim Login-Anbieter hast, kannst du es verknüpfen. Dann kannst du auch eigene Gruppen anlegen.</p>
+		<p class="small muted">Wenn du ein Konto bei {data.loginProvider} hast, kannst du es verknüpfen. Dann kannst du auch eigene Gruppen anlegen.</p>
 		<a class="button full" href="/auth/oidc/login?next=/profil">{data.oidcLabel}</a>
 	</div>
 {/if}
