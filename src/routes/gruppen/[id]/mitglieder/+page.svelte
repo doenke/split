@@ -318,7 +318,7 @@
 		{/if}
 	</div>
 {/snippet}
-{#if data.user?.isOidc}<a href="/kassen" class="small kassen-link">👪 Familien oder Paare als Kasse zusammenfassen →</a>{/if}
+<a href="/kassen" class="small kassen-link">👪 Familien oder Paare als Kasse zusammenfassen →</a>
 
 <style>
 	.opts {

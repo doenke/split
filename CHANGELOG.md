@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.49.2
+- Kassen anlegen neu geregelt: Eine Kasse, zu der man selbst gehört, darf jede(r) anlegen. Kassen für andere (um eine Gruppe vorzubereiten) legt an, wer auch Gruppen anlegen darf – und Instanz-Admins, die ohnehin alle Kassen bearbeiten können
+
 ## 0.49.1
 - Neue Kassen anlegen darf nur, wer auch Gruppen anlegen darf (Anmeldung über den Login-Anbieter); Gäste sehen „+ Neue Kasse“ und den Link aus der Mitgliederliste nicht mehr
 

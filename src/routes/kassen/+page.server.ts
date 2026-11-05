@@ -1,4 +1,4 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { and, inArray, isNotNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
 import { newId } from '$lib/server/ids';
@@ -33,13 +33,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	create: async ({ locals, request }) => {
 		if (!locals.user) redirect(303, '/login');
-		// the same people who may create groups (logged in via the login provider)
-		if (!locals.user.isOidc) error(403, 'Nur Nutzer mit Login dürfen Kassen anlegen.');
 		const f = await request.formData();
 		const name = String(f.get('name') ?? '').trim();
 		if (!name) return fail(400, { message: 'Bitte einen Namen angeben.' });
-		// a Kasse can also be set up for others (e.g. friends): then the creator only manages it
-		const includeMe = f.get('includeMe') === 'on';
+		// everyone may create a Kasse they belong to; one for others (e.g. friends, to prepare a group) only those
+		// who may create groups – and instance admins
+		const mayForOthers = locals.user.isOidc || locals.user.isInstanceAdmin;
+		const includeMe = f.get('includeMe') === 'on' || !mayForOthers;
 		const id = newId();
 		const userId = locals.user.id;
 		await db.transaction(async (tx) => {

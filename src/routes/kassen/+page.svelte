@@ -13,8 +13,7 @@
 
 <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
 	<h1 style="margin: 0">Meine Kassen</h1>
-	<!-- like groups: only people logged in via the login provider create Kassen -->
-	{#if !creating && data.user?.isOidc}<button class="primary" onclick={() => (creating = true)}>+ Neue Kasse</button>{/if}
+	{#if !creating}<button class="primary" onclick={() => (creating = true)}>+ Neue Kasse</button>{/if}
 </div>
 <p class="muted small">Familien oder Paare, die in allen Gruppen gemeinsam abrechnen.</p>
 
@@ -27,8 +26,13 @@
 			<input id="name" name="name" placeholder="z.B. Familie Jacobs" required class="grow" style="width: auto" />
 			<button class="primary">Anlegen</button>
 		</div>
-		<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked={!inAKasse} /> Ich gehöre selbst dazu</label>
-		<p class="hint">Ohne Haken: Kasse für andere, z.B. befreundete Familien.</p>
+		<!-- Kassen for others (to prepare a group): only for those who may create groups -->
+		{#if data.user?.isOidc || data.user?.isInstanceAdmin}
+			<label class="check" style="margin-top: 0.6rem"><input type="checkbox" name="includeMe" checked={!inAKasse} /> Ich gehöre selbst dazu</label>
+			<p class="hint">Ohne Haken: Kasse für andere, z.B. befreundete Familien, wenn du eine Gruppe vorbereitest.</p>
+		{:else}
+			<p class="hint">Du gehörst selbst zu dieser Kasse und verwaltest sie.</p>
+		{/if}
 	</form>
 {/if}
 
