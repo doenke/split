@@ -219,6 +219,11 @@
 	{/each}
 </div>
 
+<!-- when the final statement stands, its card links there already -->
+{#if !data.completion.final}
+	<a href="/gruppen/{data.group.id}/abrechnung" class="small" style="display: inline-block; margin: -0.5rem 0.25rem 1rem">📄 Vorläufige Abrechnung ansehen (PDF, CSV) →</a>
+{/if}
+
 {#if data.settlements.length}
 	<h2>Zahlungen</h2>
 	<div class="list">

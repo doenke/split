@@ -130,6 +130,16 @@
 				<option value="settled" selected={data.group.status === 'settled'}>abgerechnet</option>
 				<option value="archived" selected={data.group.status === 'archived'}>archiviert</option>
 			</select>
+			{#if data.completion.final || data.group.closedUntil}
+				<p class="hint">{@render frozen()}</p>
+				<button
+					formaction="?/reopen"
+					class="small"
+					onclick={(e) => {
+						if (!confirm(`${data.completion.final ? 'Endabrechnung' : 'Abrechnung'} wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.`)) e.preventDefault();
+					}}>Wieder öffnen</button
+				>
+			{/if}
 		</div>
 		<button class="primary full">Speichern</button>
 	</form>
@@ -138,8 +148,21 @@
 	<form id="newcat" method="POST" action="?/addCategory" use:enhance></form>
 {/if}
 {:else}
-	<div class="card small muted">Nur Gruppenadmins können die Einstellungen ändern.</div>
+	<div class="card small muted">
+		Nur Gruppenadmins können die Einstellungen ändern.
+		{#if data.completion.final || data.group.closedUntil}<p style="margin: 0.5rem 0 0">{@render frozen()}</p>{/if}
+	</div>
 {/if}
+
+{#snippet frozen()}
+	{#if data.completion.final}
+		✅ Die Endabrechnung steht{data.completion.finalAt ? ` seit ${formatDate(data.completion.finalAt.slice(0, 10))}` : ''}. Die Anteile sind
+		festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.
+	{:else if data.group.closedUntil}
+		🔒 Ausgaben bis einschließlich <strong>{formatDate(data.group.closedUntil)}</strong> sind festgeschrieben und ändern sich nicht mehr,
+		auch wenn Personen oder Faktoren geändert werden.
+	{/if}
+{/snippet}
 
 
 <form method="POST" action="?/toggleMute" class="card row" use:enhance>
@@ -147,40 +170,18 @@
 	<button>{data.muted ? 'Einschalten' : 'Stummschalten'}</button>
 </form>
 
-<div class="card">
-	<h2>Abrechnung & Export</h2>
-	<div class="row" style="margin-bottom: 0.75rem">
-		<a class="button grow" href="/gruppen/{data.group.id}/abrechnung">📄 Abrechnung (PDF)</a>
-		<a class="button grow" href="/gruppen/{data.group.id}/export.csv" download>📊 CSV</a>
-	</div>
-	{#if data.completion.final}
-		<p class="small">
-			✅ Die Endabrechnung steht{data.completion.finalAt ? ` seit ${formatDate(data.completion.finalAt.slice(0, 10))}` : ''}. Die Anteile
-			sind festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.
-		</p>
-		{#if data.isAdmin}
-			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Endabrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) cancel(); }}>
-				<button class="full">Wieder öffnen</button>
-			</form>
-		{/if}
-	{:else if data.group.closedUntil}
-		<p class="small">🔒 Ausgaben bis einschließlich <strong>{formatDate(data.group.closedUntil)}</strong> sind festgeschrieben und ändern sich nicht mehr, auch wenn Personen oder Faktoren geändert werden.</p>
-		{#if data.isAdmin}
-			<form method="POST" action="?/reopen" use:enhance={({ cancel }) => { if (!confirm('Abrechnung wieder öffnen? Die Anteile werden dann wieder neu berechnet und alle müssen erneut abschließen.')) cancel(); }}>
-				<button class="full">Wieder öffnen</button>
-			</form>
-		{/if}
-	{:else if data.isAdmin}
-		<form method="POST" action="?/close" use:enhance>
-			<p class="small muted">Schreibt die Anteile aller Ausgaben bis zum Stichtag fest – z.B. nach der Reise, bevor ausgeglichen wird.</p>
-			<div class="row">
-				<input type="date" name="until" value={data.group.endDate ?? new Date().toISOString().slice(0, 10)} class="grow" style="width: auto" />
-				<button>Abschließen</button>
-			</div>
-		</form>
-	{/if}
-	{#if form && 'failed' in form && form.failed?.length}<p class="error small">Nicht aufteilbar und daher nicht festgeschrieben: {form.failed.join(', ')}</p>{/if}
-</div>
+<!-- fixing the shares up to a date (e.g. after the trip); reopening is next to the status -->
+{#if data.isAdmin && !data.completion.final && !data.group.closedUntil}
+	<form method="POST" action="?/close" class="card" use:enhance>
+		<h2>Festschreiben</h2>
+		<p class="small muted">Schreibt die Anteile aller Ausgaben bis zum Stichtag fest – z.B. nach der Reise, bevor ausgeglichen wird.</p>
+		<div class="row">
+			<input type="date" name="until" value={data.group.endDate ?? new Date().toISOString().slice(0, 10)} class="grow" style="width: auto" />
+			<button>Abschließen</button>
+		</div>
+	</form>
+{/if}
+{#if form && 'failed' in form && form.failed?.length}<p class="error small">Nicht aufteilbar und daher nicht festgeschrieben: {form.failed.join(', ')}</p>{/if}
 
 {#if data.user?.isOidc}
 	<a class="button full" href="/gruppen/neu?vorlage={data.group.id}" style="margin-bottom: 1rem">📋 Neue Gruppe mit dieser als Vorlage</a>

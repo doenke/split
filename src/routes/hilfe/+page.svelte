@@ -160,8 +160,8 @@
 		</p>
 		<p>
 			Bis alle fertig sind, ist die Abrechnung <strong>vorläufig</strong> und zeigt immer den Stand von heute. Sind alle
-			fertig (und keine vorbereiteten Ausgaben mehr offen), steht die <strong>Endabrechnung</strong>. Unter Einstellungen
-			gibt es die Abrechnung als PDF mit allen Ausgaben und den Anteilen jeder Person sowie einen CSV-Export.
+			fertig (und keine vorbereiteten Ausgaben mehr offen), steht die <strong>Endabrechnung</strong>. Über die Salden-Seite
+			kommst du zur Abrechnung mit allen Ausgaben und den Anteilen jeder Person – zum Drucken, als PDF oder als CSV-Export.
 		</p>
 	</section>
 

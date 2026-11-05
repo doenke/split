@@ -3,6 +3,11 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.5
+- Gruppeneinstellungen: Box „Abrechnung & Export“ entfernt. „Wieder öffnen“ steht jetzt beim Status, das Festschreiben bis zu einem Stichtag hat eine eigene kleine Box
+- Der CSV-Export ist jetzt auf der Abrechnungsseite (neben „Drucken / als PDF speichern“); „Zurück“ führt dort zu den Salden
+- Salden: Link „Vorläufige Abrechnung ansehen“, solange die Endabrechnung noch nicht steht
+
 ## 0.42.4
 - Seite „Was hat es gekostet?“ (Kosten nach Kategorien) entfernt – das steht in der detaillierten Abrechnung
 

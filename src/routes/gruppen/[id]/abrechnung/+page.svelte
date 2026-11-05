@@ -28,7 +28,8 @@
 </svelte:head>
 
 <div class="noprint row" style="margin-bottom: 1rem">
-	<a href="/gruppen/{data.group.id}/einstellungen" class="small grow">← Zurück</a>
+	<a href="/gruppen/{data.group.id}/salden" class="small grow">← Zurück</a>
+	<a class="button" href="/gruppen/{data.group.id}/export.csv" download>📊 CSV</a>
 	<button class="primary" onclick={() => window.print()}>Drucken / als PDF speichern</button>
 </div>
 
