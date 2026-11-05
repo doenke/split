@@ -27,6 +27,7 @@ async function mailSettings(personId: string) {
 	};
 }
 import { formatIban, isValidIban, normalizeIban, normalizePaypalMe } from '$lib/core/payment';
+import { deleteAvatar, storeAvatar, UploadError } from '$lib/server/uploads';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -56,6 +57,28 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
+	/** Own profile picture (already made small and square on the device). */
+	avatar: async ({ locals, request }) => {
+		if (!locals.user) redirect(303, '/login');
+		const file = (await request.formData()).get('avatar');
+		if (!(file instanceof File) || !file.size) return fail(400, { message: 'Bitte ein Bild wählen.' });
+		const [me] = await db.select({ url: schema.persons.avatarUrl }).from(schema.persons).where(eq(schema.persons.id, locals.user.id));
+		try {
+			const url = await storeAvatar(file, locals.user.id, me?.url ?? null);
+			await db.update(schema.persons).set({ avatarUrl: url }).where(eq(schema.persons.id, locals.user.id));
+		} catch (e) {
+			if (e instanceof UploadError) return fail(400, { message: e.message });
+			throw e;
+		}
+		return { avatarSaved: true };
+	},
+	removeAvatar: async ({ locals }) => {
+		if (!locals.user) redirect(303, '/login');
+		const [me] = await db.select({ url: schema.persons.avatarUrl }).from(schema.persons).where(eq(schema.persons.id, locals.user.id));
+		await deleteAvatar(me?.url ?? null);
+		await db.update(schema.persons).set({ avatarUrl: null }).where(eq(schema.persons.id, locals.user.id));
+		return { avatarRemoved: true };
+	},
 	/** Full name (not for login-provider accounts) and the optional display name. */
 	rename: async ({ locals, request }) => {
 		if (!locals.user) redirect(303, '/login');

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import AppAddress from '$lib/components/AppAddress.svelte';
-	import { enhance } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import PasskeySetup from '$lib/components/PasskeySetup.svelte';
@@ -10,12 +10,49 @@
 	let { data, form } = $props();
 	const user = $derived(data.user!);
 
+	// profile picture: cropped to a square and made small on the device, then uploaded
+	let avatarInput = $state<HTMLInputElement>();
+	let avatarBusy = $state(false);
+	let avatarError = $state('');
+	async function square(file: File, size = 256): Promise<Blob> {
+		const img = await createImageBitmap(file);
+		const side = Math.min(img.width, img.height);
+		const canvas = document.createElement('canvas');
+		canvas.width = canvas.height = size;
+		canvas.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+		return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob'))), 'image/jpeg', 0.85));
+	}
+	async function uploadAvatar(e: Event) {
+		const file = (e.currentTarget as HTMLInputElement).files?.[0];
+		if (!file) return;
+		avatarBusy = true;
+		avatarError = '';
+		try {
+			const body = new FormData();
+			body.set('avatar', new File([await square(file)], 'avatar.jpg', { type: 'image/jpeg' }));
+			const res = await fetch('?/avatar', { method: 'POST', body, headers: { 'x-sveltekit-action': 'true' } });
+			const result = deserialize(await res.text());
+			if (result.type === 'failure') avatarError = String(result.data?.message ?? 'Hochladen fehlgeschlagen.');
+			else if (result.type === 'error') avatarError = 'Hochladen fehlgeschlagen.';
+			await invalidateAll();
+		} catch {
+			avatarError = 'Dieses Bild konnte nicht gelesen werden – bitte ein anderes Foto wählen.';
+		} finally {
+			avatarBusy = false;
+			if (avatarInput) avatarInput.value = '';
+		}
+	}
+
 </script>
 
 <svelte:head><title>Profil · Split</title></svelte:head>
 
 <div class="row" style="margin-bottom: 1rem">
-	<Avatar name={user.name} color={user.color} url={user.avatarUrl} size={56} />
+	<button type="button" class="avatar-btn" onclick={() => avatarInput?.click()} aria-label="Profilbild ändern" title="Profilbild ändern" disabled={avatarBusy}>
+		<Avatar name={user.name} color={user.color} url={user.avatarUrl} size={56} />
+		<span class="cam" aria-hidden="true">{avatarBusy ? '…' : '📷'}</span>
+	</button>
+	<input bind:this={avatarInput} type="file" accept="image/*" hidden onchange={uploadAvatar} />
 	<div>
 		<h1 style="margin: 0">{user.name}</h1>
 		{#if user.fullName !== user.name}<div class="small muted">{user.fullName}</div>{/if}
@@ -24,6 +61,13 @@
 </div>
 
 {#if form?.message}<p class="error">{form.message}</p>{/if}
+{#if avatarError}<p class="error">{avatarError}</p>{/if}
+<div class="row small avatar-actions">
+	<button type="button" class="link" onclick={() => avatarInput?.click()} disabled={avatarBusy}>Profilbild {user.avatarUrl ? 'ändern' : 'hochladen'}</button>
+	{#if user.avatarUrl?.startsWith('/avatare/')}
+		<form method="POST" action="?/removeAvatar" use:enhance><button class="link danger">Entfernen</button></form>
+	{/if}
+</div>
 
 <div class="row" style="margin-bottom: 1rem">
 	<a href="/kassen" class="button grow">👪 Kassen</a>
@@ -218,6 +262,31 @@
 </div>
 
 <style>
+	.avatar-btn {
+		position: relative;
+		padding: 0;
+		border: 0;
+		background: none;
+		border-radius: 50%;
+		min-height: 0;
+	}
+	.avatar-btn .cam {
+		position: absolute;
+		right: -4px;
+		bottom: -4px;
+		font-size: 0.8rem;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 50%;
+		width: 1.5rem;
+		height: 1.5rem;
+		display: grid;
+		place-items: center;
+	}
+	.avatar-actions {
+		margin: -0.5rem 0 1rem;
+		gap: 1rem;
+	}
 	.prefs {
 		margin-top: 0.75rem;
 	}

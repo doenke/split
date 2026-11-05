@@ -1,5 +1,5 @@
 import * as client from 'openid-client';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull, like, not, or } from 'drizzle-orm';
 import { config } from '../config';
 import { db, schema } from '../db';
 import { createPerson } from '../persons';
@@ -95,10 +95,14 @@ export async function upsertOidcPerson(profile: OidcProfile, linkToPersonId?: st
 		.set({
 			name: profile.name,
 			...(profile.email ? { email: profile.email, emailVerified: true, emailFromOidc: true } : {}),
-			avatarUrl: profile.picture,
 			isAdmin
 		})
 		.where(eq(schema.persons.id, personId));
+	// the provider's picture, unless the person uploaded an own one in Split
+	await db
+		.update(schema.persons)
+		.set({ avatarUrl: profile.picture })
+		.where(and(eq(schema.persons.id, personId), or(isNull(schema.persons.avatarUrl), not(like(schema.persons.avatarUrl, '/avatare/%')))));
 	await refreshDisplayNames();
 	await db
 		.update(schema.credentials)

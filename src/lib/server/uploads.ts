@@ -72,3 +72,36 @@ export async function uploadsWritable() {
 		return false;
 	}
 }
+
+// ---- profile pictures (resized to a small square on the device before upload) ----
+
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+const avatarTypes: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const avatarDir = () => path.join(dir(), 'avatars');
+
+/** Stores a new profile picture and returns its URL; the previous own picture is removed. */
+export async function storeAvatar(file: File, personId: string, previousUrl: string | null) {
+	const ext = avatarTypes[file.type];
+	if (!ext) throw new UploadError('Bitte ein Foto (JPEG, PNG oder WebP) wählen.');
+	if (file.size > AVATAR_MAX_BYTES) throw new UploadError('Das Bild ist zu groß (max. 2 MB).');
+	// a new name each time, so browsers don't keep showing the old picture
+	const fileName = `${personId}-${newId()}.${ext}`;
+	try {
+		await mkdir(avatarDir(), { recursive: true });
+		await writeFile(path.join(avatarDir(), fileName), Buffer.from(await file.arrayBuffer()));
+	} catch (e) {
+		console.error(`Profilbild konnte nicht in ${avatarDir()} gespeichert werden:`, e);
+		throw new UploadError('Das Bild konnte auf dem Server nicht gespeichert werden (Upload-Ordner nicht beschreibbar?).');
+	}
+	await deleteAvatar(previousUrl);
+	return `/avatare/${fileName}`;
+}
+
+/** Removes an own profile picture (pictures from the login provider are only links). */
+export async function deleteAvatar(url: string | null) {
+	if (url?.startsWith('/avatare/')) await rm(path.join(avatarDir(), path.basename(url)), { force: true });
+}
+
+export async function readAvatar(fileName: string) {
+	return readFile(path.join(avatarDir(), path.basename(fileName)));
+}
