@@ -80,7 +80,7 @@ export async function prepareExpense(
 	const equal = input.equalWeights === true;
 	let rule: SplitRule = profile ? profile.rule : input.rule;
 	if (rule && equal && rule.type !== 'individual') rule = { ...rule, equalWeights: true };
-	if (!rule || !['all', 'all_except', 'only', 'individual'].includes(rule.type)) throw new InputError('Ungültige Aufteilung.');
+	if (!rule || !['all', 'adults', 'all_except', 'only', 'individual'].includes(rule.type)) throw new InputError('Ungültige Aufteilung.');
 	const ids = rule.type === 'all_except' ? rule.excluded : rule.type === 'only' ? rule.included : rule.type === 'individual' ? Object.keys(rule.values) : [];
 	if (ids.some((id) => !memberIds.has(id))) throw new InputError('Unbekannte Person in der Aufteilung.');
 	if (rule.type === 'individual') {

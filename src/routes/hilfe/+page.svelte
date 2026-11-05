@@ -126,10 +126,11 @@
 		<h2>Ausgaben erfassen</h2>
 		<ul>
 			<li>
-				<strong>Aufteilung:</strong> „Alle“, „Alle außer …“, „Nur …“ oder individuell (Beträge, Prozente, Anteile). Normal
+				<strong>Aufteilung:</strong> „Alle“, „Voller Faktor“ (nur wer Faktor 1 hat, also die Erwachsenen – z.B. für
+				Alkohol), „Außer …“, „Nur …“ oder individuell (Beträge, Prozente, Anteile). Normal
 				zählen die Faktoren der Personen; „Alle gleich gewichten“ ignoriert sie.
 			</li>
-			<li><strong>Profile</strong> (eigener Menüpunkt) speichern wiederkehrende Aufteilungen, z.B. „Mietwagen“: nur bestimmte Personen mit eigenen Faktoren.</li>
+			<li><strong>Profile</strong> (eigener Menüpunkt) speichern wiederkehrende Aufteilungen, z.B. „Mietwagen“: nur bestimmte Personen mit eigenen Faktoren. Neue Gruppen haben schon das Profil „Alkohol“ (voller Faktor).</li>
 			<li><strong>Privater Anteil:</strong> wird vom Betrag abgezogen, nur der Rest wird geteilt.</li>
 			<li><strong>Zeitraum:</strong> z.B. Ferienwohnung – geteilt nach Nächten oder Tagen, die jemand dabei war.</li>
 			<li>

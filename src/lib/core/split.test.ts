@@ -43,6 +43,12 @@ describe('computeShares', () => {
 		expect(obj(computeShares(expense({}), family))).toEqual({ anna: 3000, ben: 3000, lea: 1500, tim: 1500 });
 	});
 
+	it('splits among everyone with a full factor (adults)', () => {
+		expect(obj(computeShares(expense({ rule: { type: 'adults' } }), family))).toEqual({ anna: 4500, ben: 4500 });
+		// own factors still count
+		expect(obj(computeShares(expense({ rule: { type: 'adults', factorOverrides: { persons: { ben: 2 } } } }), family))).toEqual({ anna: 3000, ben: 6000 });
+	});
+
 	it('includes late joiners participating since the start', () => {
 		const withCarla = [...family, m('carla')];
 		expect(obj(computeShares(expense({}), withCarla))).toEqual({

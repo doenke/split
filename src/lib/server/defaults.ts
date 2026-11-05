@@ -5,8 +5,12 @@ export const defaultCategories = [
 	{ id: 'groceries', name: 'Lebensmittel', icon: '🛒', color: '#2a9d8f' },
 	{ id: 'accommodation', name: 'Unterkunft', icon: '🏠', color: '#264653' },
 	{ id: 'transport', name: 'Transport', icon: '🚆', color: '#00798c' },
-	{ id: 'tickets', name: 'Eintritt', icon: '🎟️', color: '#d1495b' }
+	{ id: 'tickets', name: 'Eintritt', icon: '🎟️', color: '#d1495b' },
+	{ id: 'alcohol', name: 'Alkohol', icon: '🍺', color: '#e9a23b' }
 ];
+
+/** Profiles a new, empty group starts with. */
+export const defaultProfiles = [{ name: 'Alkohol', icon: '🍺', rule: { type: 'adults' as const }, defaultCategoryId: 'alcohol' }];
 
 export async function seedDefaults() {
 	await db

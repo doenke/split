@@ -36,6 +36,7 @@
 		if (prof) return `${prof.icon} Profil „${prof.name}“`;
 		if (!r || r.type === 'all') return 'Alle';
 		const names = (ids: string[]) => ids.map((id) => people.get(id)?.name ?? '?').join(', ');
+		if (r.type === 'adults') return 'Alle mit vollem Faktor';
 		if (r.type === 'all_except') return `Alle außer ${names(r.excluded)}`;
 		if (r.type === 'only') return `Nur ${names(r.included)}`;
 		return { shares: 'Individuell nach Anteilen', percent: 'Individuell in Prozent', amounts: 'Individuelle Beträge' }[r.mode];

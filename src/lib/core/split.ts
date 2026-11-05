@@ -68,6 +68,8 @@ export function participants(members: Member[], rule: SplitRule, date: IsoDate, 
 	switch (rule.type) {
 		case 'all':
 			return members.filter((m) => active(m));
+		case 'adults':
+			return members.filter((m) => active(m) && m.factor >= 1);
 		case 'all_except':
 			return members.filter((m) => active(m) && !rule.excluded.includes(m.personId));
 		case 'only':

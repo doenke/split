@@ -3,6 +3,12 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.53.0
+- Neue Aufteilung „Voller Faktor“: geteilt wird zwischen allen mit Faktor 1 (oder mehr), also den Erwachsenen – auch in Profilen wählbar
+- Neue feste Kategorie „Alkohol“ 🍺
+- Neue (leere) Gruppen starten mit dem Profil „Alkohol“: Aufteilung „Voller Faktor“, Kategorie Alkohol
+- Ausgabeformular: „Alle außer …“ heißt kürzer „Außer …“
+
 ## 0.52.0
 - Währungen: Karibische Dollar stehen standardmäßig zur Auswahl (Ostkaribischer, Barbados-, Bahamas-, Belize-, Bermuda-, Kaiman-, Jamaika-, Trinidad-und-Tobago- und Guyana-Dollar)
 - Für die an den US-Dollar gekoppelten (XCD, BBD, BSD, BZD, BMD, KYD) ermittelt Split den Tageskurs automatisch über den EZB-Kurs des US-Dollars

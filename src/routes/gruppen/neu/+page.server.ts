@@ -1,3 +1,4 @@
+import { defaultProfiles } from '$lib/server/defaults';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '$lib/server/db';
@@ -94,6 +95,9 @@ export const actions: Actions = {
 						profiles.map((p) => ({ id: newId(), groupId: id, name: p.name, icon: p.icon, rule: p.rule, defaultCategoryId: p.defaultCategoryId, sort: p.sort }))
 					);
 				}
+			} else if (!template) {
+				// a new, empty group starts with the default profiles (e.g. alcohol: only the adults)
+				await tx.insert(schema.profiles).values(defaultProfiles.map((p, i) => ({ id: newId(), groupId: id, ...p, sort: i })));
 			}
 			await audit(tx, { groupId: id, personId: userId, action: 'group.create', entityId: id, data: template ? { template: template.name } : undefined });
 		});

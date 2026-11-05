@@ -30,6 +30,8 @@ interface RuleBase {
 
 export type SplitRule =
 	| (RuleBase & { type: 'all' })
+	/** everyone with a full factor (1 or more) – the adults, e.g. for alcohol */
+	| (RuleBase & { type: 'adults' })
 	| (RuleBase & { type: 'all_except'; excluded: string[] })
 	| (RuleBase & { type: 'only'; included: string[] })
 	| (RuleBase & {

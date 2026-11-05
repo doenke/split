@@ -15,22 +15,24 @@
 		const people = membersFor(rule)
 			.map((m) => `${m.name}${f[m.personId] !== undefined ? ` ×${fmt(f[m.personId])}` : ''}`)
 			.join(', ');
+		if (rule.type === 'adults') return `Alle mit vollem Faktor: ${people || 'niemand'} · neue Erwachsene automatisch dabei`;
 		return (people || 'niemand') + (rule.type === 'only' ? '' : ' · neue Mitglieder automatisch dabei');
 	}
 
 	function membersFor(rule: SplitRule) {
 		if (rule.type === 'only') return data.members.filter((m) => rule.included.includes(m.personId));
 		if (rule.type === 'all_except') return data.members.filter((m) => !rule.excluded.includes(m.personId));
+		if (rule.type === 'adults') return data.members.filter((m) => m.factor >= 1);
 		return data.members;
 	}
 
-	let mode = $state<'all' | 'persons'>('persons');
+	let mode = $state<'all' | 'adults' | 'persons'>('persons');
 	let picked = $state<Record<string, boolean>>({});
 	let personFactors = $state<Record<string, string>>({});
 	function startEdit(id: string | null, rule?: SplitRule) {
 		editing = id ?? 'new';
 		// new profiles start with concrete people
-		mode = !rule || rule.type === 'only' ? 'persons' : 'all';
+		mode = !rule || rule.type === 'only' ? 'persons' : rule.type === 'adults' ? 'adults' : 'all';
 		picked = Object.fromEntries(
 			data.members.map((m) => [
 				m.personId,
@@ -70,13 +72,20 @@
 		<div class="segmented" style="margin-bottom: 0.75rem">
 			<button type="button" class:active={mode === 'persons'} onclick={() => (mode = 'persons')}>Bestimmte Personen</button>
 			<button type="button" class:active={mode === 'all'} onclick={() => (mode = 'all')}>Alle (außer …)</button>
+			<button type="button" class:active={mode === 'adults'} onclick={() => (mode = 'adults')}>Voller Faktor</button>
 		</div>
 		<div class="field">
 				<span class="label">Wer ist beteiligt – mit welchem Faktor?</span>
 				{#each data.members as m (m.personId)}
 					<div class="row person">
 						<label class="check grow">
-							<input type="checkbox" name="person" value={m.personId} bind:checked={picked[m.personId]} />
+							{#if mode === 'adults'}
+								<!-- decided by the factor: everyone with 1 or more -->
+								<input type="checkbox" checked={m.factor >= 1} disabled />
+								{#if m.factor >= 1}<input type="hidden" name="person" value={m.personId} />{/if}
+							{:else}
+								<input type="checkbox" name="person" value={m.personId} bind:checked={picked[m.personId]} />
+							{/if}
 							{m.name}
 						</label>
 						<input
@@ -84,13 +93,19 @@
 							bind:value={personFactors[m.personId]}
 							inputmode="decimal"
 							placeholder={fmt(m.factor)}
-							disabled={!picked[m.personId]}
+							disabled={mode === 'adults' ? m.factor < 1 : !picked[m.personId]}
 							style="width: 5rem"
 							aria-label="Faktor für {m.name}"
 						/>
 					</div>
 				{/each}
-				<p class="hint">Faktor leer = Standard.{mode === 'all' ? ' Wer später dazukommt, ist automatisch dabei.' : ''}</p>
+				<p class="hint">
+					Faktor leer = Standard.{mode === 'all'
+						? ' Wer später dazukommt, ist automatisch dabei.'
+						: mode === 'adults'
+							? ' Beteiligt sind alle mit Faktor 1 oder mehr (Erwachsene) – auch wer später dazukommt.'
+							: ''}
+				</p>
 		</div>
 		<div class="field">
 			<label for="cat-{p?.id}">Kategorie vorschlagen</label>

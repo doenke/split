@@ -164,7 +164,7 @@
 	);
 
 	// split
-	type Mode = 'all' | 'all_except' | 'only' | 'individual';
+	type Mode = 'all' | 'adults' | 'all_except' | 'only' | 'individual';
 	const initRule = init?.rule;
 	let mode = $state<Mode>(initRule?.type ?? 'all');
 	let profileId = $state<string | null>(init?.profileId ?? null);
@@ -306,6 +306,8 @@
 		switch (mode) {
 			case 'all':
 				return { type: 'all' };
+			case 'adults':
+				return { type: 'adults' };
 			case 'all_except':
 				return { type: 'all_except', excluded: ids };
 			case 'only':
@@ -408,7 +410,8 @@
 
 	const modeLabels: Record<Mode, string> = {
 		all: 'Alle',
-		all_except: 'Alle außer …',
+		adults: 'Voller Faktor',
+		all_except: 'Außer …',
 		only: 'Nur …',
 		individual: 'Individuell'
 	};
@@ -437,6 +440,8 @@
 			? `Profil „${profile.name}“`
 			: mode === 'all'
 				? `Alle (${members.length})`
+				: mode === 'adults'
+					? `Alle mit vollem Faktor (${members.filter((m) => m.factor >= 1).length})`
 				: mode === 'all_except'
 					? picked.length ? `Alle außer ${names(picked)}` : `Alle (${members.length})`
 					: mode === 'only'

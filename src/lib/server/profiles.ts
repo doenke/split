@@ -14,6 +14,8 @@ export function ruleFromForm(f: FormData, memberIds: string[]): SplitRule {
 		if (n !== null) persons[id] = n;
 	}
 	const overrides = Object.keys(persons).length ? { factorOverrides: { persons } } : {};
+	// everyone with a full factor (adults); own factors still possible
+	if (f.get('mode') === 'adults') return { type: 'adults', ...overrides };
 	// "everyone (except …)": people joining later take part automatically
 	if (f.get('mode') === 'all') {
 		const excluded = memberIds.filter((id) => !picked.includes(id));
