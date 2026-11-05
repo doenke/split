@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.50.1
+- Sinkt der Faktor eines Gruppenadmins unter 1, fragt Split nach, ob die Person auch nicht mehr Gruppenadmin sein soll
+
 ## 0.50.0
 - Wer mit Faktor 1 zu einer Gruppe hinzukommt (einzeln, als ganze Kasse oder über den Gruppenlink), ist automatisch Gruppenadmin – Kinder mit kleinerem Faktor nicht
 - Wird eine ganze Kasse in eine Gruppe übernommen, behält jede Person ihren üblichen Faktor (z.B. 0,5 für Kinder) statt 1

@@ -234,11 +234,19 @@
 				method="POST"
 				action="?/update"
 				class="edit"
-				use:enhance={() =>
-					async ({ result, update }) => {
+				use:enhance={({ formData }) => {
+					// an adult becomes a child (factor below 1): ask whether they should stop being group admin too
+					const factor = parseFloat(String(formData.get('factor') ?? '1').replace(',', '.'));
+					if (m.role === 'admin' && m.factor >= 1 && factor < 1 && formData.get('role') === 'admin') {
+						if (confirm(`${m.name} hat jetzt den Faktor ${factorLabel(factor)}. Soll ${m.name} auch nicht mehr Gruppenadmin sein?`)) {
+							formData.set('role', 'member');
+						}
+					}
+					return async ({ result, update }) => {
 						await update({ reset: false });
 						if (result.type === 'success') editing = null;
-					}}
+					};
+				}}
 			>
 				<input type="hidden" name="personId" value={m.personId} />
 				{#if data.isAdmin && !claimed.has(m.personId)}
