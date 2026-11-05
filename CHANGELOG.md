@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.42.4
+- Seite „Was hat es gekostet?“ (Kosten nach Kategorien) entfernt – das steht in der detaillierten Abrechnung
+
 ## 0.42.3
 - Box „Die Endabrechnung steht“: zusätzlich ein Link zur detaillierten Abrechnung; auf der Salden-Seite fällt der Link „Zum Ausgleichen“ weg (er führte auf die Seite selbst)
 

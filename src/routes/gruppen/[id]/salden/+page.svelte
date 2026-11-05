@@ -219,8 +219,6 @@
 	{/each}
 </div>
 
-<a href="/gruppen/{data.group.id}/kosten" class="small" style="display: inline-block; margin: -0.5rem 0.25rem 1rem">📊 Was hat es gekostet? Nach Kategorien →</a>
-
 {#if data.settlements.length}
 	<h2>Zahlungen</h2>
 	<div class="list">
