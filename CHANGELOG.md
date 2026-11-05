@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.54.0
+- Kategorie schlägt Profil vor: Wer z.B. „Alkohol“ als Kategorie wählt, bekommt das Profil „Alkohol“ gleich mit – solange die Aufteilung noch nicht von Hand geändert wurde. Ein anderes Profil oder eine andere Aufteilung bleibt unangetastet
+
 ## 0.53.2
 - „Voller Faktor“: die Übersicht „Dabei / Nicht dabei“ unter der Personenliste wieder entfernt – das Etikett „nicht dabei · Faktor …“ an der Person bleibt
 

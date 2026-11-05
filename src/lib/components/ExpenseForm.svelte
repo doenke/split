@@ -190,7 +190,23 @@
 		return m.factor === 1 ? 'Standard' : `Standardfaktor von ${m.name} (Mitglieder)`;
 	}
 	let factorOpen = $state<string | null>(null);
+	// a category can bring its profile along (e.g. Alkohol → profile Alkohol) – only while the split is untouched
+	let autoProfile = $state(false);
+	function pickCategory(id: string | null) {
+		categoryId = id;
+		const untouched = (!profileId || autoProfile) && mode === 'all' && !keepOverrides;
+		if (!untouched) return;
+		const match = id ? profiles.find((p) => p.defaultCategoryId === id) : undefined;
+		if (match) {
+			profileId = match.id;
+			autoProfile = true;
+		} else if (autoProfile) {
+			profileId = null;
+			autoProfile = false;
+		}
+	}
 	function chooseProfile(id: string) {
+		autoProfile = false;
 		profileId = id;
 		keepOverrides = false;
 		mode = 'all';
@@ -538,7 +554,7 @@
 					class:active={categoryId === c.id}
 					role="radio"
 					aria-checked={categoryId === c.id}
-					onclick={() => (categoryId = categoryId === c.id ? null : c.id)}>{c.icon} {c.name}</button
+					onclick={() => pickCategory(categoryId === c.id ? null : c.id)}>{c.icon} {c.name}</button
 				>
 			{/each}
 		</div>
@@ -637,7 +653,7 @@
 		{#if profiles.length}
 			<div class="chips" style="margin-bottom: 0.6rem">
 				{#each profiles as p (p.id)}
-					<button type="button" class="chip profile" class:active={profileId === p.id} onclick={() => (profileId === p.id ? (profileId = null) : chooseProfile(p.id))}>
+					<button type="button" class="chip profile" class:active={profileId === p.id} onclick={() => (profileId === p.id ? ((profileId = null), (autoProfile = false)) : chooseProfile(p.id))}>
 						{p.icon} {p.name}
 					</button>
 				{/each}
@@ -645,7 +661,7 @@
 		{/if}
 		<div class="segmented" style="margin-bottom: 0.6rem">
 			{#each Object.entries(modeLabels) as [k, label] (k)}
-				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (keepOverrides = false))}>{label}</button>
+				<button type="button" class:active={!profile && mode === k} onclick={() => ((mode = k as Mode), (profileId = null), (autoProfile = false), (keepOverrides = false))}>{label}</button>
 			{/each}
 		</div>
 		{#if keepOverrides}

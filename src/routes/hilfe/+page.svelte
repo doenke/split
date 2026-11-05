@@ -130,7 +130,7 @@
 				Alkohol), „Außer …“, „Nur …“ oder individuell (Beträge, Prozente, Anteile). Normal
 				zählen die Faktoren der Personen; „Alle gleich gewichten“ ignoriert sie.
 			</li>
-			<li><strong>Profile</strong> (eigener Menüpunkt) speichern wiederkehrende Aufteilungen, z.B. „Mietwagen“: nur bestimmte Personen mit eigenen Faktoren. Neue Gruppen haben schon das Profil „Alkohol“ (voller Faktor).</li>
+			<li><strong>Profile</strong> (eigener Menüpunkt) speichern wiederkehrende Aufteilungen, z.B. „Mietwagen“: nur bestimmte Personen mit eigenen Faktoren. Neue Gruppen haben schon das Profil „Alkohol“ (voller Faktor). Hat ein Profil eine Kategorie, wählt die Kategorie umgekehrt auch das Profil aus – solange du die Aufteilung nicht selbst geändert hast.</li>
 			<li><strong>Privater Anteil:</strong> wird vom Betrag abgezogen, nur der Rest wird geteilt.</li>
 			<li><strong>Zeitraum:</strong> z.B. Ferienwohnung – geteilt nach Nächten oder Tagen, die jemand dabei war.</li>
 			<li>
