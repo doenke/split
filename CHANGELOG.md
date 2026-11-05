@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.44.3
+- Kamera-Button: eigenes Kamera-Symbol statt Emoji – sitzt jetzt auf allen Geräten mittig und passt zum Plus
+
 ## 0.44.2
 - Salden: Link „Vorläufige Abrechnung ansehen“ ohne „(PDF, CSV)“
 

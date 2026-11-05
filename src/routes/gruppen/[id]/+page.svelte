@@ -237,7 +237,8 @@
 
 {#if data.group.status === 'active' && !data.group.archivedAt}
 	<label class="button primary fab camera" aria-label="Bon fotografieren" title="Bon fotografieren – später vervollständigen">
-		{snapping ? '…' : '📷'}
+		<!-- an icon instead of the emoji: emoji fonts don't draw it centred -->
+		{#if snapping}…{:else}<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.5" /></svg>{/if}
 		<!-- while the camera is open, a pending update must not reload the page (the photo would be lost) -->
 		<input
 			type="file"
