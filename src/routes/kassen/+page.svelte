@@ -43,7 +43,7 @@
 					{/each}
 				</div>
 				<div class="grow">
-					<div class="ellipsis"><strong>{k.name}</strong>{#if !k.isMember} <span class="badge">von dir verwaltet</span>{/if}</div>
+					<div class="ellipsis"><strong>{k.name}</strong>{#if !k.isMember} <span class="badge" title="Du bist nicht Mitglied, kannst die Kasse aber verwalten, weil du sie angelegt hast.">von dir angelegt</span>{/if}</div>
 					<div class="small muted ellipsis">{k.members.map((m) => m.name).join(', ') || 'noch niemand'}</div>
 				</div>
 				<div class="right">

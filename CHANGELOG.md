@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.47.2
+- Kassen-Übersicht: Kassen, die du für andere angelegt hast, heißen „von dir angelegt“ statt „von dir verwaltet“
+
 ## 0.47.1
 - Abrechnung: Hinweis „Noch nicht abgeschlossen“ ist im Dark Mode wieder lesbar
 
