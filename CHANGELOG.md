@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.55.0
+- Salden: „📋 Als Text kopieren“ unter „Wer zahlt wem“ – eine Zeile pro Zahlung („Familie Cyron → Ulli & Sönke: 396,79 €“), zum Einfügen in WhatsApp & Co.
+
 ## 0.54.1
 - Profile: „Kategorie vorschlagen“ heißt jetzt „Mit Kategorie verknüpfen“ (mit kurzer Erklärung); die Profilliste zeigt „verknüpft mit 🍺 Alkohol“
 

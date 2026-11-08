@@ -11,6 +11,23 @@
 	const confirming = $derived(data.group.settings.confirmPayments ?? false);
 	const people = $derived(new Map(data.members.map((m) => [m.personId, m])));
 	const kasseName = (id: string) => data.kassen[id]?.name ?? '?';
+
+	// "Wer zahlt wem" as plain text, one line per payment – to paste into a chat
+	let copiedTransfers = $state(false);
+	async function copyTransfers() {
+		const text = data.transfers
+			.map((t) => `${kasseName(t.from)} → ${kasseName(t.to)}: ${formatAmount(t.amount, currency).replace(/\u00a0/g, ' ')}`)
+			.join('\n');
+		try {
+			await navigator.clipboard.writeText(text);
+		} catch {
+			// no clipboard access (e.g. not https): offer the text to copy by hand
+			prompt('Zum Kopieren:', text);
+			return;
+		}
+		copiedTransfers = true;
+		setTimeout(() => (copiedTransfers = false), 2000);
+	}
 	const kasseMembers = (id: string) => data.members.filter((m) => m.kasseId === id);
 	const kassen = $derived(Object.values(data.balances.kassen).sort((a, b) => b.balance - a.balance));
 	const maxAbs = $derived(Math.max(1, ...kassen.map((k) => Math.abs(k.balance))));
@@ -125,6 +142,9 @@
 				</form>
 			{/if}
 		{/each}
+	</div>
+	<div class="copy-row">
+		<button class="link small" onclick={copyTransfers} title="Als Text kopieren, z.B. für WhatsApp">{copiedTransfers ? '✔ Kopiert' : '📋 Als Text kopieren'}</button>
 	</div>
 {/if}
 
@@ -338,5 +358,10 @@
 	.record {
 		display: block !important;
 		background: var(--surface-2);
+	}
+	.copy-row {
+		display: flex;
+		justify-content: flex-end;
+		margin: -0.6rem 0.25rem 1rem;
 	}
 </style>
