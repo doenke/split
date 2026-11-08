@@ -162,6 +162,56 @@
 			</tfoot>
 		</table>
 	</div>
+
+	<!-- the same, per Kasse – including the payments already made -->
+	<h2>Zusammenfassung nach Kassen</h2>
+	<div class="scroll">
+		<table class="matrix kassen">
+			<thead>
+				<tr>
+					<th class="lbl"></th>
+					{#each kassen as k (k.kasseId)}
+						<th class="r person">
+							{kasseName(k.kasseId)}
+							{#if k.personIds.length > 1}<div class="muted names">{k.personIds.map((id) => people.get(id) ?? '?').join(', ')}</div>{/if}
+						</th>
+					{/each}
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="lbl">Anteil</td>
+					{#each kassen as k (k.kasseId)}<td class="r">{formatAmount(k.consumed, c)}</td>{/each}
+				</tr>
+				<tr>
+					<td class="lbl">Bezahlt</td>
+					{#each kassen as k (k.kasseId)}<td class="r">{formatAmount(k.paid, c)}</td>{/each}
+				</tr>
+				<tr class="sub">
+					<td class="lbl">Saldo vor Ausgleich</td>
+					{#each kassen as k (k.kasseId)}
+						{@const b = k.paid - k.consumed}
+						<td class="r">{b > 0 ? '+' : ''}{formatAmount(b, c)}</td>
+					{/each}
+				</tr>
+				<tr>
+					<td class="lbl">Geleistete Zahlungen <span class="muted">(gezahlt − erhalten)</span></td>
+					{#each kassen as k (k.kasseId)}
+						{@const z = k.settlementsSent - k.settlementsReceived}
+						<td class="r" class:muted={!z}>{z > 0 ? '+' : ''}{formatAmount(z, c)}</td>
+					{/each}
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr class="saldo">
+					<td class="lbl">{data.transfers.length ? 'Noch offen' : 'Saldo'}</td>
+					{#each kassen as k (k.kasseId)}
+						<td class="r">{k.balance > 0 ? '+' : ''}{formatAmount(k.balance, c)}</td>
+					{/each}
+				</tr>
+			</tfoot>
+		</table>
+	</div>
 </article>
 
 <style>
@@ -288,6 +338,28 @@
 	}
 	.matrix .saldo td {
 		border-top: 1px solid var(--border);
+	}
+	.kassen .lbl {
+		min-width: 8rem;
+		max-width: 11rem;
+		font-weight: 600;
+	}
+	.kassen .names {
+		font-weight: normal;
+		font-size: 0.7rem;
+	}
+	.kassen .sub td {
+		border-top: 2px solid var(--border);
+	}
+	@media screen {
+		/* the row labels stay put, the Kassen scroll */
+		.kassen .lbl {
+			position: sticky;
+			left: 0;
+			background: var(--surface);
+			z-index: 1;
+			box-shadow: 1px 0 0 var(--border);
+		}
 	}
 	.nowrap {
 		white-space: nowrap;

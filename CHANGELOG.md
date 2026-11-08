@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.56.0
+- Abrechnung: unter der großen Tabelle eine „Zusammenfassung nach Kassen“ – je Kasse Anteil, Bezahlt, Saldo vor Ausgleich, geleistete Zahlungen und was noch offen ist
+
 ## 0.55.0
 - Salden: „📋 Als Text kopieren“ unter „Wer zahlt wem“ – eine Zeile pro Zahlung („Familie Cyron → Ulli & Sönke: 396,79 €“), zum Einfügen in WhatsApp & Co.
 
