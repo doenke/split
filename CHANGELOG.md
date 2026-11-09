@@ -3,6 +3,9 @@
 Die Version steht in `package.json`, wird bei jeder Änderung erhöht und ist in der App unten auf jeder
 Seite sowie unter `/api/health` zu sehen. Docker-Images gibt es als `latest` und mit der Versionsnummer.
 
+## 0.56.1
+- Mitgliederliste: jede Kasse in einer eigenen Karte mit Abstand, darunter „Rechnen allein ab“ mit allen ohne gemeinsame Kasse
+
 ## 0.56.0
 - Abrechnung: unter der großen Tabelle eine „Zusammenfassung nach Kassen“ – je Kasse Anteil, Bezahlt, Saldo vor Ausgleich, geleistete Zahlungen und was noch offen ist
 

@@ -185,22 +185,22 @@
 	</form>
 {/if}
 
-<!-- sorted by Kasse: families and couples together in a box, then everyone settling alone -->
-<div class="list">
-	{#each units as u (u.id)}
-		{#if u.shared}
-			<div class="kasse-group">
-				<div class="kasse-head small">
-					<span>👪</span>
-					<span class="grow"><strong>Kasse {u.name}</strong> <span class="muted">· {u.members.length} Personen, rechnen gemeinsam ab</span></span>
-				</div>
-				{#each u.members as m (m.personId)}{@render member(m)}{/each}
-			</div>
-		{:else}
-			{@render member(u.members[0])}
-		{/if}
-	{/each}
-</div>
+<!-- sorted by Kasse: each family or couple in its own box, then everyone settling alone -->
+{#each units.filter((u) => u.shared) as u (u.id)}
+	<div class="list kasse-card">
+		<div class="kasse-head small">
+			<span>👪</span>
+			<span class="grow"><strong>Kasse {u.name}</strong> <span class="muted">· {u.members.length} Personen, rechnen gemeinsam ab</span></span>
+		</div>
+		{#each u.members as m (m.personId)}{@render member(m)}{/each}
+	</div>
+{/each}
+{#if units.some((u) => !u.shared)}
+	{#if units.some((u) => u.shared)}<h3 class="alone small muted">Rechnen allein ab</h3>{/if}
+	<div class="list">
+		{#each units.filter((u) => !u.shared) as u (u.id)}{@render member(u.members[0])}{/each}
+	</div>
+{/if}
 
 {#snippet member(m: (typeof data.members)[number])}
 	<div class="member" class:open={editing === m.personId}>
@@ -352,22 +352,20 @@
 		display: block !important;
 	}
 	/* a shared Kasse: framed, with a coloured bar on the left */
-	.kasse-group {
-		display: block !important;
-		padding: 0 !important;
+	/* a shared Kasse: its own card with a coloured bar and header */
+	.kasse-card {
 		border-left: 4px solid var(--primary);
-		background: var(--primary-soft);
 	}
 	.kasse-head {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.5rem 1rem;
+		padding: 0.5rem 1rem !important;
+		background: var(--primary-soft);
 	}
-	.kasse-group .member {
-		background: var(--surface);
-		border-top: 1px solid var(--border);
-		padding: 0.75rem 1rem 0.75rem 1.25rem;
+	.alone {
+		margin: 1.25rem 0.25rem 0.4rem;
+		font-weight: 600;
 	}
 	.top {
 		flex-wrap: nowrap;
